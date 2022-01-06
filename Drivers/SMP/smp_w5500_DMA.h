@@ -36,24 +36,6 @@
 
 //#define USE_DHCP
 
-
-#define PCB_VER_1
-
-/* STM32 Pin define */
-
-#ifdef PCB_VER_1
-#define W5500_RST_PORT 	GPIOE
-#define W5500_RST_PIN	GPIO_PIN_1
-
-#define W5500_INT_PORT 	GPIOB
-#define W5500_INT_PIN	GPIO_PIN_7
-#else
-#define W5500_RST_PORT 	GPIOB
-#define W5500_RST_PIN	GPIO_PIN_6
-
-#define W5500_INT_PORT 	GPIOD
-#define W5500_INT_PIN	GPIO_PIN_8
-#endif
 /* Default network information  */
 #define MAC_ADDR_BYTE_LEN 6
 #define GATE_WAY_ADDR_BYTE_LEN 4 

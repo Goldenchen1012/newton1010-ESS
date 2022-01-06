@@ -287,12 +287,14 @@ void appSerialCanDavinciOpen(void)
 	appSerialCanDavinciDebugMsg(str);
 
 	
+	#if 0
 	if(smp_can_init(&mDavinci_can, DavinciCan_cb)==SMP_SUCCESS){
-		appSerialCanDavinciDebugMsg("Can 1 ini success");
+	    appSerialCanDavinciDebugMsg("Can 1 ini success");
 	 }else{
-		appSerialCanDavinciDebugMsg("Can 1 ini fail");
-  	}  
-  	  	
+	    appSerialCanDavinciDebugMsg("Can 1 ini fail");
+  }  
+  #endif
+	
 	#endif
   	LibSwTimerOpen(appSerialCanDavinciTimerHandler, 0);
 }

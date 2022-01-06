@@ -189,6 +189,9 @@ int8_t smp_uart_put(smp_uart_t *p_uart, uint8_t byte)
 						        // just added a byte to FIFO, but if some bigger delay occurred
 						        // (some heavy interrupt handler routine has been executed) since
 						        // that time, FIFO might be empty already.
+									  if(uart0_evt_cb)
+				                uart0_evt_cb(UART_TX_READY_TO_SEND);
+									
 						        for(i=0;i<size;i++){	
 							          smp_fifo_pop(&uart0_tx_fifo, (char *)&uart0_tx_buffer[i]);
 						        }
@@ -209,6 +212,9 @@ int8_t smp_uart_put(smp_uart_t *p_uart, uint8_t byte)
 						        // just added a byte to FIFO, but if some bigger delay occurred
 						        // (some heavy interrupt handler routine has been executed) since
 						        // that time, FIFO might be empty already.
+										if(uart1_evt_cb)
+				                uart1_evt_cb(UART_TX_READY_TO_SEND);
+										
 						        for(i=0;i<size;i++){	
 							          smp_fifo_pop(&uart1_tx_fifo, (char *)&uart1_tx_buffer[i]);
 						        }

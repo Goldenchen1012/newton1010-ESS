@@ -362,14 +362,14 @@ int8_t W5500_Init_Step(uint8_t Step){
 	if(gu8W5500_SPI_Status == W5500_SPI_Idle){	
 		switch(Step){
 			case Init_HW_Reset_1:
-				HAL_GPIO_WritePin(W5500_RST_PORT, W5500_RST_PIN, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(BSP_W5500_RST_PORT, BSP_W5500_RST_PIN, GPIO_PIN_RESET);
 				ms_Count = 0;
 				gu8_W5500_Init_Steps = Init_HW_Reset_2;
 			case Init_HW_Reset_2:
 				ms_Count++;
 				if(ms_Count == HW_RESET_DELAY_TIME_MS){
 					ms_Count = 0;
-					HAL_GPIO_WritePin(W5500_RST_PORT, W5500_RST_PIN, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(BSP_W5500_RST_PORT, BSP_W5500_RST_PIN, GPIO_PIN_SET);
 					gu8_W5500_Init_Steps = Init_SW_Reset;
 				}
 				break;

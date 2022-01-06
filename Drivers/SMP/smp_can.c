@@ -122,13 +122,22 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
     		//Error_Handler();
     		return -3;//SMP_ERROR_NOT_FOUND;
   		}
-  		
+
+		/*##-4- Activate CAN RX notification #######################################*/
+		if (HAL_CAN_ActivateNotification(&smp_can0_handle,
+				(CAN_IT_RX_FIFO0_MSG_PENDING |
+				  CAN_IT_TX_MAILBOX_EMPTY
+				)) != HAL_OK)
+		{
+			/* Notification Error */
+			//Error_Handler();
+			return SMP_ERROR_NOT_FOUND;
+		}  
 		can0_evt_cb = smp_can_event_handler;
 		// Configure buffer RX buffer.
 		can_fifo_init(&can0_rx_fifo, p_can->buffers.rx_buf, p_can->buffers.rx_buf_size);
 		// Configure buffer TX buffer.
 		can_fifo_init(&can0_tx_fifo, p_can->buffers.tx_buf, p_can->buffers.tx_buf_size);
-
 
 	}else	if(p_can->num == __CAN1){
 		  smp_can1_handle.Instance = BSP_CAN1;

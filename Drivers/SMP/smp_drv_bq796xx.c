@@ -1046,6 +1046,9 @@ void drv_bq796xx_uart_event_handler(uart_evt_type p_evt)
     case UART_BUFFER_FULL:
       /* occurred UART buffer full */
     break;    
+		case UART_TX_READY_TO_SEND:
+			
+		break;
     default:
     break;
   }
