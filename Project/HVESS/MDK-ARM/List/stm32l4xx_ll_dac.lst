@@ -1,0 +1,333 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_dac.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_dac.c
+N  * @author  MCD Application Team
+N  * @brief   DAC LL module driver
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_dac.h"
+S#include "stm32l4xx_ll_bus.h"
+S
+S#ifdef USE_FULL_ASSERT
+S  #include "stm32_assert.h"
+S#else
+S  #define assert_param(expr) ((void)0U)
+S#endif
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined (DAC1)
+S
+S/** @addtogroup DAC_LL DAC
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S/* Private constants ---------------------------------------------------------*/
+S/* Private macros ------------------------------------------------------------*/
+S
+S/** @addtogroup DAC_LL_Private_Macros
+S  * @{
+S  */
+S
+S#if defined(DAC_CHANNEL2_SUPPORT)
+S#define IS_LL_DAC_CHANNEL(__DAC_CHANNEL__)                                     \
+S  (                                                                            \
+S      ((__DAC_CHANNEL__) == LL_DAC_CHANNEL_1)                                  \
+S   || ((__DAC_CHANNEL__) == LL_DAC_CHANNEL_2)                                  \
+S  )
+X#define IS_LL_DAC_CHANNEL(__DAC_CHANNEL__)                                       (                                                                                  ((__DAC_CHANNEL__) == LL_DAC_CHANNEL_1)                                     || ((__DAC_CHANNEL__) == LL_DAC_CHANNEL_2)                                    )
+S#else
+S#define IS_LL_DAC_CHANNEL(__DAC_CHANNEL__)                                     \
+S  (                                                                            \
+S   ((__DAC_CHANNEL__) == LL_DAC_CHANNEL_1)                                     \
+S  )
+X#define IS_LL_DAC_CHANNEL(__DAC_CHANNEL__)                                       (                                                                               ((__DAC_CHANNEL__) == LL_DAC_CHANNEL_1)                                       )
+S#endif /* DAC_CHANNEL2_SUPPORT */
+S
+S#if defined (DAC_CR_TSEL1_3)
+S#define IS_LL_DAC_TRIGGER_SOURCE(__TRIGGER_SOURCE__)                           \
+S  (   ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM1_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM2_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM4_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM5_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM6_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM7_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM8_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM15_TRGO)                     \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_LPTIM1_OUT)                     \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_LPTIM2_OUT)                     \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_EXTI_LINE9)                     \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_SOFTWARE)                           \
+S  )
+X#define IS_LL_DAC_TRIGGER_SOURCE(__TRIGGER_SOURCE__)                             (   ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM1_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM2_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM4_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM5_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM6_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM7_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM8_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM15_TRGO)                        || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_LPTIM1_OUT)                        || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_LPTIM2_OUT)                        || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_EXTI_LINE9)                        || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_SOFTWARE)                             )
+S#else
+S#define IS_LL_DAC_TRIGGER_SOURCE(__TRIGGER_SOURCE__)                           \
+S  (   ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_SOFTWARE)                           \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM2_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM4_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM5_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM6_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM7_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM8_TRGO)                      \
+S   || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_EXTI_LINE9)                     \
+S  )
+X#define IS_LL_DAC_TRIGGER_SOURCE(__TRIGGER_SOURCE__)                             (   ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_SOFTWARE)                              || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM2_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM4_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM5_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM6_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM7_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_TIM8_TRGO)                         || ((__TRIGGER_SOURCE__) == LL_DAC_TRIG_EXT_EXTI_LINE9)                       )
+S#endif /* DAC_CR_TSEL1_3 */
+S
+S#define IS_LL_DAC_WAVE_AUTO_GENER_MODE(__WAVE_AUTO_GENERATION_MODE__)           \
+S  (   ((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_NONE)     \
+S   || ((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_NOISE)    \
+S   || ((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_TRIANGLE) \
+S  )
+X#define IS_LL_DAC_WAVE_AUTO_GENER_MODE(__WAVE_AUTO_GENERATION_MODE__)             (   ((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_NONE)        || ((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_NOISE)       || ((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_TRIANGLE)   )
+S
+S#define IS_LL_DAC_WAVE_AUTO_GENER_CONFIG(__WAVE_AUTO_GENERATION_MODE__, __WAVE_AUTO_GENERATION_CONFIG__)  \
+S  ( (((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_NOISE)                               \
+S    && (  ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BIT0)                            \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS1_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS2_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS3_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS4_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS5_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS6_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS7_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS8_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS9_0)                         \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS10_0)                        \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS11_0))                       \
+S    )                                                                                                     \
+S  ||(((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_TRIANGLE)                            \
+S    && (  ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_1)                              \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_3)                              \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_7)                              \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_15)                             \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_31)                             \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_63)                             \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_127)                            \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_255)                            \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_511)                            \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_1023)                           \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_2047)                           \
+S       || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_4095))                          \
+S    )                                                                                                     \
+S  )
+X#define IS_LL_DAC_WAVE_AUTO_GENER_CONFIG(__WAVE_AUTO_GENERATION_MODE__, __WAVE_AUTO_GENERATION_CONFIG__)    ( (((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_NOISE)                                   && (  ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BIT0)                                   || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS1_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS2_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS3_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS4_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS5_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS6_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS7_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS8_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS9_0)                                || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS10_0)                               || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_NOISE_LFSR_UNMASK_BITS11_0))                           )                                                                                                       ||(((__WAVE_AUTO_GENERATION_MODE__) == LL_DAC_WAVE_AUTO_GENERATION_TRIANGLE)                                && (  ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_1)                                     || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_3)                                     || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_7)                                     || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_15)                                    || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_31)                                    || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_63)                                    || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_127)                                   || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_255)                                   || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_511)                                   || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_1023)                                  || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_2047)                                  || ((__WAVE_AUTO_GENERATION_CONFIG__) == LL_DAC_TRIANGLE_AMPLITUDE_4095))                              )                                                                                                       )
+S
+S#define IS_LL_DAC_OUTPUT_BUFFER(__OUTPUT_BUFFER__)                             \
+S  (   ((__OUTPUT_BUFFER__) == LL_DAC_OUTPUT_BUFFER_ENABLE)                     \
+S   || ((__OUTPUT_BUFFER__) == LL_DAC_OUTPUT_BUFFER_DISABLE)                    \
+S  )
+X#define IS_LL_DAC_OUTPUT_BUFFER(__OUTPUT_BUFFER__)                               (   ((__OUTPUT_BUFFER__) == LL_DAC_OUTPUT_BUFFER_ENABLE)                        || ((__OUTPUT_BUFFER__) == LL_DAC_OUTPUT_BUFFER_DISABLE)                      )
+S
+S#define IS_LL_DAC_OUTPUT_CONNECTION(__OUTPUT_CONNECTION__)                     \
+S  (   ((__OUTPUT_CONNECTION__) == LL_DAC_OUTPUT_CONNECT_GPIO)                  \
+S   || ((__OUTPUT_CONNECTION__) == LL_DAC_OUTPUT_CONNECT_INTERNAL)              \
+S  )
+X#define IS_LL_DAC_OUTPUT_CONNECTION(__OUTPUT_CONNECTION__)                       (   ((__OUTPUT_CONNECTION__) == LL_DAC_OUTPUT_CONNECT_GPIO)                     || ((__OUTPUT_CONNECTION__) == LL_DAC_OUTPUT_CONNECT_INTERNAL)                )
+S
+S#define IS_LL_DAC_OUTPUT_MODE(__OUTPUT_MODE__)                                 \
+S  (   ((__OUTPUT_MODE__) == LL_DAC_OUTPUT_MODE_NORMAL)                         \
+S   || ((__OUTPUT_MODE__) == LL_DAC_OUTPUT_MODE_SAMPLE_AND_HOLD)                \
+S  )
+X#define IS_LL_DAC_OUTPUT_MODE(__OUTPUT_MODE__)                                   (   ((__OUTPUT_MODE__) == LL_DAC_OUTPUT_MODE_NORMAL)                            || ((__OUTPUT_MODE__) == LL_DAC_OUTPUT_MODE_SAMPLE_AND_HOLD)                  )
+S
+S/**
+S  * @}
+S  */
+S
+S
+S/* Private function prototypes -----------------------------------------------*/
+S
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup DAC_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup DAC_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-initialize registers of the selected DAC instance
+S  *         to their default reset values.
+S  * @param  DACx DAC instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: DAC registers are de-initialized
+S  *          - ERROR: not applicable
+S  */
+SErrorStatus LL_DAC_DeInit(DAC_TypeDef *DACx)
+S{
+S  /* Check the parameters */
+S  assert_param(IS_DAC_ALL_INSTANCE(DACx));
+S
+S  /* Force reset of DAC clock */
+S  LL_APB1_GRP1_ForceReset(LL_APB1_GRP1_PERIPH_DAC1);
+S
+S  /* Release reset of DAC clock */
+S  LL_APB1_GRP1_ReleaseReset(LL_APB1_GRP1_PERIPH_DAC1);
+S
+S  return SUCCESS;
+S}
+S
+S/**
+S  * @brief  Initialize some features of DAC channel.
+S  * @note   @ref LL_DAC_Init() aims to ease basic configuration of a DAC channel.
+S  *         Leaving it ready to be enabled and output:
+S  *         a level by calling one of
+S  *           @ref LL_DAC_ConvertData12RightAligned
+S  *           @ref LL_DAC_ConvertData12LeftAligned
+S  *           @ref LL_DAC_ConvertData8RightAligned
+S  *         or one of the supported autogenerated wave.
+S  * @note   This function allows configuration of:
+S  *          - Output mode
+S  *          - Trigger
+S  *          - Wave generation
+S  * @note   The setting of these parameters by function @ref LL_DAC_Init()
+S  *         is conditioned to DAC state:
+S  *         DAC channel must be disabled.
+S  * @param  DACx DAC instance
+S  * @param  DAC_Channel This parameter can be one of the following values:
+S  *         @arg @ref LL_DAC_CHANNEL_1
+S  *         @arg @ref LL_DAC_CHANNEL_2 (1)
+S  *
+S  *         (1) On this STM32 serie, parameter not available on all devices.
+S  *             Refer to device datasheet for channels availability.
+S  * @param  DAC_InitStruct Pointer to a @ref LL_DAC_InitTypeDef structure
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: DAC registers are initialized
+S  *          - ERROR: DAC registers are not initialized
+S  */
+SErrorStatus LL_DAC_Init(DAC_TypeDef *DACx, uint32_t DAC_Channel, LL_DAC_InitTypeDef *DAC_InitStruct)
+S{
+S  ErrorStatus status = SUCCESS;
+S
+S  /* Check the parameters */
+S  assert_param(IS_DAC_ALL_INSTANCE(DACx));
+S  assert_param(IS_LL_DAC_CHANNEL(DAC_Channel));
+S  assert_param(IS_LL_DAC_TRIGGER_SOURCE(DAC_InitStruct->TriggerSource));
+S  assert_param(IS_LL_DAC_OUTPUT_BUFFER(DAC_InitStruct->OutputBuffer));
+S  assert_param(IS_LL_DAC_OUTPUT_CONNECTION(DAC_InitStruct->OutputConnection));
+S  assert_param(IS_LL_DAC_OUTPUT_MODE(DAC_InitStruct->OutputMode));
+S  assert_param(IS_LL_DAC_WAVE_AUTO_GENER_MODE(DAC_InitStruct->WaveAutoGeneration));
+S  if (DAC_InitStruct->WaveAutoGeneration != LL_DAC_WAVE_AUTO_GENERATION_NONE)
+S  {
+S    assert_param(IS_LL_DAC_WAVE_AUTO_GENER_CONFIG(DAC_InitStruct->WaveAutoGeneration,
+S                                                  DAC_InitStruct->WaveAutoGenerationConfig));
+S  }
+S
+S  /* Note: Hardware constraint (refer to description of this function)        */
+S  /*       DAC instance must be disabled.                                     */
+S  if (LL_DAC_IsEnabled(DACx, DAC_Channel) == 0U)
+S  {
+S    /* Configuration of DAC channel:                                          */
+S    /*  - TriggerSource                                                       */
+S    /*  - WaveAutoGeneration                                                  */
+S    /*  - OutputBuffer                                                        */
+S    /*  - OutputConnection                                                    */
+S    /*  - OutputMode                                                          */
+S    if (DAC_InitStruct->WaveAutoGeneration != LL_DAC_WAVE_AUTO_GENERATION_NONE)
+S    {
+S      MODIFY_REG(DACx->CR,
+S                 (DAC_CR_TSEL1
+S                  | DAC_CR_WAVE1
+S                  | DAC_CR_MAMP1
+S                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+S                ,
+S                 (DAC_InitStruct->TriggerSource
+S                  | DAC_InitStruct->WaveAutoGeneration
+S                  | DAC_InitStruct->WaveAutoGenerationConfig
+S                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+S                );
+S    }
+S    else
+S    {
+S      MODIFY_REG(DACx->CR,
+S                 (DAC_CR_TSEL1
+S                  | DAC_CR_WAVE1
+S                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+S                ,
+S                 (DAC_InitStruct->TriggerSource
+S                  | LL_DAC_WAVE_AUTO_GENERATION_NONE
+S                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+S                );
+S    }
+S    MODIFY_REG(DACx->MCR,
+S               (DAC_MCR_MODE1_1
+S                | DAC_MCR_MODE1_0
+S                | DAC_MCR_MODE1_2
+S               ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+S              ,
+S               (DAC_InitStruct->OutputBuffer
+S                | DAC_InitStruct->OutputConnection
+S                | DAC_InitStruct->OutputMode
+S               ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+S              );
+S  }
+S  else
+S  {
+S    /* Initialization error: DAC instance is not disabled.                    */
+S    status = ERROR;
+S  }
+S  return status;
+S}
+S
+S/**
+S  * @brief Set each @ref LL_DAC_InitTypeDef field to default value.
+S  * @param DAC_InitStruct pointer to a @ref LL_DAC_InitTypeDef structure
+S  *                       whose fields will be set to default values.
+S  * @retval None
+S  */
+Svoid LL_DAC_StructInit(LL_DAC_InitTypeDef *DAC_InitStruct)
+S{
+S  /* Set DAC_InitStruct fields to default values */
+S  DAC_InitStruct->TriggerSource            = LL_DAC_TRIG_SOFTWARE;
+S  DAC_InitStruct->WaveAutoGeneration       = LL_DAC_WAVE_AUTO_GENERATION_NONE;
+S  /* Note: Parameter discarded if wave auto generation is disabled,           */
+S  /*       set anyway to its default value.                                   */
+S  DAC_InitStruct->WaveAutoGenerationConfig = LL_DAC_NOISE_LFSR_UNMASK_BIT0;
+S  DAC_InitStruct->OutputBuffer             = LL_DAC_OUTPUT_BUFFER_ENABLE;
+S  DAC_InitStruct->OutputConnection         = LL_DAC_OUTPUT_CONNECT_GPIO;
+S  DAC_InitStruct->OutputMode               = LL_DAC_OUTPUT_MODE_NORMAL;
+S}
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* DAC1 */
+S
+S/**
+S  * @}
+S  */
+S
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

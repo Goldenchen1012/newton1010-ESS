@@ -1,0 +1,876 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_rtc.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_rtc.c
+N  * @author  MCD Application Team
+N  * @brief   RTC LL module driver.
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_rtc.h"
+S#include "stm32l4xx_ll_cortex.h"
+S#ifdef  USE_FULL_ASSERT
+S#include "stm32_assert.h"
+S#else
+S#define assert_param(expr) ((void)0U)
+S#endif
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined(RTC)
+S
+S/** @addtogroup RTC_LL
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S/* Private constants ---------------------------------------------------------*/
+S/** @addtogroup RTC_LL_Private_Constants
+S  * @{
+S  */
+S/* Default values used for prescaler */
+S#define RTC_ASYNCH_PRESC_DEFAULT     0x0000007FU
+S#define RTC_SYNCH_PRESC_DEFAULT      0x000000FFU
+S
+S/* Values used for timeout */
+S#define RTC_INITMODE_TIMEOUT         1000U /* 1s when tick set to 1ms */
+S#define RTC_SYNCHRO_TIMEOUT          1000U /* 1s when tick set to 1ms */
+S/**
+S  * @}
+S  */
+S
+S/* Private macros ------------------------------------------------------------*/
+S/** @addtogroup RTC_LL_Private_Macros
+S  * @{
+S  */
+S
+S#define IS_LL_RTC_HOURFORMAT(__VALUE__) (((__VALUE__) == LL_RTC_HOURFORMAT_24HOUR) \
+S                                      || ((__VALUE__) == LL_RTC_HOURFORMAT_AMPM))
+X#define IS_LL_RTC_HOURFORMAT(__VALUE__) (((__VALUE__) == LL_RTC_HOURFORMAT_24HOUR)                                       || ((__VALUE__) == LL_RTC_HOURFORMAT_AMPM))
+S
+S#define IS_LL_RTC_ASYNCH_PREDIV(__VALUE__)   ((__VALUE__) <= 0x7FU)
+S
+S#define IS_LL_RTC_SYNCH_PREDIV(__VALUE__)    ((__VALUE__) <= 0x7FFFU)
+S
+S#define IS_LL_RTC_FORMAT(__VALUE__) (((__VALUE__) == LL_RTC_FORMAT_BIN) \
+S                                  || ((__VALUE__) == LL_RTC_FORMAT_BCD))
+X#define IS_LL_RTC_FORMAT(__VALUE__) (((__VALUE__) == LL_RTC_FORMAT_BIN)                                   || ((__VALUE__) == LL_RTC_FORMAT_BCD))
+S
+S#define IS_LL_RTC_TIME_FORMAT(__VALUE__) (((__VALUE__) == LL_RTC_TIME_FORMAT_AM_OR_24) \
+S                                       || ((__VALUE__) == LL_RTC_TIME_FORMAT_PM))
+X#define IS_LL_RTC_TIME_FORMAT(__VALUE__) (((__VALUE__) == LL_RTC_TIME_FORMAT_AM_OR_24)                                        || ((__VALUE__) == LL_RTC_TIME_FORMAT_PM))
+S
+S#define IS_LL_RTC_HOUR12(__HOUR__)            (((__HOUR__) > 0U) && ((__HOUR__) <= 12U))
+S#define IS_LL_RTC_HOUR24(__HOUR__)            ((__HOUR__) <= 23U)
+S#define IS_LL_RTC_MINUTES(__MINUTES__)        ((__MINUTES__) <= 59U)
+S#define IS_LL_RTC_SECONDS(__SECONDS__)        ((__SECONDS__) <= 59U)
+S
+S#define IS_LL_RTC_WEEKDAY(__VALUE__) (((__VALUE__) == LL_RTC_WEEKDAY_MONDAY) \
+S                                   || ((__VALUE__) == LL_RTC_WEEKDAY_TUESDAY) \
+S                                   || ((__VALUE__) == LL_RTC_WEEKDAY_WEDNESDAY) \
+S                                   || ((__VALUE__) == LL_RTC_WEEKDAY_THURSDAY) \
+S                                   || ((__VALUE__) == LL_RTC_WEEKDAY_FRIDAY) \
+S                                   || ((__VALUE__) == LL_RTC_WEEKDAY_SATURDAY) \
+S                                   || ((__VALUE__) == LL_RTC_WEEKDAY_SUNDAY))
+X#define IS_LL_RTC_WEEKDAY(__VALUE__) (((__VALUE__) == LL_RTC_WEEKDAY_MONDAY)                                    || ((__VALUE__) == LL_RTC_WEEKDAY_TUESDAY)                                    || ((__VALUE__) == LL_RTC_WEEKDAY_WEDNESDAY)                                    || ((__VALUE__) == LL_RTC_WEEKDAY_THURSDAY)                                    || ((__VALUE__) == LL_RTC_WEEKDAY_FRIDAY)                                    || ((__VALUE__) == LL_RTC_WEEKDAY_SATURDAY)                                    || ((__VALUE__) == LL_RTC_WEEKDAY_SUNDAY))
+S
+S#define IS_LL_RTC_DAY(__DAY__)    (((__DAY__) >= 1U) && ((__DAY__) <= 31U))
+S
+S#define IS_LL_RTC_MONTH(__MONTH__) (((__MONTH__) >= 1U) && ((__MONTH__) <= 12U))
+S
+S#define IS_LL_RTC_YEAR(__YEAR__) ((__YEAR__) <= 99U)
+S
+S#define IS_LL_RTC_ALMA_MASK(__VALUE__) (((__VALUE__) == LL_RTC_ALMA_MASK_NONE) \
+S                                     || ((__VALUE__) == LL_RTC_ALMA_MASK_DATEWEEKDAY) \
+S                                     || ((__VALUE__) == LL_RTC_ALMA_MASK_HOURS) \
+S                                     || ((__VALUE__) == LL_RTC_ALMA_MASK_MINUTES) \
+S                                     || ((__VALUE__) == LL_RTC_ALMA_MASK_SECONDS) \
+S                                     || ((__VALUE__) == LL_RTC_ALMA_MASK_ALL))
+X#define IS_LL_RTC_ALMA_MASK(__VALUE__) (((__VALUE__) == LL_RTC_ALMA_MASK_NONE)                                      || ((__VALUE__) == LL_RTC_ALMA_MASK_DATEWEEKDAY)                                      || ((__VALUE__) == LL_RTC_ALMA_MASK_HOURS)                                      || ((__VALUE__) == LL_RTC_ALMA_MASK_MINUTES)                                      || ((__VALUE__) == LL_RTC_ALMA_MASK_SECONDS)                                      || ((__VALUE__) == LL_RTC_ALMA_MASK_ALL))
+S
+S#define IS_LL_RTC_ALMB_MASK(__VALUE__) (((__VALUE__) == LL_RTC_ALMB_MASK_NONE) \
+S                                     || ((__VALUE__) == LL_RTC_ALMB_MASK_DATEWEEKDAY) \
+S                                     || ((__VALUE__) == LL_RTC_ALMB_MASK_HOURS) \
+S                                     || ((__VALUE__) == LL_RTC_ALMB_MASK_MINUTES) \
+S                                     || ((__VALUE__) == LL_RTC_ALMB_MASK_SECONDS) \
+S                                     || ((__VALUE__) == LL_RTC_ALMB_MASK_ALL))
+X#define IS_LL_RTC_ALMB_MASK(__VALUE__) (((__VALUE__) == LL_RTC_ALMB_MASK_NONE)                                      || ((__VALUE__) == LL_RTC_ALMB_MASK_DATEWEEKDAY)                                      || ((__VALUE__) == LL_RTC_ALMB_MASK_HOURS)                                      || ((__VALUE__) == LL_RTC_ALMB_MASK_MINUTES)                                      || ((__VALUE__) == LL_RTC_ALMB_MASK_SECONDS)                                      || ((__VALUE__) == LL_RTC_ALMB_MASK_ALL))
+S
+S
+S#define IS_LL_RTC_ALMA_DATE_WEEKDAY_SEL(__SEL__) (((__SEL__) == LL_RTC_ALMA_DATEWEEKDAYSEL_DATE) || \
+S                                                  ((__SEL__) == LL_RTC_ALMA_DATEWEEKDAYSEL_WEEKDAY))
+X#define IS_LL_RTC_ALMA_DATE_WEEKDAY_SEL(__SEL__) (((__SEL__) == LL_RTC_ALMA_DATEWEEKDAYSEL_DATE) ||                                                   ((__SEL__) == LL_RTC_ALMA_DATEWEEKDAYSEL_WEEKDAY))
+S
+S#define IS_LL_RTC_ALMB_DATE_WEEKDAY_SEL(__SEL__) (((__SEL__) == LL_RTC_ALMB_DATEWEEKDAYSEL_DATE) || \
+S                                                  ((__SEL__) == LL_RTC_ALMB_DATEWEEKDAYSEL_WEEKDAY))
+X#define IS_LL_RTC_ALMB_DATE_WEEKDAY_SEL(__SEL__) (((__SEL__) == LL_RTC_ALMB_DATEWEEKDAYSEL_DATE) ||                                                   ((__SEL__) == LL_RTC_ALMB_DATEWEEKDAYSEL_WEEKDAY))
+S
+S
+S/**
+S  * @}
+S  */
+S/* Private function prototypes -----------------------------------------------*/
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup RTC_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup RTC_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-Initializes the RTC registers to their default reset values.
+S  * @note   This function does not reset the RTC Clock source and RTC Backup Data
+S  *         registers.
+S  * @param  RTCx RTC Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC registers are de-initialized
+S  *          - ERROR: RTC registers are not de-initialized
+S  */
+SErrorStatus LL_RTC_DeInit(RTC_TypeDef *RTCx)
+S{
+S  ErrorStatus status;
+S
+S  /* Check the parameter */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S
+S  /* Disable the write protection for RTC registers */
+S  LL_RTC_DisableWriteProtection(RTCx);
+S
+S  /* Set Initialization mode */
+S  status = LL_RTC_EnterInitMode(RTCx);
+S  if(status != ERROR)
+S  {
+S    /* Reset TR, DR and CR registers */
+S    LL_RTC_WriteReg(RTCx, TR, 0x00000000U);
+S
+S    LL_RTC_WriteReg(RTCx, WUTR, RTC_WUTR_WUT);
+S    LL_RTC_WriteReg(RTCx, DR, (RTC_DR_WDU_0 | RTC_DR_MU_0 | RTC_DR_DU_0));
+S    /* Reset All CR bits except CR[2:0] */
+S    LL_RTC_WriteReg(RTCx, CR, (LL_RTC_ReadReg(RTCx, CR) & RTC_CR_WUCKSEL));
+S
+S    LL_RTC_WriteReg(RTCx, PRER, (RTC_PRER_PREDIV_A | RTC_SYNCH_PRESC_DEFAULT));
+S    LL_RTC_WriteReg(RTCx, ALRMAR,   0x00000000U);
+S    LL_RTC_WriteReg(RTCx, ALRMBR,   0x00000000U);
+S    LL_RTC_WriteReg(RTCx, SHIFTR,   0x00000000U);
+S    LL_RTC_WriteReg(RTCx, CALR,     0x00000000U);
+S    LL_RTC_WriteReg(RTCx, ALRMASSR, 0x00000000U);
+S    LL_RTC_WriteReg(RTCx, ALRMBSSR, 0x00000000U);
+S
+S#if defined(STM32L412xx) || defined(STM32L422xx) || defined (STM32L4P5xx) || defined (STM32L4Q5xx)
+S#else /* #if defined(STM32L412xx) || defined(STM32L422xx) || defined (STM32L4P5xx) || defined (STM32L4Q5xx) */
+S    /* Reset Tamper and alternate functions configuration register */
+S    LL_RTC_WriteReg(RTCx, TAMPCR, 0x00000000U);
+S
+S    /* Reset Option register */
+S    LL_RTC_WriteReg(RTCx, OR, 0x00000000U);
+S#endif /* #if defined(STM32L412xx) || defined(STM32L422xx) || defined (STM32L4P5xx) || defined (STM32L4Q5xx) */
+S
+S    /* Exit Initialization mode */
+S    LL_RTC_DisableInitMode(RTCx);
+S  }
+S
+S  /* Enable the write protection for RTC registers */
+S  LL_RTC_EnableWriteProtection(RTCx);
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Initializes the RTC registers according to the specified parameters
+S  *         in RTC_InitStruct.
+S  * @param  RTCx RTC Instance
+S  * @param  RTC_InitStruct pointer to a @ref LL_RTC_InitTypeDef structure that contains
+S  *         the configuration information for the RTC peripheral.
+S  * @note   The RTC Prescaler register is write protected and can be written in
+S  *         initialization mode only.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC registers are initialized
+S  *          - ERROR: RTC registers are not initialized
+S  */
+SErrorStatus LL_RTC_Init(RTC_TypeDef *RTCx, LL_RTC_InitTypeDef *RTC_InitStruct)
+S{
+S  ErrorStatus status = ERROR;
+S
+S  /* Check the parameters */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S  assert_param(IS_LL_RTC_HOURFORMAT(RTC_InitStruct->HourFormat));
+S  assert_param(IS_LL_RTC_ASYNCH_PREDIV(RTC_InitStruct->AsynchPrescaler));
+S  assert_param(IS_LL_RTC_SYNCH_PREDIV(RTC_InitStruct->SynchPrescaler));
+S
+S  /* Disable the write protection for RTC registers */
+S  LL_RTC_DisableWriteProtection(RTCx);
+S
+S  /* Set Initialization mode */
+S  if (LL_RTC_EnterInitMode(RTCx) != ERROR)
+S  {
+S    /* Set Hour Format */
+S    LL_RTC_SetHourFormat(RTCx, RTC_InitStruct->HourFormat);
+S
+S    /* Configure Synchronous and Asynchronous prescaler factor */
+S    LL_RTC_SetSynchPrescaler(RTCx, RTC_InitStruct->SynchPrescaler);
+S    LL_RTC_SetAsynchPrescaler(RTCx, RTC_InitStruct->AsynchPrescaler);
+S
+S    /* Exit Initialization mode */
+S    LL_RTC_DisableInitMode(RTCx);
+S
+S    status = SUCCESS;
+S  }
+S  /* Enable the write protection for RTC registers */
+S  LL_RTC_EnableWriteProtection(RTCx);
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Set each @ref LL_RTC_InitTypeDef field to default value.
+S  * @param  RTC_InitStruct pointer to a @ref LL_RTC_InitTypeDef structure which will be initialized.
+S  * @retval None
+S  */
+Svoid LL_RTC_StructInit(LL_RTC_InitTypeDef *RTC_InitStruct)
+S{
+S  /* Set RTC_InitStruct fields to default values */
+S  RTC_InitStruct->HourFormat      = LL_RTC_HOURFORMAT_24HOUR;
+S  RTC_InitStruct->AsynchPrescaler = RTC_ASYNCH_PRESC_DEFAULT;
+S  RTC_InitStruct->SynchPrescaler  = RTC_SYNCH_PRESC_DEFAULT;
+S}
+S
+S/**
+S  * @brief  Set the RTC current time.
+S  * @param  RTCx RTC Instance
+S  * @param  RTC_Format This parameter can be one of the following values:
+S  *         @arg @ref LL_RTC_FORMAT_BIN
+S  *         @arg @ref LL_RTC_FORMAT_BCD
+S  * @param  RTC_TimeStruct pointer to a RTC_TimeTypeDef structure that contains
+S  *                        the time configuration information for the RTC.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC Time register is configured
+S  *          - ERROR: RTC Time register is not configured
+S  */
+SErrorStatus LL_RTC_TIME_Init(RTC_TypeDef *RTCx, uint32_t RTC_Format, LL_RTC_TimeTypeDef *RTC_TimeStruct)
+S{
+S  ErrorStatus status = ERROR;
+S
+S  /* Check the parameters */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S  assert_param(IS_LL_RTC_FORMAT(RTC_Format));
+S
+S  if (RTC_Format == LL_RTC_FORMAT_BIN)
+S  {
+S    if (LL_RTC_GetHourFormat(RTCx) != LL_RTC_HOURFORMAT_24HOUR)
+S    {
+S      assert_param(IS_LL_RTC_HOUR12(RTC_TimeStruct->Hours));
+S      assert_param(IS_LL_RTC_TIME_FORMAT(RTC_TimeStruct->TimeFormat));
+S    }
+S    else
+S    {
+S      RTC_TimeStruct->TimeFormat = 0x00U;
+S      assert_param(IS_LL_RTC_HOUR24(RTC_TimeStruct->Hours));
+S    }
+S    assert_param(IS_LL_RTC_MINUTES(RTC_TimeStruct->Minutes));
+S    assert_param(IS_LL_RTC_SECONDS(RTC_TimeStruct->Seconds));
+S  }
+S  else
+S  {
+S    if (LL_RTC_GetHourFormat(RTCx) != LL_RTC_HOURFORMAT_24HOUR)
+S    {
+S      assert_param(IS_LL_RTC_HOUR12(__LL_RTC_CONVERT_BCD2BIN(RTC_TimeStruct->Hours)));
+S      assert_param(IS_LL_RTC_TIME_FORMAT(RTC_TimeStruct->TimeFormat));
+S    }
+S    else
+S    {
+S      RTC_TimeStruct->TimeFormat = 0x00U;
+S      assert_param(IS_LL_RTC_HOUR24(__LL_RTC_CONVERT_BCD2BIN(RTC_TimeStruct->Hours)));
+S    }
+S    assert_param(IS_LL_RTC_MINUTES(__LL_RTC_CONVERT_BCD2BIN(RTC_TimeStruct->Minutes)));
+S    assert_param(IS_LL_RTC_SECONDS(__LL_RTC_CONVERT_BCD2BIN(RTC_TimeStruct->Seconds)));
+S  }
+S
+S  /* Disable the write protection for RTC registers */
+S  LL_RTC_DisableWriteProtection(RTCx);
+S
+S  /* Set Initialization mode */
+S  if (LL_RTC_EnterInitMode(RTCx) != ERROR)
+S  {
+S    /* Check the input parameters format */
+S    if (RTC_Format != LL_RTC_FORMAT_BIN)
+S    {
+S      LL_RTC_TIME_Config(RTCx, RTC_TimeStruct->TimeFormat, RTC_TimeStruct->Hours,
+S                         RTC_TimeStruct->Minutes, RTC_TimeStruct->Seconds);
+S    }
+S    else
+S    {
+S      LL_RTC_TIME_Config(RTCx, RTC_TimeStruct->TimeFormat, __LL_RTC_CONVERT_BIN2BCD(RTC_TimeStruct->Hours),
+S                         __LL_RTC_CONVERT_BIN2BCD(RTC_TimeStruct->Minutes),
+S                         __LL_RTC_CONVERT_BIN2BCD(RTC_TimeStruct->Seconds));
+S    }
+S
+S    /* Exit Initialization mode */
+S    LL_RTC_DisableInitMode(RTC);
+S
+S    /* If  RTC_CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
+S    if (LL_RTC_IsShadowRegBypassEnabled(RTCx) == 0U)
+S    {
+S      status = LL_RTC_WaitForSynchro(RTCx);
+S    }
+S    else
+S    {
+S      status = SUCCESS;
+S    }
+S  }
+S  /* Enable the write protection for RTC registers */
+S  LL_RTC_EnableWriteProtection(RTCx);
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Set each @ref LL_RTC_TimeTypeDef field to default value (Time = 00h:00min:00sec).
+S  * @param  RTC_TimeStruct pointer to a @ref LL_RTC_TimeTypeDef structure which will be initialized.
+S  * @retval None
+S  */
+Svoid LL_RTC_TIME_StructInit(LL_RTC_TimeTypeDef *RTC_TimeStruct)
+S{
+S  /* Time = 00h:00min:00sec */
+S  RTC_TimeStruct->TimeFormat = LL_RTC_TIME_FORMAT_AM_OR_24;
+S  RTC_TimeStruct->Hours      = 0U;
+S  RTC_TimeStruct->Minutes    = 0U;
+S  RTC_TimeStruct->Seconds    = 0U;
+S}
+S
+S/**
+S  * @brief  Set the RTC current date.
+S  * @param  RTCx RTC Instance
+S  * @param  RTC_Format This parameter can be one of the following values:
+S  *         @arg @ref LL_RTC_FORMAT_BIN
+S  *         @arg @ref LL_RTC_FORMAT_BCD
+S  * @param  RTC_DateStruct pointer to a RTC_DateTypeDef structure that contains
+S  *                         the date configuration information for the RTC.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC Day register is configured
+S  *          - ERROR: RTC Day register is not configured
+S  */
+SErrorStatus LL_RTC_DATE_Init(RTC_TypeDef *RTCx, uint32_t RTC_Format, LL_RTC_DateTypeDef *RTC_DateStruct)
+S{
+S  ErrorStatus status = ERROR;
+S
+S  /* Check the parameters */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S  assert_param(IS_LL_RTC_FORMAT(RTC_Format));
+S
+S  if ((RTC_Format == LL_RTC_FORMAT_BIN) && ((RTC_DateStruct->Month & 0x10U) == 0x10U))
+S  {
+S    RTC_DateStruct->Month = (uint8_t)(((uint32_t) RTC_DateStruct->Month & (uint32_t)~(0x10U)) + 0x0AU);
+S  }
+S
+S  if (RTC_Format == LL_RTC_FORMAT_BIN)
+S  {
+S    assert_param(IS_LL_RTC_YEAR(RTC_DateStruct->Year));
+S    assert_param(IS_LL_RTC_MONTH(RTC_DateStruct->Month));
+S    assert_param(IS_LL_RTC_DAY(RTC_DateStruct->Day));
+S  }
+S  else
+S  {
+S    assert_param(IS_LL_RTC_YEAR(__LL_RTC_CONVERT_BCD2BIN(RTC_DateStruct->Year)));
+S    assert_param(IS_LL_RTC_MONTH(__LL_RTC_CONVERT_BCD2BIN(RTC_DateStruct->Month)));
+S    assert_param(IS_LL_RTC_DAY(__LL_RTC_CONVERT_BCD2BIN(RTC_DateStruct->Day)));
+S  }
+S  assert_param(IS_LL_RTC_WEEKDAY(RTC_DateStruct->WeekDay));
+S
+S  /* Disable the write protection for RTC registers */
+S  LL_RTC_DisableWriteProtection(RTCx);
+S
+S  /* Set Initialization mode */
+S  if (LL_RTC_EnterInitMode(RTCx) != ERROR)
+S  {
+S    /* Check the input parameters format */
+S    if (RTC_Format != LL_RTC_FORMAT_BIN)
+S    {
+S      LL_RTC_DATE_Config(RTCx, RTC_DateStruct->WeekDay, RTC_DateStruct->Day, RTC_DateStruct->Month, RTC_DateStruct->Year);
+S    }
+S    else
+S    {
+S      LL_RTC_DATE_Config(RTCx, RTC_DateStruct->WeekDay, __LL_RTC_CONVERT_BIN2BCD(RTC_DateStruct->Day),
+S                         __LL_RTC_CONVERT_BIN2BCD(RTC_DateStruct->Month), __LL_RTC_CONVERT_BIN2BCD(RTC_DateStruct->Year));
+S    }
+S
+S    /* Exit Initialization mode */
+S    LL_RTC_DisableInitMode(RTC);
+S
+S    /* If  RTC_CR_BYPSHAD bit = 0, wait for synchro else this check is not needed */
+S    if (LL_RTC_IsShadowRegBypassEnabled(RTCx) == 0U)
+S    {
+S      status = LL_RTC_WaitForSynchro(RTCx);
+S    }
+S    else
+S    {
+S      status = SUCCESS;
+S    }
+S  }
+S  /* Enable the write protection for RTC registers */
+S  LL_RTC_EnableWriteProtection(RTCx);
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Set each @ref LL_RTC_DateTypeDef field to default value (date = Monday, January 01 xx00)
+S  * @param  RTC_DateStruct pointer to a @ref LL_RTC_DateTypeDef structure which will be initialized.
+S  * @retval None
+S  */
+Svoid LL_RTC_DATE_StructInit(LL_RTC_DateTypeDef *RTC_DateStruct)
+S{
+S  /* Monday, January 01 xx00 */
+S  RTC_DateStruct->WeekDay = LL_RTC_WEEKDAY_MONDAY;
+S  RTC_DateStruct->Day     = 1U;
+S  RTC_DateStruct->Month   = LL_RTC_MONTH_JANUARY;
+S  RTC_DateStruct->Year    = 0U;
+S}
+S
+S/**
+S  * @brief  Set the RTC Alarm A.
+S  * @note   The Alarm register can only be written when the corresponding Alarm
+S  *         is disabled (Use @ref LL_RTC_ALMA_Disable function).
+S  * @param  RTCx RTC Instance
+S  * @param  RTC_Format This parameter can be one of the following values:
+S  *         @arg @ref LL_RTC_FORMAT_BIN
+S  *         @arg @ref LL_RTC_FORMAT_BCD
+S  * @param  RTC_AlarmStruct pointer to a @ref LL_RTC_AlarmTypeDef structure that
+S  *                         contains the alarm configuration parameters.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: ALARMA registers are configured
+S  *          - ERROR: ALARMA registers are not configured
+S  */
+SErrorStatus LL_RTC_ALMA_Init(RTC_TypeDef *RTCx, uint32_t RTC_Format, LL_RTC_AlarmTypeDef *RTC_AlarmStruct)
+S{
+S  /* Check the parameters */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S  assert_param(IS_LL_RTC_FORMAT(RTC_Format));
+S  assert_param(IS_LL_RTC_ALMA_MASK(RTC_AlarmStruct->AlarmMask));
+S  assert_param(IS_LL_RTC_ALMA_DATE_WEEKDAY_SEL(RTC_AlarmStruct->AlarmDateWeekDaySel));
+S
+S  if (RTC_Format == LL_RTC_FORMAT_BIN)
+S  {
+S    if (LL_RTC_GetHourFormat(RTCx) != LL_RTC_HOURFORMAT_24HOUR)
+S    {
+S      assert_param(IS_LL_RTC_HOUR12(RTC_AlarmStruct->AlarmTime.Hours));
+S      assert_param(IS_LL_RTC_TIME_FORMAT(RTC_AlarmStruct->AlarmTime.TimeFormat));
+S    }
+S    else
+S    {
+S      RTC_AlarmStruct->AlarmTime.TimeFormat = 0x00U;
+S      assert_param(IS_LL_RTC_HOUR24(RTC_AlarmStruct->AlarmTime.Hours));
+S    }
+S    assert_param(IS_LL_RTC_MINUTES(RTC_AlarmStruct->AlarmTime.Minutes));
+S    assert_param(IS_LL_RTC_SECONDS(RTC_AlarmStruct->AlarmTime.Seconds));
+S
+S    if (RTC_AlarmStruct->AlarmDateWeekDaySel == LL_RTC_ALMA_DATEWEEKDAYSEL_DATE)
+S    {
+S      assert_param(IS_LL_RTC_DAY(RTC_AlarmStruct->AlarmDateWeekDay));
+S    }
+S    else
+S    {
+S      assert_param(IS_LL_RTC_WEEKDAY(RTC_AlarmStruct->AlarmDateWeekDay));
+S    }
+S  }
+S  else
+S  {
+S    if (LL_RTC_GetHourFormat(RTCx) != LL_RTC_HOURFORMAT_24HOUR)
+S    {
+S      assert_param(IS_LL_RTC_HOUR12(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Hours)));
+S      assert_param(IS_LL_RTC_TIME_FORMAT(RTC_AlarmStruct->AlarmTime.TimeFormat));
+S    }
+S    else
+S    {
+S      RTC_AlarmStruct->AlarmTime.TimeFormat = 0x00U;
+S      assert_param(IS_LL_RTC_HOUR24(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Hours)));
+S    }
+S
+S    assert_param(IS_LL_RTC_MINUTES(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Minutes)));
+S    assert_param(IS_LL_RTC_SECONDS(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Seconds)));
+S
+S    if (RTC_AlarmStruct->AlarmDateWeekDaySel == LL_RTC_ALMA_DATEWEEKDAYSEL_DATE)
+S    {
+S      assert_param(IS_LL_RTC_DAY(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmDateWeekDay)));
+S    }
+S    else
+S    {
+S      assert_param(IS_LL_RTC_WEEKDAY(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmDateWeekDay)));
+S    }
+S  }
+S
+S  /* Disable the write protection for RTC registers */
+S  LL_RTC_DisableWriteProtection(RTCx);
+S
+S  /* Select weekday selection */
+S  if (RTC_AlarmStruct->AlarmDateWeekDaySel == LL_RTC_ALMA_DATEWEEKDAYSEL_DATE)
+S  {
+S    /* Set the date for ALARM */
+S    LL_RTC_ALMA_DisableWeekday(RTCx);
+S    if (RTC_Format != LL_RTC_FORMAT_BIN)
+S    {
+S      LL_RTC_ALMA_SetDay(RTCx, RTC_AlarmStruct->AlarmDateWeekDay);
+S    }
+S    else
+S    {
+S      LL_RTC_ALMA_SetDay(RTCx, __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmDateWeekDay));
+S    }
+S  }
+S  else
+S  {
+S    /* Set the week day for ALARM */
+S    LL_RTC_ALMA_EnableWeekday(RTCx);
+S    LL_RTC_ALMA_SetWeekDay(RTCx, RTC_AlarmStruct->AlarmDateWeekDay);
+S  }
+S
+S  /* Configure the Alarm register */
+S  if (RTC_Format != LL_RTC_FORMAT_BIN)
+S  {
+S    LL_RTC_ALMA_ConfigTime(RTCx, RTC_AlarmStruct->AlarmTime.TimeFormat, RTC_AlarmStruct->AlarmTime.Hours,
+S                           RTC_AlarmStruct->AlarmTime.Minutes, RTC_AlarmStruct->AlarmTime.Seconds);
+S  }
+S  else
+S  {
+S    LL_RTC_ALMA_ConfigTime(RTCx, RTC_AlarmStruct->AlarmTime.TimeFormat,
+S                           __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmTime.Hours),
+S                           __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmTime.Minutes),
+S                           __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmTime.Seconds));
+S  }
+S  /* Set ALARM mask */
+S  LL_RTC_ALMA_SetMask(RTCx, RTC_AlarmStruct->AlarmMask);
+S
+S  /* Enable the write protection for RTC registers */
+S  LL_RTC_EnableWriteProtection(RTCx);
+S
+S  return SUCCESS;
+S}
+S
+S/**
+S  * @brief  Set the RTC Alarm B.
+S  * @note   The Alarm register can only be written when the corresponding Alarm
+S  *         is disabled (@ref LL_RTC_ALMB_Disable function).
+S  * @param  RTCx RTC Instance
+S  * @param  RTC_Format This parameter can be one of the following values:
+S  *         @arg @ref LL_RTC_FORMAT_BIN
+S  *         @arg @ref LL_RTC_FORMAT_BCD
+S  * @param  RTC_AlarmStruct pointer to a @ref LL_RTC_AlarmTypeDef structure that
+S  *                         contains the alarm configuration parameters.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: ALARMB registers are configured
+S  *          - ERROR: ALARMB registers are not configured
+S  */
+SErrorStatus LL_RTC_ALMB_Init(RTC_TypeDef *RTCx, uint32_t RTC_Format, LL_RTC_AlarmTypeDef *RTC_AlarmStruct)
+S{
+S  /* Check the parameters */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S  assert_param(IS_LL_RTC_FORMAT(RTC_Format));
+S  assert_param(IS_LL_RTC_ALMB_MASK(RTC_AlarmStruct->AlarmMask));
+S  assert_param(IS_LL_RTC_ALMB_DATE_WEEKDAY_SEL(RTC_AlarmStruct->AlarmDateWeekDaySel));
+S
+S  if (RTC_Format == LL_RTC_FORMAT_BIN)
+S  {
+S    if (LL_RTC_GetHourFormat(RTCx) != LL_RTC_HOURFORMAT_24HOUR)
+S    {
+S      assert_param(IS_LL_RTC_HOUR12(RTC_AlarmStruct->AlarmTime.Hours));
+S      assert_param(IS_LL_RTC_TIME_FORMAT(RTC_AlarmStruct->AlarmTime.TimeFormat));
+S    }
+S    else
+S    {
+S      RTC_AlarmStruct->AlarmTime.TimeFormat = 0x00U;
+S      assert_param(IS_LL_RTC_HOUR24(RTC_AlarmStruct->AlarmTime.Hours));
+S    }
+S    assert_param(IS_LL_RTC_MINUTES(RTC_AlarmStruct->AlarmTime.Minutes));
+S    assert_param(IS_LL_RTC_SECONDS(RTC_AlarmStruct->AlarmTime.Seconds));
+S
+S    if (RTC_AlarmStruct->AlarmDateWeekDaySel == LL_RTC_ALMB_DATEWEEKDAYSEL_DATE)
+S    {
+S      assert_param(IS_LL_RTC_DAY(RTC_AlarmStruct->AlarmDateWeekDay));
+S    }
+S    else
+S    {
+S      assert_param(IS_LL_RTC_WEEKDAY(RTC_AlarmStruct->AlarmDateWeekDay));
+S    }
+S  }
+S  else
+S  {
+S    if (LL_RTC_GetHourFormat(RTCx) != LL_RTC_HOURFORMAT_24HOUR)
+S    {
+S      assert_param(IS_LL_RTC_HOUR12(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Hours)));
+S      assert_param(IS_LL_RTC_TIME_FORMAT(RTC_AlarmStruct->AlarmTime.TimeFormat));
+S    }
+S    else
+S    {
+S      RTC_AlarmStruct->AlarmTime.TimeFormat = 0x00U;
+S      assert_param(IS_LL_RTC_HOUR24(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Hours)));
+S    }
+S
+S    assert_param(IS_LL_RTC_MINUTES(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Minutes)));
+S    assert_param(IS_LL_RTC_SECONDS(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmTime.Seconds)));
+S
+S    if (RTC_AlarmStruct->AlarmDateWeekDaySel == LL_RTC_ALMB_DATEWEEKDAYSEL_DATE)
+S    {
+S      assert_param(IS_LL_RTC_DAY(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmDateWeekDay)));
+S    }
+S    else
+S    {
+S      assert_param(IS_LL_RTC_WEEKDAY(__LL_RTC_CONVERT_BCD2BIN(RTC_AlarmStruct->AlarmDateWeekDay)));
+S    }
+S  }
+S
+S  /* Disable the write protection for RTC registers */
+S  LL_RTC_DisableWriteProtection(RTCx);
+S
+S  /* Select weekday selection */
+S  if (RTC_AlarmStruct->AlarmDateWeekDaySel == LL_RTC_ALMB_DATEWEEKDAYSEL_DATE)
+S  {
+S    /* Set the date for ALARM */
+S    LL_RTC_ALMB_DisableWeekday(RTCx);
+S    if (RTC_Format != LL_RTC_FORMAT_BIN)
+S    {
+S      LL_RTC_ALMB_SetDay(RTCx, RTC_AlarmStruct->AlarmDateWeekDay);
+S    }
+S    else
+S    {
+S      LL_RTC_ALMB_SetDay(RTCx, __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmDateWeekDay));
+S    }
+S  }
+S  else
+S  {
+S    /* Set the week day for ALARM */
+S    LL_RTC_ALMB_EnableWeekday(RTCx);
+S    LL_RTC_ALMB_SetWeekDay(RTCx, RTC_AlarmStruct->AlarmDateWeekDay);
+S  }
+S
+S  /* Configure the Alarm register */
+S  if (RTC_Format != LL_RTC_FORMAT_BIN)
+S  {
+S    LL_RTC_ALMB_ConfigTime(RTCx, RTC_AlarmStruct->AlarmTime.TimeFormat, RTC_AlarmStruct->AlarmTime.Hours,
+S                           RTC_AlarmStruct->AlarmTime.Minutes, RTC_AlarmStruct->AlarmTime.Seconds);
+S  }
+S  else
+S  {
+S    LL_RTC_ALMB_ConfigTime(RTCx, RTC_AlarmStruct->AlarmTime.TimeFormat,
+S                           __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmTime.Hours),
+S                           __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmTime.Minutes),
+S                           __LL_RTC_CONVERT_BIN2BCD(RTC_AlarmStruct->AlarmTime.Seconds));
+S  }
+S  /* Set ALARM mask */
+S  LL_RTC_ALMB_SetMask(RTCx, RTC_AlarmStruct->AlarmMask);
+S
+S  /* Enable the write protection for RTC registers */
+S  LL_RTC_EnableWriteProtection(RTCx);
+S
+S  return SUCCESS;
+S}
+S
+S/**
+S  * @brief  Set each @ref LL_RTC_AlarmTypeDef of ALARMA field to default value (Time = 00h:00mn:00sec /
+S  *         Day = 1st day of the month/Mask = all fields are masked).
+S  * @param  RTC_AlarmStruct pointer to a @ref LL_RTC_AlarmTypeDef structure which will be initialized.
+S  * @retval None
+S  */
+Svoid LL_RTC_ALMA_StructInit(LL_RTC_AlarmTypeDef *RTC_AlarmStruct)
+S{
+S  /* Alarm Time Settings : Time = 00h:00mn:00sec */
+S  RTC_AlarmStruct->AlarmTime.TimeFormat = LL_RTC_ALMA_TIME_FORMAT_AM;
+S  RTC_AlarmStruct->AlarmTime.Hours      = 0U;
+S  RTC_AlarmStruct->AlarmTime.Minutes    = 0U;
+S  RTC_AlarmStruct->AlarmTime.Seconds    = 0U;
+S
+S  /* Alarm Day Settings : Day = 1st day of the month */
+S  RTC_AlarmStruct->AlarmDateWeekDaySel = LL_RTC_ALMA_DATEWEEKDAYSEL_DATE;
+S  RTC_AlarmStruct->AlarmDateWeekDay    = 1U;
+S
+S  /* Alarm Masks Settings : Mask =  all fields are not masked */
+S  RTC_AlarmStruct->AlarmMask           = LL_RTC_ALMA_MASK_NONE;
+S}
+S
+S/**
+S  * @brief  Set each @ref LL_RTC_AlarmTypeDef of ALARMA field to default value (Time = 00h:00mn:00sec /
+S  *         Day = 1st day of the month/Mask = all fields are masked).
+S  * @param  RTC_AlarmStruct pointer to a @ref LL_RTC_AlarmTypeDef structure which will be initialized.
+S  * @retval None
+S  */
+Svoid LL_RTC_ALMB_StructInit(LL_RTC_AlarmTypeDef *RTC_AlarmStruct)
+S{
+S  /* Alarm Time Settings : Time = 00h:00mn:00sec */
+S  RTC_AlarmStruct->AlarmTime.TimeFormat = LL_RTC_ALMB_TIME_FORMAT_AM;
+S  RTC_AlarmStruct->AlarmTime.Hours      = 0U;
+S  RTC_AlarmStruct->AlarmTime.Minutes    = 0U;
+S  RTC_AlarmStruct->AlarmTime.Seconds    = 0U;
+S
+S  /* Alarm Day Settings : Day = 1st day of the month */
+S  RTC_AlarmStruct->AlarmDateWeekDaySel = LL_RTC_ALMB_DATEWEEKDAYSEL_DATE;
+S  RTC_AlarmStruct->AlarmDateWeekDay    = 1U;
+S
+S  /* Alarm Masks Settings : Mask =  all fields are not masked */
+S  RTC_AlarmStruct->AlarmMask           = LL_RTC_ALMB_MASK_NONE;
+S}
+S
+S/**
+S  * @brief  Enters the RTC Initialization mode.
+S  * @note   The RTC Initialization mode is write protected, use the
+S  *         @ref LL_RTC_DisableWriteProtection before calling this function.
+S  * @param  RTCx RTC Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC is in Init mode
+S  *          - ERROR: RTC is not in Init mode
+S  */
+SErrorStatus LL_RTC_EnterInitMode(RTC_TypeDef *RTCx)
+S{
+S  __IO uint32_t timeout = RTC_INITMODE_TIMEOUT;
+S  ErrorStatus status = SUCCESS;
+S  uint32_t tmp;
+S
+S  /* Check the parameter */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S
+S  /* Check if the Initialization mode is set */
+S  if (LL_RTC_IsActiveFlag_INIT(RTCx) == 0U)
+S  {
+S    /* Set the Initialization mode */
+S    LL_RTC_EnableInitMode(RTCx);
+S
+S    /* Wait till RTC is in INIT state and if Time out is reached exit */
+S    tmp = LL_RTC_IsActiveFlag_INIT(RTCx);
+S    while ((timeout != 0U) && (tmp != 1U))
+S    {
+S      if (LL_SYSTICK_IsActiveCounterFlag() == 1U)
+S      {
+S        timeout --;
+S      }
+S      tmp = LL_RTC_IsActiveFlag_INIT(RTCx);
+S      if (timeout == 0U)
+S      {
+S        status = ERROR;
+S      }
+S    }
+S  }
+S  return status;
+S}
+S
+S/**
+S  * @brief  Exit the RTC Initialization mode.
+S  * @note   When the initialization sequence is complete, the calendar restarts
+S  *         counting after 4 RTCCLK cycles.
+S  * @note   The RTC Initialization mode is write protected, use the
+S  *         @ref LL_RTC_DisableWriteProtection before calling this function.
+S  * @param  RTCx RTC Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC exited from in Init mode
+S  *          - ERROR: Not applicable
+S  */
+SErrorStatus LL_RTC_ExitInitMode(RTC_TypeDef *RTCx)
+S{
+S  /* Check the parameter */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S
+S  /* Disable initialization mode */
+S  LL_RTC_DisableInitMode(RTCx);
+S
+S  return SUCCESS;
+S}
+S
+S/**
+S  * @brief  Waits until the RTC Time and Day registers (RTC_TR and RTC_DR) are
+S  *         synchronized with RTC APB clock.
+S  * @note   The RTC Resynchronization mode is write protected, use the
+S  *         @ref LL_RTC_DisableWriteProtection before calling this function.
+S  * @note   To read the calendar through the shadow registers after Calendar
+S  *         initialization, calendar update or after wakeup from low power modes
+S  *         the software must first clear the RSF flag.
+S  *         The software must then wait until it is set again before reading
+S  *         the calendar, which means that the calendar registers have been
+S  *         correctly copied into the RTC_TR and RTC_DR shadow registers.
+S  * @param  RTCx RTC Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: RTC registers are synchronised
+S  *          - ERROR: RTC registers are not synchronised
+S  */
+SErrorStatus LL_RTC_WaitForSynchro(RTC_TypeDef *RTCx)
+S{
+S  __IO uint32_t timeout = RTC_SYNCHRO_TIMEOUT;
+S  ErrorStatus status = SUCCESS;
+S  uint32_t tmp;
+S
+S  /* Check the parameter */
+S  assert_param(IS_RTC_ALL_INSTANCE(RTCx));
+S
+S  /* Clear RSF flag */
+S  LL_RTC_ClearFlag_RS(RTCx);
+S
+S  /* Wait the registers to be synchronised */
+S  tmp = LL_RTC_IsActiveFlag_RS(RTCx);
+S  while ((timeout != 0U) && (tmp != 0U))
+S  {
+S    if (LL_SYSTICK_IsActiveCounterFlag() == 1U)
+S    {
+S      timeout--;
+S    }
+S    tmp = LL_RTC_IsActiveFlag_RS(RTCx);
+S    if (timeout == 0U)
+S    {
+S      status = ERROR;
+S    }
+S  }
+S
+S  if (status != ERROR)
+S  {
+S    timeout = RTC_SYNCHRO_TIMEOUT;
+S    tmp = LL_RTC_IsActiveFlag_RS(RTCx);
+S    while ((timeout != 0U) && (tmp != 1U))
+S    {
+S      if (LL_SYSTICK_IsActiveCounterFlag() == 1U)
+S      {
+S        timeout--;
+S      }
+S      tmp = LL_RTC_IsActiveFlag_RS(RTCx);
+S      if (timeout == 0U)
+S      {
+S        status = ERROR;
+S      }
+S    }
+S  }
+S
+S  return (status);
+S}
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* defined(RTC) */
+S
+S/**
+S  * @}
+S  */
+S
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

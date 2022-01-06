@@ -1,0 +1,309 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_spi.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_spi.c
+N  * @author  MCD Application Team
+N  * @brief   SPI LL module driver.
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_spi.h"
+S#include "stm32l4xx_ll_bus.h"
+S
+S#ifdef  USE_FULL_ASSERT
+S#include "stm32_assert.h"
+S#else
+S#define assert_param(expr) ((void)0U)
+S#endif
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined (SPI1) || defined (SPI2) || defined (SPI3)
+S
+S/** @addtogroup SPI_LL
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S
+S/* Private constants ---------------------------------------------------------*/
+S/** @defgroup SPI_LL_Private_Constants SPI Private Constants
+S  * @{
+S  */
+S/* SPI registers Masks */
+S#define SPI_CR1_CLEAR_MASK                 (SPI_CR1_CPHA    | SPI_CR1_CPOL     | SPI_CR1_MSTR   | \
+S                                            SPI_CR1_BR      | SPI_CR1_LSBFIRST | SPI_CR1_SSI    | \
+S                                            SPI_CR1_SSM     | SPI_CR1_RXONLY   | SPI_CR1_CRCL   | \
+S                                            SPI_CR1_CRCNEXT | SPI_CR1_CRCEN    | SPI_CR1_BIDIOE | \
+S                                            SPI_CR1_BIDIMODE)
+X#define SPI_CR1_CLEAR_MASK                 (SPI_CR1_CPHA    | SPI_CR1_CPOL     | SPI_CR1_MSTR   |                                             SPI_CR1_BR      | SPI_CR1_LSBFIRST | SPI_CR1_SSI    |                                             SPI_CR1_SSM     | SPI_CR1_RXONLY   | SPI_CR1_CRCL   |                                             SPI_CR1_CRCNEXT | SPI_CR1_CRCEN    | SPI_CR1_BIDIOE |                                             SPI_CR1_BIDIMODE)
+S/**
+S  * @}
+S  */
+S
+S/* Private macros ------------------------------------------------------------*/
+S/** @defgroup SPI_LL_Private_Macros SPI Private Macros
+S  * @{
+S  */
+S#define IS_LL_SPI_TRANSFER_DIRECTION(__VALUE__) (((__VALUE__) == LL_SPI_FULL_DUPLEX)       \
+S                                                 || ((__VALUE__) == LL_SPI_SIMPLEX_RX)     \
+S                                                 || ((__VALUE__) == LL_SPI_HALF_DUPLEX_RX) \
+S                                                 || ((__VALUE__) == LL_SPI_HALF_DUPLEX_TX))
+X#define IS_LL_SPI_TRANSFER_DIRECTION(__VALUE__) (((__VALUE__) == LL_SPI_FULL_DUPLEX)                                                        || ((__VALUE__) == LL_SPI_SIMPLEX_RX)                                                      || ((__VALUE__) == LL_SPI_HALF_DUPLEX_RX)                                                  || ((__VALUE__) == LL_SPI_HALF_DUPLEX_TX))
+S
+S#define IS_LL_SPI_MODE(__VALUE__) (((__VALUE__) == LL_SPI_MODE_MASTER) \
+S                                   || ((__VALUE__) == LL_SPI_MODE_SLAVE))
+X#define IS_LL_SPI_MODE(__VALUE__) (((__VALUE__) == LL_SPI_MODE_MASTER)                                    || ((__VALUE__) == LL_SPI_MODE_SLAVE))
+S
+S#define IS_LL_SPI_DATAWIDTH(__VALUE__) (((__VALUE__) == LL_SPI_DATAWIDTH_4BIT)     \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_5BIT)  \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_6BIT)  \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_7BIT)  \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_8BIT)  \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_9BIT)  \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_10BIT) \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_11BIT) \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_12BIT) \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_13BIT) \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_14BIT) \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_15BIT) \
+S                                        || ((__VALUE__) == LL_SPI_DATAWIDTH_16BIT))
+X#define IS_LL_SPI_DATAWIDTH(__VALUE__) (((__VALUE__) == LL_SPI_DATAWIDTH_4BIT)                                             || ((__VALUE__) == LL_SPI_DATAWIDTH_5BIT)                                          || ((__VALUE__) == LL_SPI_DATAWIDTH_6BIT)                                          || ((__VALUE__) == LL_SPI_DATAWIDTH_7BIT)                                          || ((__VALUE__) == LL_SPI_DATAWIDTH_8BIT)                                          || ((__VALUE__) == LL_SPI_DATAWIDTH_9BIT)                                          || ((__VALUE__) == LL_SPI_DATAWIDTH_10BIT)                                         || ((__VALUE__) == LL_SPI_DATAWIDTH_11BIT)                                         || ((__VALUE__) == LL_SPI_DATAWIDTH_12BIT)                                         || ((__VALUE__) == LL_SPI_DATAWIDTH_13BIT)                                         || ((__VALUE__) == LL_SPI_DATAWIDTH_14BIT)                                         || ((__VALUE__) == LL_SPI_DATAWIDTH_15BIT)                                         || ((__VALUE__) == LL_SPI_DATAWIDTH_16BIT))
+S
+S#define IS_LL_SPI_POLARITY(__VALUE__) (((__VALUE__) == LL_SPI_POLARITY_LOW) \
+S                                       || ((__VALUE__) == LL_SPI_POLARITY_HIGH))
+X#define IS_LL_SPI_POLARITY(__VALUE__) (((__VALUE__) == LL_SPI_POLARITY_LOW)                                        || ((__VALUE__) == LL_SPI_POLARITY_HIGH))
+S
+S#define IS_LL_SPI_PHASE(__VALUE__) (((__VALUE__) == LL_SPI_PHASE_1EDGE) \
+S                                    || ((__VALUE__) == LL_SPI_PHASE_2EDGE))
+X#define IS_LL_SPI_PHASE(__VALUE__) (((__VALUE__) == LL_SPI_PHASE_1EDGE)                                     || ((__VALUE__) == LL_SPI_PHASE_2EDGE))
+S
+S#define IS_LL_SPI_NSS(__VALUE__) (((__VALUE__) == LL_SPI_NSS_SOFT)          \
+S                                  || ((__VALUE__) == LL_SPI_NSS_HARD_INPUT) \
+S                                  || ((__VALUE__) == LL_SPI_NSS_HARD_OUTPUT))
+X#define IS_LL_SPI_NSS(__VALUE__) (((__VALUE__) == LL_SPI_NSS_SOFT)                                            || ((__VALUE__) == LL_SPI_NSS_HARD_INPUT)                                   || ((__VALUE__) == LL_SPI_NSS_HARD_OUTPUT))
+S
+S#define IS_LL_SPI_BAUDRATE(__VALUE__) (((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV2)      \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV4)   \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV8)   \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV16)  \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV32)  \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV64)  \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV128) \
+S                                       || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV256))
+X#define IS_LL_SPI_BAUDRATE(__VALUE__) (((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV2)                                             || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV4)                                          || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV8)                                          || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV16)                                         || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV32)                                         || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV64)                                         || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV128)                                        || ((__VALUE__) == LL_SPI_BAUDRATEPRESCALER_DIV256))
+S
+S#define IS_LL_SPI_BITORDER(__VALUE__) (((__VALUE__) == LL_SPI_LSB_FIRST) \
+S                                       || ((__VALUE__) == LL_SPI_MSB_FIRST))
+X#define IS_LL_SPI_BITORDER(__VALUE__) (((__VALUE__) == LL_SPI_LSB_FIRST)                                        || ((__VALUE__) == LL_SPI_MSB_FIRST))
+S
+S#define IS_LL_SPI_CRCCALCULATION(__VALUE__) (((__VALUE__) == LL_SPI_CRCCALCULATION_ENABLE) \
+S                                             || ((__VALUE__) == LL_SPI_CRCCALCULATION_DISABLE))
+X#define IS_LL_SPI_CRCCALCULATION(__VALUE__) (((__VALUE__) == LL_SPI_CRCCALCULATION_ENABLE)                                              || ((__VALUE__) == LL_SPI_CRCCALCULATION_DISABLE))
+S
+S#define IS_LL_SPI_CRC_POLYNOMIAL(__VALUE__) ((__VALUE__) >= 0x1U)
+S
+S/**
+S  * @}
+S  */
+S
+S/* Private function prototypes -----------------------------------------------*/
+S
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup SPI_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup SPI_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-initialize the SPI registers to their default reset values.
+S  * @param  SPIx SPI Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: SPI registers are de-initialized
+S  *          - ERROR: SPI registers are not de-initialized
+S  */
+SErrorStatus LL_SPI_DeInit(SPI_TypeDef *SPIx)
+S{
+S  ErrorStatus status = ERROR;
+S
+S  /* Check the parameters */
+S  assert_param(IS_SPI_ALL_INSTANCE(SPIx));
+S
+S#if defined(SPI1)
+S  if (SPIx == SPI1)
+S  {
+S    /* Force reset of SPI clock */
+S    LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_SPI1);
+S
+S    /* Release reset of SPI clock */
+S    LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_SPI1);
+S
+S    status = SUCCESS;
+S  }
+S#endif /* SPI1 */
+S#if defined(SPI2)
+S  if (SPIx == SPI2)
+S  {
+S    /* Force reset of SPI clock */
+S    LL_APB1_GRP1_ForceReset(LL_APB1_GRP1_PERIPH_SPI2);
+S
+S    /* Release reset of SPI clock */
+S    LL_APB1_GRP1_ReleaseReset(LL_APB1_GRP1_PERIPH_SPI2);
+S
+S    status = SUCCESS;
+S  }
+S#endif /* SPI2 */
+S#if defined(SPI3)
+S  if (SPIx == SPI3)
+S  {
+S    /* Force reset of SPI clock */
+S    LL_APB1_GRP1_ForceReset(LL_APB1_GRP1_PERIPH_SPI3);
+S
+S    /* Release reset of SPI clock */
+S    LL_APB1_GRP1_ReleaseReset(LL_APB1_GRP1_PERIPH_SPI3);
+S
+S    status = SUCCESS;
+S  }
+S#endif /* SPI3 */
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Initialize the SPI registers according to the specified parameters in SPI_InitStruct.
+S  * @note   As some bits in SPI configuration registers can only be written when the SPI is disabled (SPI_CR1_SPE bit =0),
+S  *         SPI peripheral should be in disabled state prior calling this function. Otherwise, ERROR result will be returned.
+S  * @param  SPIx SPI Instance
+S  * @param  SPI_InitStruct pointer to a @ref LL_SPI_InitTypeDef structure
+S  * @retval An ErrorStatus enumeration value. (Return always SUCCESS)
+S  */
+SErrorStatus LL_SPI_Init(SPI_TypeDef *SPIx, LL_SPI_InitTypeDef *SPI_InitStruct)
+S{
+S  ErrorStatus status = ERROR;
+S
+S  /* Check the SPI Instance SPIx*/
+S  assert_param(IS_SPI_ALL_INSTANCE(SPIx));
+S
+S  /* Check the SPI parameters from SPI_InitStruct*/
+S  assert_param(IS_LL_SPI_TRANSFER_DIRECTION(SPI_InitStruct->TransferDirection));
+S  assert_param(IS_LL_SPI_MODE(SPI_InitStruct->Mode));
+S  assert_param(IS_LL_SPI_DATAWIDTH(SPI_InitStruct->DataWidth));
+S  assert_param(IS_LL_SPI_POLARITY(SPI_InitStruct->ClockPolarity));
+S  assert_param(IS_LL_SPI_PHASE(SPI_InitStruct->ClockPhase));
+S  assert_param(IS_LL_SPI_NSS(SPI_InitStruct->NSS));
+S  assert_param(IS_LL_SPI_BAUDRATE(SPI_InitStruct->BaudRate));
+S  assert_param(IS_LL_SPI_BITORDER(SPI_InitStruct->BitOrder));
+S  assert_param(IS_LL_SPI_CRCCALCULATION(SPI_InitStruct->CRCCalculation));
+S
+S  if (LL_SPI_IsEnabled(SPIx) == 0x00000000U)
+S  {
+S    /*---------------------------- SPIx CR1 Configuration ------------------------
+S     * Configure SPIx CR1 with parameters:
+S     * - TransferDirection:  SPI_CR1_BIDIMODE, SPI_CR1_BIDIOE and SPI_CR1_RXONLY bits
+S     * - Master/Slave Mode:  SPI_CR1_MSTR bit
+S     * - ClockPolarity:      SPI_CR1_CPOL bit
+S     * - ClockPhase:         SPI_CR1_CPHA bit
+S     * - NSS management:     SPI_CR1_SSM bit
+S     * - BaudRate prescaler: SPI_CR1_BR[2:0] bits
+S     * - BitOrder:           SPI_CR1_LSBFIRST bit
+S     * - CRCCalculation:     SPI_CR1_CRCEN bit
+S     */
+S    MODIFY_REG(SPIx->CR1,
+S               SPI_CR1_CLEAR_MASK,
+S               SPI_InitStruct->TransferDirection | SPI_InitStruct->Mode |
+S               SPI_InitStruct->ClockPolarity | SPI_InitStruct->ClockPhase |
+S               SPI_InitStruct->NSS | SPI_InitStruct->BaudRate |
+S               SPI_InitStruct->BitOrder | SPI_InitStruct->CRCCalculation);
+S
+S    /*---------------------------- SPIx CR2 Configuration ------------------------
+S     * Configure SPIx CR2 with parameters:
+S     * - DataWidth:          DS[3:0] bits
+S     * - NSS management:     SSOE bit
+S     */
+S    MODIFY_REG(SPIx->CR2,
+S               SPI_CR2_DS | SPI_CR2_SSOE,
+S               SPI_InitStruct->DataWidth | (SPI_InitStruct->NSS >> 16U));
+S
+S    /* Set Rx FIFO to Quarter (1 Byte) in case of 8 Bits mode. No DataPacking by default */
+S    if (SPI_InitStruct->DataWidth < LL_SPI_DATAWIDTH_9BIT)
+S    {
+S      LL_SPI_SetRxFIFOThreshold(SPIx, LL_SPI_RX_FIFO_TH_QUARTER);
+S    }
+S
+S    /*---------------------------- SPIx CRCPR Configuration ----------------------
+S     * Configure SPIx CRCPR with parameters:
+S     * - CRCPoly:            CRCPOLY[15:0] bits
+S     */
+S    if (SPI_InitStruct->CRCCalculation == LL_SPI_CRCCALCULATION_ENABLE)
+S    {
+S      assert_param(IS_LL_SPI_CRC_POLYNOMIAL(SPI_InitStruct->CRCPoly));
+S      LL_SPI_SetCRCPolynomial(SPIx, SPI_InitStruct->CRCPoly);
+S    }
+S    status = SUCCESS;
+S  }
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Set each @ref LL_SPI_InitTypeDef field to default value.
+S  * @param  SPI_InitStruct pointer to a @ref LL_SPI_InitTypeDef structure
+S  * whose fields will be set to default values.
+S  * @retval None
+S  */
+Svoid LL_SPI_StructInit(LL_SPI_InitTypeDef *SPI_InitStruct)
+S{
+S  /* Set SPI_InitStruct fields to default values */
+S  SPI_InitStruct->TransferDirection = LL_SPI_FULL_DUPLEX;
+S  SPI_InitStruct->Mode              = LL_SPI_MODE_SLAVE;
+S  SPI_InitStruct->DataWidth         = LL_SPI_DATAWIDTH_8BIT;
+S  SPI_InitStruct->ClockPolarity     = LL_SPI_POLARITY_LOW;
+S  SPI_InitStruct->ClockPhase        = LL_SPI_PHASE_1EDGE;
+S  SPI_InitStruct->NSS               = LL_SPI_NSS_HARD_INPUT;
+S  SPI_InitStruct->BaudRate          = LL_SPI_BAUDRATEPRESCALER_DIV2;
+S  SPI_InitStruct->BitOrder          = LL_SPI_MSB_FIRST;
+S  SPI_InitStruct->CRCCalculation    = LL_SPI_CRCCALCULATION_DISABLE;
+S  SPI_InitStruct->CRCPoly           = 7U;
+S}
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* defined (SPI1) || defined (SPI2) || defined (SPI3) */
+S
+S/**
+S  * @}
+S  */
+S
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

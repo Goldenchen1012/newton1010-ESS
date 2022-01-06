@@ -1,0 +1,306 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_lpuart.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_lpuart.c
+N  * @author  MCD Application Team
+N  * @brief   LPUART LL module driver.
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_lpuart.h"
+S#include "stm32l4xx_ll_rcc.h"
+S#include "stm32l4xx_ll_bus.h"
+S#ifdef USE_FULL_ASSERT
+S#include "stm32_assert.h"
+S#else
+S#define assert_param(expr) ((void)0U)
+S#endif /* USE_FULL_ASSERT */
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined (LPUART1)
+S
+S/** @addtogroup LPUART_LL
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S/* Private constants ---------------------------------------------------------*/
+S/** @addtogroup LPUART_LL_Private_Constants
+S  * @{
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S
+S/* Private macros ------------------------------------------------------------*/
+S/** @addtogroup LPUART_LL_Private_Macros
+S  * @{
+S  */
+S
+S/* Check of parameters for configuration of LPUART registers                  */
+S
+S#if defined(USART_PRESC_PRESCALER)
+S#define IS_LL_LPUART_PRESCALER(__VALUE__)  (((__VALUE__) == LL_LPUART_PRESCALER_DIV1) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV2) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV4) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV6) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV8) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV10) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV12) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV16) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV32) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV64) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV128) \
+S                                            || ((__VALUE__) == LL_LPUART_PRESCALER_DIV256))
+X#define IS_LL_LPUART_PRESCALER(__VALUE__)  (((__VALUE__) == LL_LPUART_PRESCALER_DIV1)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV2)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV4)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV6)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV8)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV10)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV12)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV16)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV32)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV64)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV128)                                             || ((__VALUE__) == LL_LPUART_PRESCALER_DIV256))
+S
+S#endif /* USART_PRESC_PRESCALER */
+S/* __BAUDRATE__ Depending on constraints applicable for LPUART BRR register   */
+S/*              value :                                                       */
+S/*                - fck must be in the range [3 x baudrate, 4096 x baudrate]  */
+S/*                - LPUART_BRR register value should be >= 0x300              */
+S/*                - LPUART_BRR register value should be <= 0xFFFFF (20 bits)  */
+S/*              Baudrate specified by the user should belong to [8, 40000000].*/
+S#define IS_LL_LPUART_BAUDRATE(__BAUDRATE__) (((__BAUDRATE__) <= 40000000U) && ((__BAUDRATE__) >= 8U))
+S
+S/* __VALUE__ BRR content must be greater than or equal to 0x300. */
+S#define IS_LL_LPUART_BRR_MIN(__VALUE__)   ((__VALUE__) >= 0x300U)
+S
+S/* __VALUE__ BRR content must be lower than or equal to 0xFFFFF. */
+S#define IS_LL_LPUART_BRR_MAX(__VALUE__)   ((__VALUE__) <= 0x000FFFFFU)
+S
+S#define IS_LL_LPUART_DIRECTION(__VALUE__) (((__VALUE__) == LL_LPUART_DIRECTION_NONE) \
+S                                           || ((__VALUE__) == LL_LPUART_DIRECTION_RX) \
+S                                           || ((__VALUE__) == LL_LPUART_DIRECTION_TX) \
+S                                           || ((__VALUE__) == LL_LPUART_DIRECTION_TX_RX))
+X#define IS_LL_LPUART_DIRECTION(__VALUE__) (((__VALUE__) == LL_LPUART_DIRECTION_NONE)                                            || ((__VALUE__) == LL_LPUART_DIRECTION_RX)                                            || ((__VALUE__) == LL_LPUART_DIRECTION_TX)                                            || ((__VALUE__) == LL_LPUART_DIRECTION_TX_RX))
+S
+S#define IS_LL_LPUART_PARITY(__VALUE__) (((__VALUE__) == LL_LPUART_PARITY_NONE) \
+S                                        || ((__VALUE__) == LL_LPUART_PARITY_EVEN) \
+S                                        || ((__VALUE__) == LL_LPUART_PARITY_ODD))
+X#define IS_LL_LPUART_PARITY(__VALUE__) (((__VALUE__) == LL_LPUART_PARITY_NONE)                                         || ((__VALUE__) == LL_LPUART_PARITY_EVEN)                                         || ((__VALUE__) == LL_LPUART_PARITY_ODD))
+S
+S#define IS_LL_LPUART_DATAWIDTH(__VALUE__) (((__VALUE__) == LL_LPUART_DATAWIDTH_7B) \
+S                                           || ((__VALUE__) == LL_LPUART_DATAWIDTH_8B) \
+S                                           || ((__VALUE__) == LL_LPUART_DATAWIDTH_9B))
+X#define IS_LL_LPUART_DATAWIDTH(__VALUE__) (((__VALUE__) == LL_LPUART_DATAWIDTH_7B)                                            || ((__VALUE__) == LL_LPUART_DATAWIDTH_8B)                                            || ((__VALUE__) == LL_LPUART_DATAWIDTH_9B))
+S
+S#define IS_LL_LPUART_STOPBITS(__VALUE__) (((__VALUE__) == LL_LPUART_STOPBITS_1) \
+S                                          || ((__VALUE__) == LL_LPUART_STOPBITS_2))
+X#define IS_LL_LPUART_STOPBITS(__VALUE__) (((__VALUE__) == LL_LPUART_STOPBITS_1)                                           || ((__VALUE__) == LL_LPUART_STOPBITS_2))
+S
+S#define IS_LL_LPUART_HWCONTROL(__VALUE__) (((__VALUE__) == LL_LPUART_HWCONTROL_NONE) \
+S                                           || ((__VALUE__) == LL_LPUART_HWCONTROL_RTS) \
+S                                           || ((__VALUE__) == LL_LPUART_HWCONTROL_CTS) \
+S                                           || ((__VALUE__) == LL_LPUART_HWCONTROL_RTS_CTS))
+X#define IS_LL_LPUART_HWCONTROL(__VALUE__) (((__VALUE__) == LL_LPUART_HWCONTROL_NONE)                                            || ((__VALUE__) == LL_LPUART_HWCONTROL_RTS)                                            || ((__VALUE__) == LL_LPUART_HWCONTROL_CTS)                                            || ((__VALUE__) == LL_LPUART_HWCONTROL_RTS_CTS))
+S
+S/**
+S  * @}
+S  */
+S
+S/* Private function prototypes -----------------------------------------------*/
+S
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup LPUART_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup LPUART_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-initialize LPUART registers (Registers restored to their default values).
+S  * @param  LPUARTx LPUART Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: LPUART registers are de-initialized
+S  *          - ERROR: not applicable
+S  */
+SErrorStatus LL_LPUART_DeInit(USART_TypeDef *LPUARTx)
+S{
+S  ErrorStatus status = SUCCESS;
+S
+S  /* Check the parameters */
+S  assert_param(IS_LPUART_INSTANCE(LPUARTx));
+S
+S  if (LPUARTx == LPUART1)
+S  {
+S    /* Force reset of LPUART peripheral */
+S    LL_APB1_GRP2_ForceReset(LL_APB1_GRP2_PERIPH_LPUART1);
+S
+S    /* Release reset of LPUART peripheral */
+S    LL_APB1_GRP2_ReleaseReset(LL_APB1_GRP2_PERIPH_LPUART1);
+S  }
+S  else
+S  {
+S    status = ERROR;
+S  }
+S
+S  return (status);
+S}
+S
+S/**
+S  * @brief  Initialize LPUART registers according to the specified
+S  *         parameters in LPUART_InitStruct.
+S  * @note   As some bits in LPUART configuration registers can only be written when
+S  *         the LPUART is disabled (USART_CR1_UE bit =0),
+S  *         LPUART Peripheral should be in disabled state prior calling this function.
+S  *         Otherwise, ERROR result will be returned.
+S  * @note   Baud rate value stored in LPUART_InitStruct BaudRate field, should be valid (different from 0).
+S  * @param  LPUARTx LPUART Instance
+S  * @param  LPUART_InitStruct pointer to a @ref LL_LPUART_InitTypeDef structure
+S  *         that contains the configuration information for the specified LPUART peripheral.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: LPUART registers are initialized according to LPUART_InitStruct content
+S  *          - ERROR: Problem occurred during LPUART Registers initialization
+S  */
+SErrorStatus LL_LPUART_Init(USART_TypeDef *LPUARTx, LL_LPUART_InitTypeDef *LPUART_InitStruct)
+S{
+S  ErrorStatus status = ERROR;
+S  uint32_t periphclk;
+S
+S  /* Check the parameters */
+S  assert_param(IS_LPUART_INSTANCE(LPUARTx));
+S#if defined(USART_PRESC_PRESCALER)
+S  assert_param(IS_LL_LPUART_PRESCALER(LPUART_InitStruct->PrescalerValue));
+S#endif /* USART_PRESC_PRESCALER */
+S  assert_param(IS_LL_LPUART_BAUDRATE(LPUART_InitStruct->BaudRate));
+S  assert_param(IS_LL_LPUART_DATAWIDTH(LPUART_InitStruct->DataWidth));
+S  assert_param(IS_LL_LPUART_STOPBITS(LPUART_InitStruct->StopBits));
+S  assert_param(IS_LL_LPUART_PARITY(LPUART_InitStruct->Parity));
+S  assert_param(IS_LL_LPUART_DIRECTION(LPUART_InitStruct->TransferDirection));
+S  assert_param(IS_LL_LPUART_HWCONTROL(LPUART_InitStruct->HardwareFlowControl));
+S
+S  /* LPUART needs to be in disabled state, in order to be able to configure some bits in
+S     CRx registers. Otherwise (LPUART not in Disabled state) => return ERROR */
+S  if (LL_LPUART_IsEnabled(LPUARTx) == 0U)
+S  {
+S    /*---------------------------- LPUART CR1 Configuration -----------------------
+S     * Configure LPUARTx CR1 (LPUART Word Length, Parity and Transfer Direction bits) with parameters:
+S     * - DataWidth:          USART_CR1_M bits according to LPUART_InitStruct->DataWidth value
+S     * - Parity:             USART_CR1_PCE, USART_CR1_PS bits according to LPUART_InitStruct->Parity value
+S     * - TransferDirection:  USART_CR1_TE, USART_CR1_RE bits according to LPUART_InitStruct->TransferDirection value
+S     */
+S    MODIFY_REG(LPUARTx->CR1,
+S               (USART_CR1_M | USART_CR1_PCE | USART_CR1_PS | USART_CR1_TE | USART_CR1_RE),
+S               (LPUART_InitStruct->DataWidth | LPUART_InitStruct->Parity | LPUART_InitStruct->TransferDirection));
+S
+S    /*---------------------------- LPUART CR2 Configuration -----------------------
+S     * Configure LPUARTx CR2 (Stop bits) with parameters:
+S     * - Stop Bits:          USART_CR2_STOP bits according to LPUART_InitStruct->StopBits value.
+S     */
+S    LL_LPUART_SetStopBitsLength(LPUARTx, LPUART_InitStruct->StopBits);
+S
+S    /*---------------------------- LPUART CR3 Configuration -----------------------
+S     * Configure LPUARTx CR3 (Hardware Flow Control) with parameters:
+S     * - HardwareFlowControl: USART_CR3_RTSE, USART_CR3_CTSE bits according
+S     *   to LPUART_InitStruct->HardwareFlowControl value.
+S     */
+S    LL_LPUART_SetHWFlowCtrl(LPUARTx, LPUART_InitStruct->HardwareFlowControl);
+S
+S    /*---------------------------- LPUART BRR Configuration -----------------------
+S     * Retrieve Clock frequency used for LPUART Peripheral
+S     */
+S    periphclk = LL_RCC_GetLPUARTClockFreq(LL_RCC_LPUART1_CLKSOURCE);
+S
+S    /* Configure the LPUART Baud Rate :
+S#if defined(USART_PRESC_PRESCALER)
+S       - prescaler value is required
+S#endif
+S       - valid baud rate value (different from 0) is required
+S       - Peripheral clock as returned by RCC service, should be valid (different from 0).
+S    */
+S    if ((periphclk != LL_RCC_PERIPH_FREQUENCY_NO)
+S        && (LPUART_InitStruct->BaudRate != 0U))
+S    {
+S      status = SUCCESS;
+S      LL_LPUART_SetBaudRate(LPUARTx,
+S                            periphclk,
+S#if defined(USART_PRESC_PRESCALER)
+S                            LPUART_InitStruct->PrescalerValue,
+S#endif /* USART_PRESC_PRESCALER */
+S                            LPUART_InitStruct->BaudRate);
+S
+S      /* Check BRR is greater than or equal to 0x300 */
+S      assert_param(IS_LL_LPUART_BRR_MIN(LPUARTx->BRR));
+S
+S      /* Check BRR is lower than or equal to 0xFFFFF */
+S      assert_param(IS_LL_LPUART_BRR_MAX(LPUARTx->BRR));
+S    }
+S
+S#if defined(USART_PRESC_PRESCALER)
+S    /*---------------------------- LPUART PRESC Configuration -----------------------
+S     * Configure LPUARTx PRESC (Prescaler) with parameters:
+S     * - PrescalerValue: LPUART_PRESC_PRESCALER bits according to LPUART_InitStruct->PrescalerValue value.
+S     */
+S    LL_LPUART_SetPrescaler(LPUARTx, LPUART_InitStruct->PrescalerValue);
+S#endif /* USART_PRESC_PRESCALER */
+S  }
+S
+S  return (status);
+S}
+S
+S/**
+S  * @brief Set each @ref LL_LPUART_InitTypeDef field to default value.
+S  * @param LPUART_InitStruct pointer to a @ref LL_LPUART_InitTypeDef structure
+S  *                          whose fields will be set to default values.
+S  * @retval None
+S  */
+S
+Svoid LL_LPUART_StructInit(LL_LPUART_InitTypeDef *LPUART_InitStruct)
+S{
+S  /* Set LPUART_InitStruct fields to default values */
+S#if defined(USART_PRESC_PRESCALER)
+S  LPUART_InitStruct->PrescalerValue      = LL_LPUART_PRESCALER_DIV1;
+S#endif /* USART_PRESC_PRESCALER */
+S  LPUART_InitStruct->BaudRate            = 9600U;
+S  LPUART_InitStruct->DataWidth           = LL_LPUART_DATAWIDTH_8B;
+S  LPUART_InitStruct->StopBits            = LL_LPUART_STOPBITS_1;
+S  LPUART_InitStruct->Parity              = LL_LPUART_PARITY_NONE ;
+S  LPUART_InitStruct->TransferDirection   = LL_LPUART_DIRECTION_TX_RX;
+S  LPUART_InitStruct->HardwareFlowControl = LL_LPUART_HWCONTROL_NONE;
+S}
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* LPUART1 */
+S
+S/**
+S  * @}
+S  */
+S
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+N

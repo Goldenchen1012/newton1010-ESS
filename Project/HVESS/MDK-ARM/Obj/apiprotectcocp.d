@@ -1,0 +1,14 @@
+.\obj\apiprotectcocp.o: ..\..\..\AppProtect\ApiProtectCocp.c
+.\obj\apiprotectcocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\apiprotectcocp.o: ..\..\..\User\define.h
+.\obj\apiprotectcocp.o: ..\..\..\HAL\halafe.h
+.\obj\apiprotectcocp.o: ..\..\..\Lib\LibRegister.h
+.\obj\apiprotectcocp.o: ..\..\..\Config_Common\sdk_config.h
+.\obj\apiprotectcocp.o: ..\..\..\Lib\LibDebug.h
+.\obj\apiprotectcocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\obj\apiprotectcocp.o: ..\..\..\AppProtect\AppProtect.h
+.\obj\apiprotectcocp.o: ..\..\..\AppProtect\AppProtectEvent.h
+.\obj\apiprotectcocp.o: ..\..\..\AppProtect\ApiProtectCocp.h
+.\obj\apiprotectcocp.o: ..\..\..\API\ApiSysPar.h
+.\obj\apiprotectcocp.o: ..\..\..\Lib\LibCalibration.h
+.\obj\apiprotectcocp.o: ..\..\..\APP\AppGauge.h

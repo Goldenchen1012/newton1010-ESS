@@ -1,0 +1,353 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_comp.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_comp.c
+N  * @author  MCD Application Team
+N  * @brief   COMP LL module driver
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_comp.h"
+S
+S#ifdef  USE_FULL_ASSERT
+S#include "stm32_assert.h"
+S#else
+S#define assert_param(expr) ((void)0U)
+S#endif
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined (COMP1) || defined (COMP2)
+S
+S/** @addtogroup COMP_LL COMP
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S/* Private constants ---------------------------------------------------------*/
+S/* Private macros ------------------------------------------------------------*/
+S
+S/** @addtogroup COMP_LL_Private_Macros
+S  * @{
+S  */
+S
+S/* Check of parameters for configuration of COMP hierarchical scope:          */
+S/* COMP instance.                                                             */
+S
+S#define IS_LL_COMP_POWER_MODE(__POWER_MODE__)                                  \
+S  (   ((__POWER_MODE__) == LL_COMP_POWERMODE_HIGHSPEED)                        \
+S   || ((__POWER_MODE__) == LL_COMP_POWERMODE_MEDIUMSPEED)                      \
+S   || ((__POWER_MODE__) == LL_COMP_POWERMODE_ULTRALOWPOWER)                    \
+S  )
+X#define IS_LL_COMP_POWER_MODE(__POWER_MODE__)                                    (   ((__POWER_MODE__) == LL_COMP_POWERMODE_HIGHSPEED)                           || ((__POWER_MODE__) == LL_COMP_POWERMODE_MEDIUMSPEED)                         || ((__POWER_MODE__) == LL_COMP_POWERMODE_ULTRALOWPOWER)                      )
+S
+S/* Note: On this STM32 series, comparator input plus parameters are           */
+S/*       the same on all COMP instances.                                      */
+S/*       However, comparator instance kept as macro parameter for             */
+S/*       compatibility with other STM32 families.                             */
+S#if defined(COMP_CSR_INPSEL_1)
+S#define IS_LL_COMP_INPUT_PLUS(__COMP_INSTANCE__, __INPUT_PLUS__)               \
+S  (   ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO1)                             \
+S   || ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO2)                             \
+S   || ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO3)                             \
+S  )
+X#define IS_LL_COMP_INPUT_PLUS(__COMP_INSTANCE__, __INPUT_PLUS__)                 (   ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO1)                                || ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO2)                                || ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO3)                               )
+S#else
+S#define IS_LL_COMP_INPUT_PLUS(__COMP_INSTANCE__, __INPUT_PLUS__)               \
+S  (   ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO1)                             \
+S   || ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO2)                             \
+S  )
+X#define IS_LL_COMP_INPUT_PLUS(__COMP_INSTANCE__, __INPUT_PLUS__)                 (   ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO1)                                || ((__INPUT_PLUS__) == LL_COMP_INPUT_PLUS_IO2)                               )
+S#endif
+S
+S/* Note: On this STM32 series, comparator input minus parameters are          */
+S/*       the same on all COMP instances.                                      */
+S/*       However, comparator instance kept as macro parameter for             */
+S/*       compatibility with other STM32 families.                             */
+S#if defined(COMP_CSR_INMESEL_1)
+S#define IS_LL_COMP_INPUT_MINUS(__COMP_INSTANCE__, __INPUT_MINUS__)             \
+S  (   ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_4VREFINT)                    \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_2VREFINT)                    \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_3_4VREFINT)                    \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_VREFINT)                       \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH1)                      \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH2)                      \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO1)                           \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO2)                           \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO3)                           \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO4)                           \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO5)                           \
+S  )
+X#define IS_LL_COMP_INPUT_MINUS(__COMP_INSTANCE__, __INPUT_MINUS__)               (   ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_4VREFINT)                       || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_2VREFINT)                       || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_3_4VREFINT)                       || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_VREFINT)                          || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH1)                         || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH2)                         || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO1)                              || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO2)                              || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO3)                              || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO4)                              || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO5)                             )
+S#else
+S#define IS_LL_COMP_INPUT_MINUS(__COMP_INSTANCE__, __INPUT_MINUS__)             \
+S  (   ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_4VREFINT)                    \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_2VREFINT)                    \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_3_4VREFINT)                    \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_VREFINT)                       \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH1)                      \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH2)                      \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO1)                           \
+S   || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO2)                           \
+S  )
+X#define IS_LL_COMP_INPUT_MINUS(__COMP_INSTANCE__, __INPUT_MINUS__)               (   ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_4VREFINT)                       || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_1_2VREFINT)                       || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_3_4VREFINT)                       || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_VREFINT)                          || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH1)                         || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_DAC1_CH2)                         || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO1)                              || ((__INPUT_MINUS__) == LL_COMP_INPUT_MINUS_IO2)                             )
+S#endif
+S
+S#define IS_LL_COMP_INPUT_HYSTERESIS(__INPUT_HYSTERESIS__)                      \
+S  (   ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_NONE)                      \
+S   || ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_LOW)                       \
+S   || ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_MEDIUM)                    \
+S   || ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_HIGH)                      \
+S  )
+X#define IS_LL_COMP_INPUT_HYSTERESIS(__INPUT_HYSTERESIS__)                        (   ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_NONE)                         || ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_LOW)                          || ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_MEDIUM)                       || ((__INPUT_HYSTERESIS__) == LL_COMP_HYSTERESIS_HIGH)                        )
+S
+S#define IS_LL_COMP_OUTPUT_POLARITY(__POLARITY__)                               \
+S  (   ((__POLARITY__) == LL_COMP_OUTPUTPOL_NONINVERTED)                        \
+S   || ((__POLARITY__) == LL_COMP_OUTPUTPOL_INVERTED)                           \
+S  )
+X#define IS_LL_COMP_OUTPUT_POLARITY(__POLARITY__)                                 (   ((__POLARITY__) == LL_COMP_OUTPUTPOL_NONINVERTED)                           || ((__POLARITY__) == LL_COMP_OUTPUTPOL_INVERTED)                             )
+S
+S#if defined(COMP2)
+S#define IS_LL_COMP_OUTPUT_BLANKING_SOURCE(__COMP_INSTANCE__, __OUTPUT_BLANKING_SOURCE__)       \
+S  (((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_NONE)                                  \
+S    ? (                                                                                        \
+S       (1UL)                                                                                   \
+S      )                                                                                        \
+S      :                                                                                        \
+S      (((__COMP_INSTANCE__) == COMP1)                                                          \
+S        ? (                                                                                    \
+S              ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM1_OC5_COMP1)             \
+S           || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM2_OC3_COMP1)             \
+S           || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM3_OC3_COMP1)             \
+S          )                                                                                    \
+S          :                                                                                    \
+S          (                                                                                    \
+S              ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM3_OC4_COMP2)             \
+S           || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM8_OC5_COMP2)             \
+S           || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM15_OC1_COMP2)            \
+S          )                                                                                    \
+S      )                                                                                        \
+S  )
+X#define IS_LL_COMP_OUTPUT_BLANKING_SOURCE(__COMP_INSTANCE__, __OUTPUT_BLANKING_SOURCE__)         (((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_NONE)                                      ? (                                                                                               (1UL)                                                                                         )                                                                                              :                                                                                              (((__COMP_INSTANCE__) == COMP1)                                                                  ? (                                                                                                  ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM1_OC5_COMP1)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM2_OC3_COMP1)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM3_OC3_COMP1)                       )                                                                                              :                                                                                              (                                                                                                  ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM3_OC4_COMP2)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM8_OC5_COMP2)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM15_OC1_COMP2)                      )                                                                                          )                                                                                          )
+S#else
+S#if defined(TIM3)
+S#define IS_LL_COMP_OUTPUT_BLANKING_SOURCE(__COMP_INSTANCE__, __OUTPUT_BLANKING_SOURCE__)       \
+S  (((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_NONE)                                  \
+S    ? (                                                                                        \
+S       (1UL)                                                                                   \
+S      )                                                                                        \
+S      :                                                                                        \
+S      (                                                                                        \
+S           ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM1_OC5_COMP1)                \
+S        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM2_OC3_COMP1)                \
+S        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM3_OC3_COMP1)                \
+S      )                                                                                        \
+S  )
+X#define IS_LL_COMP_OUTPUT_BLANKING_SOURCE(__COMP_INSTANCE__, __OUTPUT_BLANKING_SOURCE__)         (((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_NONE)                                      ? (                                                                                               (1UL)                                                                                         )                                                                                              :                                                                                              (                                                                                                   ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM1_OC5_COMP1)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM2_OC3_COMP1)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM3_OC3_COMP1)                      )                                                                                          )
+S#else
+S#define IS_LL_COMP_OUTPUT_BLANKING_SOURCE(__COMP_INSTANCE__, __OUTPUT_BLANKING_SOURCE__)       \
+S  (((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_NONE)                                  \
+S    ? (                                                                                        \
+S       (1UL)                                                                                   \
+S      )                                                                                        \
+S      :                                                                                        \
+S      (                                                                                        \
+S           ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM1_OC5_COMP1)                \
+S        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM2_OC3_COMP1)                \
+S      )                                                                                        \
+S  )
+X#define IS_LL_COMP_OUTPUT_BLANKING_SOURCE(__COMP_INSTANCE__, __OUTPUT_BLANKING_SOURCE__)         (((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_NONE)                                      ? (                                                                                               (1UL)                                                                                         )                                                                                              :                                                                                              (                                                                                                   ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM1_OC5_COMP1)                        || ((__OUTPUT_BLANKING_SOURCE__) == LL_COMP_BLANKINGSRC_TIM2_OC3_COMP1)                      )                                                                                          )
+S#endif /* TIM3 */
+S#endif /* COMP2 */
+S/**
+S  * @}
+S  */
+S
+S
+S/* Private function prototypes -----------------------------------------------*/
+S
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup COMP_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup COMP_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-initialize registers of the selected COMP instance
+S  *         to their default reset values.
+S  * @note   If comparator is locked, de-initialization by software is
+S  *         not possible.
+S  *         The only way to unlock the comparator is a device hardware reset.
+S  * @param  COMPx COMP instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: COMP registers are de-initialized
+S  *          - ERROR: COMP registers are not de-initialized
+S  */
+SErrorStatus LL_COMP_DeInit(COMP_TypeDef *COMPx)
+S{
+S  ErrorStatus status = SUCCESS;
+S
+S  /* Check the parameters */
+S  assert_param(IS_COMP_ALL_INSTANCE(COMPx));
+S
+S  /* Note: Hardware constraint (refer to description of this function):       */
+S  /*       COMP instance must not be locked.                                  */
+S  if (LL_COMP_IsLocked(COMPx) == 0UL)
+S  {
+S    LL_COMP_WriteReg(COMPx, CSR, 0x00000000UL);
+S
+S  }
+S  else
+S  {
+S    /* Comparator instance is locked: de-initialization by software is         */
+S    /* not possible.                                                           */
+S    /* The only way to unlock the comparator is a device hardware reset.       */
+S    status = ERROR;
+S  }
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief  Initialize some features of COMP instance.
+S  * @note   This function configures features of the selected COMP instance.
+S  *         Some features are also available at scope COMP common instance
+S  *         (common to several COMP instances).
+S  *         Refer to functions having argument "COMPxy_COMMON" as parameter.
+S  * @param  COMPx COMP instance
+S  * @param  COMP_InitStruct Pointer to a @ref LL_COMP_InitTypeDef structure
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: COMP registers are initialized
+S  *          - ERROR: COMP registers are not initialized
+S  */
+SErrorStatus LL_COMP_Init(COMP_TypeDef *COMPx, LL_COMP_InitTypeDef *COMP_InitStruct)
+S{
+S  ErrorStatus status = SUCCESS;
+S
+S  /* Check the parameters */
+S  assert_param(IS_COMP_ALL_INSTANCE(COMPx));
+S  assert_param(IS_LL_COMP_POWER_MODE(COMP_InitStruct->PowerMode));
+S  assert_param(IS_LL_COMP_INPUT_PLUS(COMPx, COMP_InitStruct->InputPlus));
+S  assert_param(IS_LL_COMP_INPUT_MINUS(COMPx, COMP_InitStruct->InputMinus));
+S  assert_param(IS_LL_COMP_INPUT_HYSTERESIS(COMP_InitStruct->InputHysteresis));
+S  assert_param(IS_LL_COMP_OUTPUT_POLARITY(COMP_InitStruct->OutputPolarity));
+S  assert_param(IS_LL_COMP_OUTPUT_BLANKING_SOURCE(COMPx, COMP_InitStruct->OutputBlankingSource));
+S
+S  /* Note: Hardware constraint (refer to description of this function)        */
+S  /*       COMP instance must not be locked.                                  */
+S  if (LL_COMP_IsLocked(COMPx) == 0UL)
+S  {
+S    /* Configuration of comparator instance :                                 */
+S    /*  - PowerMode                                                           */
+S    /*  - InputPlus                                                           */
+S    /*  - InputMinus                                                          */
+S    /*  - InputHysteresis                                                     */
+S    /*  - OutputPolarity                                                      */
+S    /*  - OutputBlankingSource                                                */
+S#if defined(COMP_CSR_INMESEL_1)
+S    MODIFY_REG(COMPx->CSR,
+S               COMP_CSR_PWRMODE
+S               | COMP_CSR_INPSEL
+S               | COMP_CSR_SCALEN
+S               | COMP_CSR_BRGEN
+S               | COMP_CSR_INMESEL
+S               | COMP_CSR_INMSEL
+S               | COMP_CSR_HYST
+S               | COMP_CSR_POLARITY
+S               | COMP_CSR_BLANKING
+S               ,
+S               COMP_InitStruct->PowerMode
+S               | COMP_InitStruct->InputPlus
+S               | COMP_InitStruct->InputMinus
+S               | COMP_InitStruct->InputHysteresis
+S               | COMP_InitStruct->OutputPolarity
+S               | COMP_InitStruct->OutputBlankingSource
+S              );
+S#else
+S    MODIFY_REG(COMPx->CSR,
+S               COMP_CSR_PWRMODE
+S               | COMP_CSR_INPSEL
+S               | COMP_CSR_SCALEN
+S               | COMP_CSR_BRGEN
+S               | COMP_CSR_INMSEL
+S               | COMP_CSR_HYST
+S               | COMP_CSR_POLARITY
+S               | COMP_CSR_BLANKING
+S               ,
+S               COMP_InitStruct->PowerMode
+S               | COMP_InitStruct->InputPlus
+S               | COMP_InitStruct->InputMinus
+S               | COMP_InitStruct->InputHysteresis
+S               | COMP_InitStruct->OutputPolarity
+S               | COMP_InitStruct->OutputBlankingSource
+S              );
+S#endif
+S
+S  }
+S  else
+S  {
+S    /* Initialization error: COMP instance is locked.                         */
+S    status = ERROR;
+S  }
+S
+S  return status;
+S}
+S
+S/**
+S  * @brief Set each @ref LL_COMP_InitTypeDef field to default value.
+S  * @param COMP_InitStruct Pointer to a @ref LL_COMP_InitTypeDef structure
+S  *                        whose fields will be set to default values.
+S  * @retval None
+S  */
+Svoid LL_COMP_StructInit(LL_COMP_InitTypeDef *COMP_InitStruct)
+S{
+S  /* Set COMP_InitStruct fields to default values */
+S  COMP_InitStruct->PowerMode            = LL_COMP_POWERMODE_ULTRALOWPOWER;
+S  COMP_InitStruct->InputPlus            = LL_COMP_INPUT_PLUS_IO1;
+S  COMP_InitStruct->InputMinus           = LL_COMP_INPUT_MINUS_VREFINT;
+S  COMP_InitStruct->InputHysteresis      = LL_COMP_HYSTERESIS_NONE;
+S  COMP_InitStruct->OutputPolarity       = LL_COMP_OUTPUTPOL_NONINVERTED;
+S  COMP_InitStruct->OutputBlankingSource = LL_COMP_BLANKINGSRC_NONE;
+S}
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* COMP1 || COMP2 */
+S
+S/**
+S  * @}
+S  */
+S
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

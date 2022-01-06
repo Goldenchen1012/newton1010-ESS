@@ -1,0 +1,88 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_crs.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_crs.h
+N  * @author  MCD Application Team
+N  * @brief   CRS LL module driver.
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_crs.h"
+S#include "stm32l4xx_ll_bus.h"
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined(CRS)
+S
+S/** @defgroup CRS_LL CRS
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S/* Private constants ---------------------------------------------------------*/
+S/* Private macros ------------------------------------------------------------*/
+S/* Private function prototypes -----------------------------------------------*/
+S
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup CRS_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup CRS_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-Initializes CRS peripheral registers to their default reset values.
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: CRS registers are de-initialized
+S  *          - ERROR: not applicable
+S  */
+SErrorStatus LL_CRS_DeInit(void)
+S{
+S  LL_APB1_GRP1_ForceReset(LL_APB1_GRP1_PERIPH_CRS);
+S  LL_APB1_GRP1_ReleaseReset(LL_APB1_GRP1_PERIPH_CRS);
+S
+S  return  SUCCESS;
+S}
+S
+S
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* defined(CRS) */
+S
+S/**
+S  * @}
+S  */
+S  
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -1,0 +1,15 @@
+.\obj\apiprotectuvp.o: ..\..\..\AppProtect\ApiProtectUvp.c
+.\obj\apiprotectuvp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\apiprotectuvp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\obj\apiprotectuvp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\obj\apiprotectuvp.o: ..\..\..\User\define.h
+.\obj\apiprotectuvp.o: ..\..\..\HAL\halafe.h
+.\obj\apiprotectuvp.o: ..\..\..\Lib\LibRegister.h
+.\obj\apiprotectuvp.o: ..\..\..\Config_Common\sdk_config.h
+.\obj\apiprotectuvp.o: ..\..\..\Lib\LibDebug.h
+.\obj\apiprotectuvp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\obj\apiprotectuvp.o: ..\..\..\AppProtect\AppProtect.h
+.\obj\apiprotectuvp.o: ..\..\..\AppProtect\AppProtectEvent.h
+.\obj\apiprotectuvp.o: ..\..\..\AppProtect\ApiProtectUvp.h
+.\obj\apiprotectuvp.o: ..\..\..\API\ApiSysPar.h
+.\obj\apiprotectuvp.o: ..\..\..\Lib\LibCalibration.h

@@ -1,0 +1,17 @@
+.\obj\apiprotectdocp.o: ..\..\..\AppProtect\ApiProtectDocp.c
+.\obj\apiprotectdocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\apiprotectdocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\obj\apiprotectdocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\obj\apiprotectdocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\obj\apiprotectdocp.o: ..\..\..\User\define.h
+.\obj\apiprotectdocp.o: ..\..\..\HAL\halafe.h
+.\obj\apiprotectdocp.o: ..\..\..\Lib\LibRegister.h
+.\obj\apiprotectdocp.o: ..\..\..\Config_Common\sdk_config.h
+.\obj\apiprotectdocp.o: ..\..\..\Lib\LibDebug.h
+.\obj\apiprotectdocp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\obj\apiprotectdocp.o: ..\..\..\AppProtect\AppProtect.h
+.\obj\apiprotectdocp.o: ..\..\..\AppProtect\AppProtectEvent.h
+.\obj\apiprotectdocp.o: ..\..\..\AppProtect\ApiProtectDocp.h
+.\obj\apiprotectdocp.o: ..\..\..\API\ApiSysPar.h
+.\obj\apiprotectdocp.o: ..\..\..\Lib\LibCalibration.h
+.\obj\apiprotectdocp.o: ..\..\..\APP\AppGauge.h

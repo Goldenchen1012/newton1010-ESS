@@ -1,0 +1,16 @@
+.\obj\apiprotectcutp.o: ..\..\..\AppProtect\ApiProtectCutp.c
+.\obj\apiprotectcutp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\apiprotectcutp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\obj\apiprotectcutp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\obj\apiprotectcutp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\obj\apiprotectcutp.o: ..\..\..\User\define.h
+.\obj\apiprotectcutp.o: ..\..\..\HAL\halafe.h
+.\obj\apiprotectcutp.o: ..\..\..\Lib\LibRegister.h
+.\obj\apiprotectcutp.o: ..\..\..\Config_Common\sdk_config.h
+.\obj\apiprotectcutp.o: ..\..\..\Lib\LibDebug.h
+.\obj\apiprotectcutp.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\obj\apiprotectcutp.o: ..\..\..\AppProtect\AppProtect.h
+.\obj\apiprotectcutp.o: ..\..\..\AppProtect\AppProtectEvent.h
+.\obj\apiprotectcutp.o: ..\..\..\AppProtect\ApiProtectCutp.h
+.\obj\apiprotectcutp.o: ..\..\..\API\ApiSysPar.h
+.\obj\apiprotectcutp.o: ..\..\..\Lib\LibCalibration.h

@@ -1,0 +1,13 @@
+.\obj\halafe.o: ..\..\..\HAL\HalAfe.c
+.\obj\halafe.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\halafe.o: ..\..\..\HAL\halafe.h
+.\obj\halafe.o: ..\..\..\Lib\LibRegister.h
+.\obj\halafe.o: ..\..\..\Config_Common\sdk_config.h
+.\obj\halafe.o: ..\..\..\Lib\LibDebug.h
+.\obj\halafe.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\obj\halafe.o: ..\..\..\Lib\LibSwTimer.h
+.\obj\halafe.o: ..\..\..\Lib\LibNtc.h
+.\obj\halafe.o: ..\..\..\HAL\HalAfeBq796xx.h
+.\obj\halafe.o: ..\..\..\API\ApiSysPar.h
+.\obj\halafe.o: ..\..\..\User\define.h
+.\obj\halafe.o: ..\..\..\Lib\LibCalibration.h

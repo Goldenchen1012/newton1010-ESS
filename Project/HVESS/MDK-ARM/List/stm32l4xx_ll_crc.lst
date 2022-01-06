@@ -1,0 +1,109 @@
+L 1 "..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_ll_crc.c"
+N/**
+N  ******************************************************************************
+N  * @file    stm32l4xx_ll_crc.c
+N  * @author  MCD Application Team
+N  * @brief   CRC LL module driver.
+N  ******************************************************************************
+N  * @attention
+N  *
+N  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+N  * All rights reserved.</center></h2>
+N  *
+N  * This software component is licensed by ST under BSD 3-Clause license,
+N  * the "License"; You may not use this file except in compliance with the
+N  * License. You may obtain a copy of the License at:
+N  *                        opensource.org/licenses/BSD-3-Clause
+N  *
+N  ******************************************************************************
+N  */
+N#if defined(USE_FULL_LL_DRIVER)
+X#if 0L
+S
+S/* Includes ------------------------------------------------------------------*/
+S#include "stm32l4xx_ll_crc.h"
+S#include "stm32l4xx_ll_bus.h"
+S
+S#ifdef  USE_FULL_ASSERT
+S#include "stm32_assert.h"
+S#else
+S#define assert_param(expr) ((void)0U)
+S#endif
+S
+S/** @addtogroup STM32L4xx_LL_Driver
+S  * @{
+S  */
+S
+S#if defined (CRC)
+S
+S/** @addtogroup CRC_LL
+S  * @{
+S  */
+S
+S/* Private types -------------------------------------------------------------*/
+S/* Private variables ---------------------------------------------------------*/
+S/* Private constants ---------------------------------------------------------*/
+S/* Private macros ------------------------------------------------------------*/
+S/* Private function prototypes -----------------------------------------------*/
+S
+S/* Exported functions --------------------------------------------------------*/
+S/** @addtogroup CRC_LL_Exported_Functions
+S  * @{
+S  */
+S
+S/** @addtogroup CRC_LL_EF_Init
+S  * @{
+S  */
+S
+S/**
+S  * @brief  De-initialize CRC registers (Registers restored to their default values).
+S  * @param  CRCx CRC Instance
+S  * @retval An ErrorStatus enumeration value:
+S  *          - SUCCESS: CRC registers are de-initialized
+S  *          - ERROR: CRC registers are not de-initialized
+S  */
+SErrorStatus LL_CRC_DeInit(CRC_TypeDef *CRCx)
+S{
+S  ErrorStatus status = SUCCESS;
+S
+S  /* Check the parameters */
+S  assert_param(IS_CRC_ALL_INSTANCE(CRCx));
+S
+S  if (CRCx == CRC)
+S  {
+S    /* Force CRC reset */
+S    LL_AHB1_GRP1_ForceReset(LL_AHB1_GRP1_PERIPH_CRC);
+S
+S    /* Release CRC reset */
+S    LL_AHB1_GRP1_ReleaseReset(LL_AHB1_GRP1_PERIPH_CRC);
+S  }
+S  else
+S  {
+S    status = ERROR;
+S  }
+S
+S  return (status);
+S}
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S/**
+S  * @}
+S  */
+S
+S#endif /* defined (CRC) */
+S
+S/**
+S  * @}
+S  */
+S
+N#endif /* USE_FULL_LL_DRIVER */
+N
+N/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+N
