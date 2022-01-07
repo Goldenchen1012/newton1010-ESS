@@ -156,7 +156,7 @@ void SystemClock_Config_24MHz (void);
 /* Private functions ---------------------------------------------------------*/
 
 //IRM GPIO Call Back Function---------------------------------------------------
-#define ADS7946_VREF                           5.0f
+#define ADS7946_VREF                           4.096f
 #define ADS7946_RESOLUTION_B                   14
 
 apiIRMonitoring_cb_t app_irm_event_cb;
@@ -252,9 +252,9 @@ static void app_imr_ads7946_callBack(uint8_t *pDat, uint8_t size)
 	AdcValue.b[1] = pDat[2];
 	AdcValue.b[0] = pDat[3];
 	AdcValue.i >>= 3;
+	volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
 	
 	if(irm_fun_ptr !=NULL){
-	    volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
 		  irm_fun_ptr(&volt_data);
 	}
 	
@@ -557,7 +557,6 @@ int main(void)
 	#endif
   SystemClock_Config_HSE_80MHz();
 	
-	smp_DMA_Init();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -628,7 +627,7 @@ int main(void)
 	HAL_Delay(1000);
 	#endif
   //-------------------------------------------
-
+  
 	appProjectOpen();
 	LibSwTimerClearCount();
 	
@@ -651,6 +650,20 @@ int main(void)
 	#endif
 	//------------------------------------------
 	
+	
+	//Test IRM SW1 mesaure Vstack(Total Battreary Voltage)
+	#if 0
+	app_irm_sw_gpio_init_cb();
+	BSP_IRM_SW1_ON();
+	BSP_IRM_SW3_OFF();
+	BSP_IRM_SW3_OFF();
+	
+	while(1){
+	   app_irm_trigger_voltage_data_cb();
+	   HAL_Delay(500);
+	}
+	#endif
+	
 	//ADC Test
 	//------------------------------------------
 	#ifdef G_TEST_INT_ADC
@@ -668,7 +681,7 @@ int main(void)
 		
 		LOG_BLUE("TEST ADC#%04d %04d,%04d,%04d,%04d,%04d\r\n", test_cont,app_adc_temp[0],app_adc_temp[1],app_adc_temp[2],app_adc_temp[3],app_adc_temp[4]);
 		
-		drv_bq796xx_delay_ms(50);
+		HAL_Delay(50);
 		
 		test_cont++;
 		if(test_cont>=50) break;
@@ -695,7 +708,7 @@ int main(void)
   #endif 
 	
 	drv_bq796xx_Read_Stack_FaultSummary(0);
-	drv_bq796xx_delay_ms(10);
+	HAL_Delay(10);
 				
   for(int k=0; k<10*BMU_TOTAL_BOARDS; k++){			
 	    res = drv_bq796xx_data_frame_parser(); 	
@@ -975,7 +988,7 @@ int main(void)
 	
 	app_flash_log_managment_init(app_flash_log_event_handler);
 	HAL_Delay(1000);
-	while(test_event_log_cnt<300)
+	while(test_event_log_cnt<50)
 	{
 		
 	  smp_mx25l_flash_read_status(&mx251_status);
@@ -986,7 +999,7 @@ int main(void)
 		test_uart_rx_process();
 		
 		test_event_log_cnt++;
-		HAL_Delay(500);
+		HAL_Delay(100);
 		LOG_WHITE("Event log#%d transfer\r\n", test_event_log_cnt);
 	}
 	#endif

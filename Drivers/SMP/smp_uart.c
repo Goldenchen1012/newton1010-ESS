@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    smp_uart.c
   * @author  Golden Chen
-  * @version V0.0.2
-  * @date    2021/12/28
+  * @version V0.0.3
+  * @date    2022/01/07
   * @brief   
   ******************************************************************************
   * @attention
@@ -21,6 +21,9 @@
 #include "smp_debug.h"
 #include "smp_fifo.h"
 #include "smp_gpio.h"
+#include "SEGGER_RTT.h"
+#include "RTT_Log.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -87,6 +90,11 @@ int8_t smp_uart_init(smp_uart_t *p_uart, smp_uart_event_t smp_uart_event_handler
 		}else{
 			return SMP_ERROR_INVALID_PARAM;
 		}
+		
+    //Golden Add 2022.01.07		
+		smp_uart0_handle.Init.OverSampling = UART_OVERSAMPLING_16;	
+    smp_uart0_handle.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    smp_uart0_handle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 			
 		smp_uart0_handle.Init.Mode       = UART_MODE_TX_RX;
 		if(HAL_UART_DeInit(&smp_uart0_handle) != HAL_OK){
@@ -366,13 +374,24 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		GPIO_InitTypeDef  GPIO_InitStruct;
 
 		/*##-1- Enable peripherals and GPIO Clocks #################################*/
-		/* Enable SMP UART0 GPIO TX/RX clock */
-		BSP_UART0_TX_GPIO_CLK_ENABLE();
-		BSP_UART0_RX_GPIO_CLK_ENABLE();
-
+		
+		// Initializes the peripherals clock
+		if(huart->Instance==USART2){
+		    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
+        PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+        if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+        {
+           SEGGER_RTT_printf(0,"BSP_UART0 Init PCLK1 Error!");  
+        }
+	  }
+		
 		/* Enable SMP UART0 clock */
 		BSP_UART0_CLK_ENABLE();
 
+		/* Enable SMP UART0 GPIO TX/RX clock */
+		BSP_UART0_TX_GPIO_CLK_ENABLE();
+		BSP_UART0_RX_GPIO_CLK_ENABLE();		
+		
 		/* Enable SMP UART0 DMA clock */
 		BSP_UART0_DMA_CLK_ENABLE();
 
@@ -382,14 +401,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
 		GPIO_InitStruct.Pull      = GPIO_PULLUP;
 		GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-		GPIO_InitStruct.Alternate = BSP_UART0_TX_AF | BSP_UART0_RX_AF;
+		GPIO_InitStruct.Alternate = BSP_UART0_TX_AF;
 
 		HAL_GPIO_Init(BSP_UART0_TX_GPIO_PORT, &GPIO_InitStruct);
 
 		/* BSP_UART0 RX GPIO pin configuration  */
 		//GPIO_InitStruct.Pin = BSP_UART0_RX_PIN;
 		//GPIO_InitStruct.Alternate = BSP_UART0_RX_AF;
-
 		//HAL_GPIO_Init(BSP_UART0_RX_GPIO_PORT, &GPIO_InitStruct);
 
 		/*##-3- Configure BSP_UART0 DMA ##################################################*/
@@ -404,8 +422,11 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		uart0_dma_tx.Init.Priority            = DMA_PRIORITY_LOW;
 		uart0_dma_tx.Init.Request             = BSP_UART0_TX_DMA_REQUEST;
 
-		HAL_DMA_Init(&uart0_dma_tx);
-
+		if(HAL_DMA_Init(&uart0_dma_tx)!= HAL_OK)
+    {
+        SEGGER_RTT_printf(0,"BSP_UART0 Init DMA TX Error!");
+    }
+		
 		/* Associate the initialized DMA handle to the BSP_UART0 handle */
 		__HAL_LINKDMA(huart, hdmatx, uart0_dma_tx);
 
@@ -420,7 +441,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		uart0_dma_rx.Init.Priority            = DMA_PRIORITY_HIGH;
 		uart0_dma_rx.Init.Request             = BSP_UART0_RX_DMA_REQUEST;
 
-		HAL_DMA_Init(&uart0_dma_rx);
+		if(HAL_DMA_Init(&uart0_dma_rx)!= HAL_OK)
+    {
+        SEGGER_RTT_printf(0,"BSP_UART0 Init DMA RX Error!");
+    }
 
 		/* Associate the initialized DMA handle to BSP_UART0 handle */
 		__HAL_LINKDMA(huart, hdmarx, uart0_dma_rx);

@@ -81,7 +81,7 @@
       <DebugOpt>
         <uSim>0</uSim>
         <uTrg>1</uTrg>
-        <sLdApp>0</sLdApp>
+        <sLdApp>1</sLdApp>
         <sGomain>1</sGomain>
         <sRbreak>1</sRbreak>
         <sRwatch>1</sRwatch>
@@ -239,6 +239,21 @@
           <count>15</count>
           <WinNumber>1</WinNumber>
           <ItemText>app_adc_temp</ItemText>
+        </Ww>
+        <Ww>
+          <count>16</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>uart0_tx_buffer</ItemText>
+        </Ww>
+        <Ww>
+          <count>17</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>smp_uart0_handle,0x10</ItemText>
+        </Ww>
+        <Ww>
+          <count>18</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>uart1_tx_buffer</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
