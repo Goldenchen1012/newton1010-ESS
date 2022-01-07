@@ -2,8 +2,8 @@
 ******************************************************************************
 * @file    smp_W5500_DMA.h
 * @author  Steve Cheng
-* @version V0.0.1
-* @date    2021/12/9
+* @version V0.0.2
+* @date    2022/01/07
 * @brief   
 ******************************************************************************
 * @attention
@@ -17,16 +17,17 @@
   
 #ifndef _SMP_W5500_DMA_HAL_
 #define _SMP_W5500_DMA_HAL_  
-
+#include "Bsp.h"
 #include "wizchip_conf.h"
 #include "socket.h"
-#include "Bsp.h"
+#include "stm32l4xx_hal.h"
 #include "smp_gpio.h"
 #include "smp_spi_DMA.h"
 #include "LibSwTimer.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+
 
 #define W5500_MAX_SOCKET_NUM 8
 
@@ -155,7 +156,10 @@ typedef enum{
 	Check_Listen_Cmd_Recv,
 	Read_Socket_Status_2,
 	Verify_Socket_Listen,
-	/****** Socket establish *****/		
+	/****** Socket establish *****/	
+	Read_SIR_Register,
+	Check_SocketNum_Int,
+	Read_SIR_End,
 	Read_Socket_INT_event,
 	Verify_Connect_Event,
 	Clear_CON_INT_Flag,
@@ -171,7 +175,8 @@ typedef enum{
 	Read_Socket_Buf_Addr_HighByte,
 	Read_Socket_Buf_Addr_LowByte,
 	Read_Socket_Buf_data,
-	ParserData_and_Update_Buf_Offset_Highbyte,
+	ParserData,
+	Update_Buf_Offset_Highbyte,
 	Update_Buf_Offset_Lowbyte,
 	Set_Scoket_Recv,
 	Read_Cmd_Register_Status_3,
@@ -199,8 +204,12 @@ typedef enum{
 	Read_Socket_INT_event_2,
 	Verify_Disconnct_End,
 	Clear_DISCON_INT_Flag,
-	Server_End
+	Server_End,
+	//----------------
+	Read_Socket_INT_Event_New_1,
+	Check_INT_Event,
 }W5500_server_step;
+
 
 /*************************************/
 enum{
@@ -211,21 +220,36 @@ enum{
 
 enum{
 	Socket_Disable = 0,
-	Socket_Enable
+	Socket_Enable,
+	Socket_Close,
+	Socket_Open
 };
 enum{
 	Event_Handle_Done,
 	Event_Handle_Ing
 };
 
+enum{
+	W5500_Status_Reset,
+	W5500_Status_Init_End,
+	W5500_Status_Server_Open
+};
+
 int8_t W5500_Init_Step(uint8_t Step);
 int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum);
+int8_t W5500_Server_Step_New(uint8_t Step, uint8_t SocketNum);
 int8_t W5500_Socket_Register(W5500_Socket_parm *parm, smp_w5500_event_t w5500_event_Handler);
+int8_t W5500_Read_Socket_INTReg(void);
+int8_t W5500_Socket_Reopen_Step(uint8_t Step, uint8_t SocketNum);
+
 
 void Hal_W5500_Open(void);
 
 extern smp_gpio_t		PB12;
 extern smp_spi_cs_t 	W5500_CS;
 extern smp_spi_t 		SPI_W5500;
-extern bool W5500INT_Low;
+
+extern volatile bool W5500_Read_SnIR_End;
+extern volatile uint16_t W5500_INT_Cnt;
+
 #endif

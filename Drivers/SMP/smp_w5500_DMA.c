@@ -1,9 +1,9 @@
 /**
 ******************************************************************************
 * @file    smp_W5500_DMA.c
-* @author  Steve Cheng/ Golden
-* @version V0.0.1
-* @date    2021/12/30
+* @author  Steve Cheng
+* @version V0.0.2
+* @date    2022/01/07
 * @brief   
 ******************************************************************************
 * @attention
@@ -14,32 +14,40 @@
 *
 ******************************************************************************
 */
-#include "Bsp.h"
+
 #include "smp_w5500_DMA.h"
 #include <stdbool.h>
 #include <string.h>
 
-#define _W5500_SPI_VDM_OP_                     0x00
-#define _W5500_SPI_FDM_OP_LEN1_                0x01
-#define _W5500_SPI_FDM_OP_LEN2_                0x02
-#define _W5500_SPI_FDM_OP_LEN4_                0x03
+#define DMA_Test 
+
+
+#define _W5500_SPI_VDM_OP_          0x00
+#define _W5500_SPI_FDM_OP_LEN1_     0x01
+#define _W5500_SPI_FDM_OP_LEN2_     0x02
+#define _W5500_SPI_FDM_OP_LEN4_     0x03
 
 #define SOCK_ANY_PORT_NUM  0xC000
 static uint16_t sock_any_port = SOCK_ANY_PORT_NUM;
 static uint16_t sock_io_mode = 0;
 static uint16_t sock_is_sending = 0;
-static uint16_t sock_remained_size[_WIZCHIP_SOCK_NUM_] = {0,0,};
+static uint16_t sock_remained_size[_WIZCHIP_SOCK_NUM_];
 uint8_t  sock_pack_info[_WIZCHIP_SOCK_NUM_] = {0,};
 
 volatile uint16_t SocketHandleByteLen[W5500_MAX_SOCKET_NUM] = {0,0,0,0,0,0,0,0};
-volatile uint16_t gu16Temp;
+uint16_t gu16RecvBytesCnt;
+
 static uint8_t socketStatus[W5500_MAX_SOCKET_NUM];
 static uint8_t SocketEnableCount = 0;
 uint8_t Socket_Event_Handling_Status[W5500_MAX_SOCKET_NUM];
 
+
 static uint8_t gu8W5500_SPI_Status = W5500_SPI_Idle;
 static uint8_t gu8_W5500_Init_Steps = Init_End;
 static uint8_t gu8Socket_Sever_Step[W5500_MAX_SOCKET_NUM] = {0};
+static uint8_t gu8Socket_Reopen_Step[W5500_MAX_SOCKET_NUM] = {0};
+static uint8_t gu8SockNum = 0;
+
 
 static uint8_t DefMac[MAC_ADDR_BYTE_LEN] = DEFAULT_MAC_ADDR;
 static uint8_t DefIp[IP_ADDR_BYTE_LEN] = DEFAULT_IP_ADDR;
@@ -47,13 +55,20 @@ static uint8_t DefSn[SUB_MASK_ADDR_BYTE_LEN] = DEFAULT_SUB_MASK;
 static uint8_t DefGw[GATE_WAY_ADDR_BYTE_LEN] = DEFAULT_GW_ADDR;
 static uint8_t DefDns[IP_ADDR_BYTE_LEN] = DEFAULT_DNS_ADDR;
 
+
 uint8_t W5500_tx_Buf[BSP_SPI2_TX_BUFFER_SIZE];
 uint8_t Readbyte_value;
-bool W5500INT_Low;
+uint8_t gu8Temp;
+uint16_t gu16Temp;
+uint32_t gu32Temp;
+volatile bool W5500_Read_SnIR_End;
+volatile uint16_t W5500_INT_Cnt = 0;
+
 
 smp_gpio_t		PB12;
 smp_spi_cs_t 	W5500_CS;
 smp_spi_t 		SPI_W5500;
+
 
 wiz_NetInfo TmpNetInfo,RemoteNetInfo;
 
@@ -76,11 +91,11 @@ void smp_w5500_spiDMA_write_byte(uint32_t AddrSel, uint8_t Value){
 	uint8_t spi_data[4];
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_WRITE_ | _W5500_SPI_VDM_OP_);
-	spi_data[0] = (AddrSel & 0x00FF0000) >> 16;
-	spi_data[1] = (AddrSel & 0x0000FF00) >> 8;
-	spi_data[2] = (AddrSel & 0x000000FF) >> 0;
-	spi_data[3] = Value;
-	smp_spi_master_send_recv(&SPI_W5500, spi_data, 4, 0, 0, &W5500_CS);
+	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
+	W5500_tx_Buf[1] = (AddrSel & 0x0000FF00) >> 8;
+	W5500_tx_Buf[2] = (AddrSel & 0x000000FF) >> 0;
+	W5500_tx_Buf[3] = Value;
+	smp_spi_master_send_recv(&SPI_W5500, W5500_tx_Buf, 4, 0, 0, &W5500_CS);
 
 }
 
@@ -89,15 +104,26 @@ void smp_w5500_spiDMA_read_byte(uint32_t AddrSel){
 	
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_READ_ | _W5500_SPI_VDM_OP_);
-	spi_data[0] = (AddrSel & 0x00FF0000) >> 16;
-	spi_data[1] = (AddrSel & 0x0000FF00) >> 8;
-	spi_data[2] = (AddrSel & 0x000000FF) >> 0;
-	smp_spi_master_send_recv(&SPI_W5500, spi_data, 3, &Readbyte_value, 1, &W5500_CS);
+	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
+	W5500_tx_Buf[1] = (AddrSel & 0x0000FF00) >> 8;
+	W5500_tx_Buf[2] = (AddrSel & 0x000000FF) >> 0;
+	smp_spi_master_send_recv(&SPI_W5500, W5500_tx_Buf, 3, &Readbyte_value, 1, &W5500_CS);
 	
+}
+void smp_w5500_spiDMA_read_byte_block(uint32_t AddrSel){
+	uint8_t spi_data[3];
+	
+	gu8W5500_SPI_Status = W5500_SPI_Busy;
+	AddrSel |= (_W5500_SPI_READ_ | _W5500_SPI_VDM_OP_);
+	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
+	W5500_tx_Buf[1] = (AddrSel & 0x0000FF00) >> 8;
+	W5500_tx_Buf[2] = (AddrSel & 0x000000FF) >> 0;
+	smp_spi_master_send_recv_blocking(&SPI_W5500, W5500_tx_Buf, 3, &Readbyte_value, 1, &W5500_CS);
+
 }
 
 void smp_w5500_spiDMA_WriteMulti(uint32_t AddrSel, uint8_t* pBuf,uint16_t Len){
-	uint8_t spi_data[3],i;
+	uint8_t i;
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	 AddrSel |= (_W5500_SPI_WRITE_ | _W5500_SPI_VDM_OP_);
 	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
@@ -115,10 +141,10 @@ void smp_w5500_spiDMA_ReadMulti(uint32_t AddrSel, uint16_t Len, uint8_t* Ptr){
 	
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_READ_ | _W5500_SPI_VDM_OP_);
-	spi_data[0] = (AddrSel & 0x00FF0000) >> 16;
-	spi_data[1] = (AddrSel & 0x0000FF00) >> 8;
-	spi_data[2] = (AddrSel & 0x000000FF) >> 0;
-	smp_spi_master_send_recv(&SPI_W5500, spi_data, 3, Ptr, Len, &W5500_CS);
+	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
+	W5500_tx_Buf[1] = (AddrSel & 0x0000FF00) >> 8;
+	W5500_tx_Buf[2] = (AddrSel & 0x000000FF) >> 0;
+	smp_spi_master_send_recv(&SPI_W5500, W5500_tx_Buf, 3, Ptr, Len, &W5500_CS);
 	
 }
 
@@ -138,31 +164,37 @@ void spi_master_w5500_event_handler(smp_spi_evt_type p_evt)
 	}
 }
 
-static void W5500SwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr){
-	static uint8_t SocketNum = 0;
-	static uint8_t EventDoneCheck = 0;
+
+static void W5500SwTimerHandler_New(__far void *dest, uint16_t evt, void *vDataPtr){
+	static int8_t SocketNum = 0;
+	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS){
 		if(gu8_W5500_Init_Steps != Init_End){
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_SET);
 			W5500_Init_Step(gu8_W5500_Init_Steps);
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_RESET);
 		}else{
-			if(W5500INT_Low){
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_SET);
-				if(smpW5500Socket[SocketNum].SocketStatus == Socket_Enable){
-					Socket_Event_Handling_Status[SocketNum] = Event_Handle_Ing;
-					W5500_Server_Step(gu8Socket_Sever_Step[SocketNum],SocketNum);
+			if(socketStatus[gu8SockNum] == SOCK_CLOSED){
+				Socket_Event_Handling_Status[gu8SockNum] = Event_Handle_Ing;
+				W5500_Socket_Reopen_Step(gu8Socket_Reopen_Step[gu8SockNum],gu8SockNum);
+				if(Socket_Event_Handling_Status[gu8SockNum] == Event_Handle_Done){
+					gu8SockNum++;
 				}
-				if(Socket_Event_Handling_Status[SocketNum] == Event_Handle_Done){
-					SocketNum++;
+				if(gu8SockNum >= SocketEnableCount){
+					gu8SockNum = 0;	
 				}
-				if(SocketNum == SocketEnableCount){
-					SocketNum = 0;
-					W5500INT_Low = false;
+			}else if(W5500_INT_Cnt){
+				if(!W5500_Read_SnIR_End){
+					SocketNum = W5500_Read_Socket_INTReg();
+				}else{	
+					W5500_Server_Step_New(gu8Socket_Sever_Step[SocketNum], SocketNum);
+					if(Socket_Event_Handling_Status[SocketNum] == Event_Handle_Done){
+						if(W5500_INT_Cnt){
+							W5500_INT_Cnt--;
+						}
+					}	
 				}
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_RESET);
 			}
 		}
+		
 	}
 
 }
@@ -305,7 +337,7 @@ void smp_w5500_spi_config(void){
 
 void Hal_W5500_Open(void){
 	smp_w5500_spi_config();
-	LibSwTimerOpen(W5500SwTimerHandler, 0);
+	LibSwTimerOpen(W5500SwTimerHandler_New, 0);
 	gu8_W5500_Init_Steps = Init_HW_Reset_1;
 }
 
@@ -331,9 +363,9 @@ int8_t W5500_Socket_Register(W5500_Socket_parm *parm, smp_w5500_event_t w5500_ev
 	}else{
 		parm->Num = i;
 	}
-	W5500INT_Low = true;
-	SocketEnableCount++;	
-	
+
+	SocketEnableCount++;
+	socketStatus[i] = SOCK_CLOSED;
 	return SMP_SUCCESS;
 }
 
@@ -352,12 +384,10 @@ int8_t W5500_Init_Step(uint8_t Step){
 		{SUBR, SUB_MASK_ADDR_BYTE_LEN, TmpNetInfo.sn},
 		{SIPR, IP_ADDR_BYTE_LEN, TmpNetInfo.ip}
 	}; 
-	uint8_t Tmp;
 	static uint8_t SocketNum = 0;
 	static uint8_t ms_Count = 0;
 	static uint8_t Step_RW_NetInfo = 0;
 	static int8_t smpResult = SMP_SUCCESS;
-	bool CommEndFlag;
 	
 	if(gu8W5500_SPI_Status == W5500_SPI_Idle){	
 		switch(Step){
@@ -390,9 +420,9 @@ int8_t W5500_Init_Step(uint8_t Step){
 				gu8_W5500_Init_Steps = Init_PHY_Rst;				
 				break;
 			case Init_PHY_Rst:				
-				Tmp = Readbyte_value;
-				Tmp |= ~PHYCFGR_RST;
-				smp_w5500_spiDMA_write_byte(PHYCFGR, Tmp);
+				gu8Temp = Readbyte_value;
+				gu8Temp |= ~PHYCFGR_RST;
+				smp_w5500_spiDMA_write_byte(PHYCFGR, gu8Temp);
 				gu8_W5500_Init_Steps = Init_PHY_Verify_Read;				
 				break;
 			case Init_PHY_Verify_Read:				
@@ -459,55 +489,58 @@ int8_t W5500_Init_Step(uint8_t Step){
 	return smpResult;
 }
 
-int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
-	static int8_t smpResult = SMP_SUCCESS;
+
+
+int8_t W5500_Read_Socket_INTReg(void){
+	static uint8_t socketNum = 0; 
+		smp_w5500_spiDMA_read_byte_block(SIR);
+		
+		if(Readbyte_value){
+			socketNum = Readbyte_value-1;
+			Socket_Event_Handling_Status[socketNum] = Event_Handle_Ing;
+			gu8Socket_Sever_Step[socketNum] = Read_Socket_INT_Event_New_1;
+		}else{
+			Socket_Event_Handling_Status[socketNum] = Event_Handle_Done;
+		}
+		W5500_Read_SnIR_End = true;
+		return socketNum;
+}
+
+int8_t W5500_Socket_Reopen_Step(uint8_t Step, uint8_t SocketNum){
+	static uint8_t ms_Count = 0,i,lu8Temp;
 	static W5500_RegisterList *TempSocket;
-	static uint8_t ms_Count = 0;
-	uint8_t i,lu8TTemp;
-	uint16_t lu16Temp;
-	uint32_t lu32Temp;
-	TempSocket = &smpW5500Socket[SocketNum];
+		
+	TempSocket = &smpW5500Socket[SocketNum];	
 	if(gu8W5500_SPI_Status == W5500_SPI_Idle){	
 		switch(Step){
 			case Server_Read_Socket_Status:
-				Socket_Event_Handling_Status[SocketNum] = Event_Handle_Ing;
 				smp_w5500_spiDMA_read_byte(Sn_SR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Server_Check_Socket_Status;
+				gu8Socket_Reopen_Step[SocketNum] = Server_Check_Socket_Status;
 				break;
 			case Server_Check_Socket_Status:
-				socketStatus[SocketNum] = Readbyte_value;
-				switch(Readbyte_value){
-					case SOCK_CLOSED:
-						gu8Socket_Sever_Step[SocketNum] = Socket_Open_Read_IP;
-						break;
-					case SOCK_INIT:
-						gu8Socket_Sever_Step[SocketNum] = Socket_Listen_Read_Mode;
-						break;
-					case SOCK_LISTEN:
-						gu8Socket_Sever_Step[SocketNum] = Server_Read_Socket_Status;
-						Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
-						//W5500INT_Low = false;
-						break;
-					case SOCK_SYNRECV:
-						gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event;
-						break;
-					case SOCK_ESTABLISHED:
-						gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event;
-						break;
-					case SOCK_CLOSE_WAIT:
-						gu8Socket_Sever_Step[SocketNum] = Set_Socket_Disconnect;
-						break;
-					case SOCK_LAST_ACK:
-						gu8Socket_Sever_Step[SocketNum] = Set_Socket_Disconnect;
-						break;
-					default:
-						break;
-				}	
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					switch(Readbyte_value){
+						case SOCK_CLOSED:
+							Socket_Event_Handling_Status[SocketNum] = Event_Handle_Ing;
+							gu8Socket_Reopen_Step[SocketNum] = Socket_Open_Read_IP;
+							break;
+						case SOCK_INIT:
+							gu8Socket_Reopen_Step[SocketNum] = Socket_Listen_Read_Mode;
+							break;
+						case SOCK_LISTEN:
+							gu8Socket_Reopen_Step[SocketNum] = Server_Read_Socket_Status;
+							socketStatus[SocketNum] = Socket_Open;
+							Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
+							break;
+					}
+				}
 				break;
 			/******* Socket reset and open *******/
 			case Socket_Open_Read_IP:
 				smp_w5500_getLocalIP();
-				gu8Socket_Sever_Step[SocketNum] = Socket_Open_Check_IP;
+				gu8Socket_Reopen_Step[SocketNum] = Socket_Open_Check_IP;
 				break;
 			case Socket_Open_Check_IP:
 				for(i=0;i<IP_ADDR_BYTE_LEN;i++){
@@ -516,25 +549,24 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 					}
 				}
 				if(i == IP_ADDR_BYTE_LEN){
-					//while(1);
-					smpResult = SMP_ERROR_NOT_FOUND;
+					return SMP_ERROR_NOT_FOUND;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Set_Socket_Close;
+					gu8Socket_Reopen_Step[SocketNum] = Set_Socket_Close;
 				}
 				break;	
 			case Set_Socket_Close:
 				smp_w5500_spiDMA_write_byte(Sn_CR(SocketNum), Sn_CR_CLOSE);
-				gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_0;
+				gu8Socket_Reopen_Step[SocketNum] = Read_Cmd_Register_Status_0;
 				break;
 			case Read_Cmd_Register_Status_0:
 				smp_w5500_spiDMA_read_byte(Sn_CR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Check_Close_Cmd_Recv;
+				gu8Socket_Reopen_Step[SocketNum] = Check_Close_Cmd_Recv;
 				break;
 			case Check_Close_Cmd_Recv:
 				if(Readbyte_value!=0){
-					gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_0;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Cmd_Register_Status_0;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = RST_All_INT_Flag;
+					gu8Socket_Reopen_Step[SocketNum] = RST_All_INT_Flag;
 				}
 				break;
 			case RST_All_INT_Flag:
@@ -543,22 +575,22 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				sock_is_sending &= ~(1<<SocketNum);
 				sock_remained_size[SocketNum] = 0;
 				sock_pack_info[SocketNum] = 0;
-				gu8Socket_Sever_Step[SocketNum] = Read_Socket_Status_0;
+				gu8Socket_Reopen_Step[SocketNum] = Read_Socket_Status_0;
 				break;
 			case Read_Socket_Status_0:
 				smp_w5500_spiDMA_read_byte(Sn_SR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Verify_Socket_Close_0;
+				gu8Socket_Reopen_Step[SocketNum] = Verify_Socket_Close_0;
 				break;
 			case Verify_Socket_Close_0:
 				if(Readbyte_value!= SOCK_CLOSED){
-					gu8Socket_Sever_Step[SocketNum] = Read_Socket_Status_0;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Socket_Status_0;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Set_Socket_Mode;
+					gu8Socket_Reopen_Step[SocketNum] = Set_Socket_Mode;
 				}
 				break;
 			case Set_Socket_Mode:
 				smp_w5500_spiDMA_write_byte(Sn_MR(SocketNum), TempSocket->Parm.Protocol);
-				gu8Socket_Sever_Step[SocketNum] = Set_Socket_Port_Highbyte;
+				gu8Socket_Reopen_Step[SocketNum] = Set_Socket_Port_Highbyte;
 				break;
 			case Set_Socket_Port_Highbyte:
 				if(!TempSocket->Parm.PortNum)
@@ -566,102 +598,157 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				    TempSocket->Parm.PortNum = sock_any_port++;
 				    if(sock_any_port == 0xFFF0) sock_any_port = SOCK_ANY_PORT_NUM;
 				}else{
-					lu8TTemp = (uint8_t)(TempSocket->Parm.PortNum >> 8);
-					smp_w5500_spiDMA_write_byte(Sn_PORT(SocketNum), lu8TTemp);
-					gu8Socket_Sever_Step[SocketNum] = Set_Socket_Port_Lowbyte;
+					gu8Temp = (uint8_t)(TempSocket->Parm.PortNum >> 8);
+					smp_w5500_spiDMA_write_byte(Sn_PORT(SocketNum), gu8Temp);
+					gu8Socket_Reopen_Step[SocketNum] = Set_Socket_Port_Lowbyte;
 				}
 				break;
 			case Set_Socket_Port_Lowbyte:
-					lu8TTemp = (uint8_t)TempSocket->Parm.PortNum;
-					smp_w5500_spiDMA_write_byte(WIZCHIP_OFFSET_INC(Sn_PORT(SocketNum),1), lu8TTemp);
-					gu8Socket_Sever_Step[SocketNum] = Set_Socket_Open;
+					gu8Temp = (uint8_t)TempSocket->Parm.PortNum;
+					smp_w5500_spiDMA_write_byte(WIZCHIP_OFFSET_INC(Sn_PORT(SocketNum),1), gu8Temp);
+					gu8Socket_Reopen_Step[SocketNum] = Set_Socket_Open;
 				break;
 			case Set_Socket_Open:
 					smp_w5500_spiDMA_write_byte(Sn_CR(SocketNum), Sn_CR_OPEN);
-					gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_1;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Cmd_Register_Status_1;
 				break;
 			case Read_Cmd_Register_Status_1:
 					smp_w5500_spiDMA_read_byte(Sn_CR(SocketNum));
-					gu8Socket_Sever_Step[SocketNum] = Check_Open_Cmd_Recv;
+					gu8Socket_Reopen_Step[SocketNum] = Check_Open_Cmd_Recv;
 				break;
 			case Check_Open_Cmd_Recv:
 				if(Readbyte_value!=0){
-					gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_1;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Cmd_Register_Status_1;
 				}else{
 					sock_io_mode &= ~(1 <<SocketNum);
 					sock_io_mode |= ((0x00 & SF_IO_NONBLOCK) << SocketNum);   
 					sock_is_sending &= ~(1<<SocketNum);
 					sock_remained_size[SocketNum] = 0;
 					sock_pack_info[SocketNum] = PACK_COMPLETED;
-					gu8Socket_Sever_Step[SocketNum] = Read_Socket_Status_1;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Socket_Status_1;
 				}	
 				break;
 			case Read_Socket_Status_1:
 				smp_w5500_spiDMA_read_byte(Sn_SR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Verify_Socket_Close_1;
+				gu8Socket_Reopen_Step[SocketNum] = Verify_Socket_Close_1;
 				break;
 			case Verify_Socket_Close_1:
 				if(Readbyte_value == SOCK_CLOSED){
-					gu8Socket_Sever_Step[SocketNum] = Read_Socket_Status_1;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Socket_Status_1;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Server_Read_Socket_Status;
+					gu8Socket_Reopen_Step[SocketNum] = Server_Read_Socket_Status;
 				}
 				break;
 			/************ End ************/
 			/******* Socket listen *******/	
 			case Socket_Listen_Read_Mode:
 				smp_w5500_spiDMA_read_byte(Sn_MR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Socket_Listen_Verify_Mode;
+				gu8Socket_Reopen_Step[SocketNum] = Socket_Listen_Verify_Mode;
 				break;
 			case Socket_Listen_Verify_Mode:
 				if((Readbyte_value&0x0F)!= TempSocket->Parm.Protocol){
-					smpResult = SMP_ERROR_NOT_FOUND;
+					return SMP_ERROR_NOT_FOUND;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Set_Socket_Listen;
+					gu8Socket_Reopen_Step[SocketNum] = Set_Socket_Listen;
 				}
 			case Set_Socket_Listen:
 				smp_w5500_spiDMA_write_byte(Sn_CR(SocketNum), Sn_CR_LISTEN);
-				gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_2;
+				gu8Socket_Reopen_Step[SocketNum] = Read_Cmd_Register_Status_2;
 				break;
 			case Read_Cmd_Register_Status_2:
 				smp_w5500_spiDMA_read_byte(Sn_CR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Check_Listen_Cmd_Recv;
+				gu8Socket_Reopen_Step[SocketNum] = Check_Listen_Cmd_Recv;
 				break;
 			case Check_Listen_Cmd_Recv:
 				if(Readbyte_value != 0){
-					gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_2;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Cmd_Register_Status_2;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Read_Socket_Status_2;
+					gu8Socket_Reopen_Step[SocketNum] = Read_Socket_Status_2;
 				}
 				break;
 			case Read_Socket_Status_2:
 				smp_w5500_spiDMA_read_byte(Sn_SR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Verify_Socket_Listen;
+				gu8Socket_Reopen_Step[SocketNum] = Verify_Socket_Listen;
 				break;
 			case  Verify_Socket_Listen:
 				if(Readbyte_value != SOCK_LISTEN){
-					smpResult = SMP_ERROR_NOT_FOUND;
+					return SMP_ERROR_NOT_FOUND;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Server_Read_Socket_Status;
+					gu8Socket_Reopen_Step[SocketNum] = Server_Read_Socket_Status;
 				}
 				break;
 			/************ End ************/
-			/****** Socket establish *****/		
-			case Read_Socket_INT_event:
+		
+			
+		}
+	}
+	return SMP_SUCCESS;
+}
+
+
+int8_t W5500_Server_Step_New(uint8_t Step, uint8_t SocketNum){
+	static int8_t smpResult = SMP_SUCCESS;
+	static W5500_RegisterList *TempSocket;
+	static uint8_t ms_Count = 0, recv_no_data_cnt = 0;
+	TempSocket = &smpW5500Socket[SocketNum];
+	if(gu8W5500_SPI_Status == W5500_SPI_Idle){	
+		switch(Step){
+#ifdef DMA_Test 
+			case Read_Socket_INT_Event_New_1:
 				smp_w5500_spiDMA_read_byte(Sn_IR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Verify_Connect_Event;
+				gu8Socket_Sever_Step[SocketNum] = Check_INT_Event;
 				break;
-			case Verify_Connect_Event:
-				lu8TTemp = Readbyte_value;
-				if((lu8TTemp&=SOCKET_NUM_BASE)&Sn_IR_CON){
-					gu8Socket_Sever_Step[SocketNum] = Clear_CON_INT_Flag;
-				}else{
-					gu8Socket_Sever_Step[SocketNum] =  Read_Recv_Cnt_HighByte;
+			case Check_INT_Event:
+				switch(Readbyte_value){
+					case Sn_IR_CON:
+						gu8Socket_Sever_Step[SocketNum] = Clear_CON_INT_Flag;
+						break;
+					case Sn_IR_RECV:
+						gu8Socket_Sever_Step[SocketNum] = Read_Recv_Cnt_HighByte;
+						break;
+					case Sn_IR_DISCON:
+						gu8Socket_Sever_Step[SocketNum] = Set_Socket_Disconnect;
+						break;
+					case Sn_IR_TIMEOUT:
+						//while(1);
+						break;
+					case Sn_IR_SENDOK:
+						//while(1);
+						break;
+					default:
+						Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
+						gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_Event_New_1;
+						break;
 				}
 				break;
+#else
+			case Read_Socket_INT_Event_New_1:
+				smp_w5500_spiDMA_read_byte_block(Sn_IR(SocketNum));
+				switch(Readbyte_value){
+					case Sn_IR_CON:
+						gu8Socket_Sever_Step[SocketNum] = Clear_CON_INT_Flag;
+						break;
+					case Sn_IR_RECV:
+						gu8Socket_Sever_Step[SocketNum] = Read_Recv_Cnt_HighByte;
+						break;
+					case Sn_IR_DISCON:
+						gu8Socket_Sever_Step[SocketNum] = Set_Socket_Disconnect;
+						break;
+					case Sn_IR_TIMEOUT:
+						//while(1);
+						break;
+					case Sn_IR_SENDOK:
+						//while(1);
+						break;
+					default:
+						break;
+				}
+				break;
+#endif
+			/****** Socket establish : Sn_IR_CON*****/			
 			case Clear_CON_INT_Flag:
 				smp_w5500_spiDMA_write_byte(Sn_IR(SocketNum), (Sn_IR_CON&SOCKET_NUM_BASE)); 
-				gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event;
+				gu8Socket_Sever_Step[SocketNum] = Read_Remote_IP;
 				break;
 			case Read_Remote_IP:
 				smp_w5500_spiDMA_ReadMulti(Sn_DIPR(SocketNum),IP_ADDR_BYTE_LEN, RemoteNetInfo.ip);
@@ -671,78 +758,107 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				smp_w5500_spiDMA_read_byte(Sn_DPORT(SocketNum));
 				gu8Socket_Sever_Step[SocketNum]  = Save_High_Byte_Read_Remote_Port_LowByte;
 			case Save_High_Byte_Read_Remote_Port_LowByte:
-				smpW5500Socket[SocketNum].Parm.DestPort = ((uint16_t)Readbyte_value)<<8;
-				smp_w5500_spiDMA_read_byte(WIZCHIP_OFFSET_INC(Sn_DPORT(SocketNum),1));
-				gu8Socket_Sever_Step[SocketNum] = Save_Port_Low_Byte;
-			case Save_Port_Low_Byte:
-				smpW5500Socket[SocketNum].Parm.DestPort +=(( uint16_t)Readbyte_value);
-				gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event;
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					smpW5500Socket[SocketNum].Parm.DestPort = ((uint16_t)Readbyte_value)<<8;
+					smp_w5500_spiDMA_read_byte(WIZCHIP_OFFSET_INC(Sn_DPORT(SocketNum),1));
+					gu8Socket_Sever_Step[SocketNum] = Save_Port_Low_Byte;
+				}
 				break;
+			case Save_Port_Low_Byte:
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					smpW5500Socket[SocketNum].Parm.DestPort += Readbyte_value;
+					gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_Event_New_1;
+					Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
+				}
+				break;
+			/******  End *****/	
+			/****** Socket establish : Sn_IR_Recv *****/					
 			case Read_Recv_Cnt_HighByte:
 				smp_w5500_spiDMA_read_byte(Sn_RX_RSR(SocketNum));
 				gu8Socket_Sever_Step[SocketNum] = Read_Recv_Cnt_LowByte;
 				break;
 			case Read_Recv_Cnt_LowByte:
-				gu16Temp = (uint16_t)Readbyte_value;
-				SocketHandleByteLen[SocketNum] = gu16Temp<<8;
-				smp_w5500_spiDMA_read_byte(WIZCHIP_OFFSET_INC(Sn_RX_RSR(SocketNum),1));
-				gu8Socket_Sever_Step[SocketNum] = Check_Recv_Data;			
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					gu16RecvBytesCnt = Readbyte_value;
+					gu16RecvBytesCnt = gu16RecvBytesCnt<<8;
+					//gu16Temp = (uint16_t)Readbyte_value;
+					//gu16Temp = (gu16Temp<<8);
+					smp_w5500_spiDMA_read_byte(WIZCHIP_OFFSET_INC(Sn_RX_RSR(SocketNum),1));
+					gu8Socket_Sever_Step[SocketNum] = Check_Recv_Data;		
+				}
+				break;
 			case Check_Recv_Data:
 				ms_Count++;
 				if(ms_Count == 2){
-					SocketHandleByteLen[SocketNum] = SocketHandleByteLen[SocketNum] + ((uint16_t)Readbyte_value);
+					gu16RecvBytesCnt = gu16RecvBytesCnt+Readbyte_value;
+					SocketHandleByteLen[SocketNum] = gu16RecvBytesCnt;
 					ms_Count = 0;
 					if(SocketHandleByteLen[SocketNum]> 0){
-						gu8Socket_Sever_Step[SocketNum] = Read_Buf_Max_Len;
+						gu8Socket_Sever_Step[SocketNum] = Read_Socket_Buf_Addr_HighByte;
 					}else{
-						gu8Socket_Sever_Step[SocketNum] = Server_Read_Socket_Status;
-						Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
-						//W5500INT_Low = false;
+						gu8Socket_Sever_Step[SocketNum] =  Read_Recv_Cnt_HighByte;
+						recv_no_data_cnt++;
+						if(recv_no_data_cnt == 2){
+							recv_no_data_cnt = 0;
+							gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_Event_New_1;
+							Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
+						}
 					}
 				}
-				break;
-			case Read_Buf_Max_Len:
-					smp_w5500_spiDMA_read_byte(Sn_RXBUF_SIZE(SocketNum));
-					gu8Socket_Sever_Step[SocketNum] = Check_Oversize_Event;
-				break;
-			case Check_Oversize_Event:
-				ms_Count++;
-				if(ms_Count == 1){
-					ms_Count = 0;
-					lu16Temp = ((uint16_t)Readbyte_value)<< 10;
-					if(SocketHandleByteLen[SocketNum] > lu16Temp){
-						SocketHandleByteLen[SocketNum] = lu16Temp;
-					}
-				}
-				gu8Socket_Sever_Step[SocketNum] = Read_Socket_Buf_Addr_HighByte;
 				break;
 			case Read_Socket_Buf_Addr_HighByte:
 				smp_w5500_spiDMA_read_byte(Sn_RX_RD(SocketNum));
 				gu8Socket_Sever_Step[SocketNum] = Read_Socket_Buf_Addr_LowByte;
 				break;
 			case Read_Socket_Buf_Addr_LowByte:
-				gu16Temp = Readbyte_value;
-				gu16Temp = gu16Temp<<8;
-				smp_w5500_spiDMA_read_byte(WIZCHIP_OFFSET_INC(Sn_RX_RD(SocketNum),1));
-				gu8Socket_Sever_Step[SocketNum] = Read_Socket_Buf_data;
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					gu16Temp = Readbyte_value;
+					gu16Temp = gu16Temp <<8;
+					smp_w5500_spiDMA_read_byte(WIZCHIP_OFFSET_INC(Sn_RX_RD(SocketNum),1));
+					gu8Socket_Sever_Step[SocketNum] = Read_Socket_Buf_data;
+				}
 				break;
 			case Read_Socket_Buf_data:
-				gu16Temp += Readbyte_value;
-				lu32Temp = ((uint32_t)gu16Temp<<8)+ (WIZCHIP_RXBUF_BLOCK(SocketNum)<< 3); 
-				smp_w5500_spiDMA_ReadMulti(lu32Temp,SocketHandleByteLen[SocketNum], TempSocket->Parm.Memory.rx_buf_Ptr);
-				gu8Socket_Sever_Step[SocketNum] = ParserData_and_Update_Buf_Offset_Highbyte;
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					gu16Temp += Readbyte_value;
+					gu32Temp = ((uint32_t)gu16Temp<<8)+ (WIZCHIP_RXBUF_BLOCK(SocketNum)<< 3); 
+					smp_w5500_spiDMA_ReadMulti(gu32Temp,SocketHandleByteLen[SocketNum], TempSocket->Parm.Memory.rx_buf_Ptr);
+					gu8Socket_Sever_Step[SocketNum] = ParserData;
+				}
+				
 				break;
-			case ParserData_and_Update_Buf_Offset_Highbyte:
+			case ParserData:
 				gu16Temp += SocketHandleByteLen[SocketNum];
 				if(TempSocket->cbFunPtr){
 					SocketHandleByteLen[SocketNum] = TempSocket->cbFunPtr(W5500_DATA_RECV,SocketHandleByteLen[SocketNum]);
 				}
-				smp_w5500_spiDMA_write_byte(Sn_RX_RD(SocketNum),(uint8_t)(gu16Temp>>8));
-				gu8Socket_Sever_Step[SocketNum] = Update_Buf_Offset_Lowbyte;
+				gu8Socket_Sever_Step[SocketNum] = Update_Buf_Offset_Highbyte;
+				break;
+			case Update_Buf_Offset_Highbyte:
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					smp_w5500_spiDMA_write_byte(Sn_RX_RD(SocketNum),(uint8_t)(gu16Temp>>8));
+					gu8Socket_Sever_Step[SocketNum] = Update_Buf_Offset_Lowbyte;				
+				}
 				break;
 			case Update_Buf_Offset_Lowbyte:
-				smp_w5500_spiDMA_write_byte(WIZCHIP_OFFSET_INC(Sn_RX_RD(SocketNum),1),(uint8_t)gu16Temp);
-				gu8Socket_Sever_Step[SocketNum] = Set_Scoket_Recv;
+				ms_Count++;
+				if(ms_Count == 2){
+					ms_Count = 0;
+					smp_w5500_spiDMA_write_byte(WIZCHIP_OFFSET_INC(Sn_RX_RD(SocketNum),1),(uint8_t)gu16Temp);
+					gu8Socket_Sever_Step[SocketNum] = Set_Scoket_Recv;
+				}
 				break;
 			case Set_Scoket_Recv:
 				smp_w5500_spiDMA_write_byte(Sn_CR(SocketNum), Sn_CR_RECV);
@@ -764,9 +880,9 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				gu8Socket_Sever_Step[SocketNum] = Check_Response_Oversize;
 				break;
 			case Check_Response_Oversize:
-				lu16Temp = ((uint16_t)Readbyte_value)<<10;
-				if(TempSocket->Parm.Memory.tx_buf_size > lu16Temp){
-					TempSocket->Parm.Memory.tx_buf_size = lu16Temp;
+				gu16Temp = ((uint16_t)Readbyte_value)<<10;
+				if(SocketHandleByteLen[SocketNum] > gu16Temp){
+					SocketHandleByteLen[SocketNum] = gu16Temp;
 				}
 				gu8Socket_Sever_Step[SocketNum] = Read_W5500_Tx_FSR_High;
 				break;
@@ -790,8 +906,8 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				break;
 			case Get_W5500_Tx_Ptr_Addr_and_Trans:
 				gu16Temp +=(uint16_t)Readbyte_value;
-				lu32Temp = (((uint32_t)gu16Temp) << 8) + (WIZCHIP_TXBUF_BLOCK(SocketNum)<< 3);
-				smp_w5500_spiDMA_WriteMulti(lu32Temp, TempSocket->Parm.Memory.tx_buf_Ptr, SocketHandleByteLen[SocketNum]);
+				gu32Temp = (((uint32_t)gu16Temp) << 8) + (WIZCHIP_TXBUF_BLOCK(SocketNum)<< 3);
+				smp_w5500_spiDMA_WriteMulti(gu32Temp, TempSocket->Parm.Memory.tx_buf_Ptr, SocketHandleByteLen[SocketNum]);
 				gu8Socket_Sever_Step[SocketNum] = Update_Tx_Ptr_Highbyte;
 				break;
 			case Update_Tx_Ptr_Highbyte:
@@ -820,24 +936,20 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				}
 				break;
 			case Read_Socket_INT_event_1:
-				smp_w5500_spiDMA_read_byte(Sn_IR(SocketNum));
+				smp_w5500_spiDMA_read_byte_block(Sn_IR(SocketNum));
 				gu8Socket_Sever_Step[SocketNum] = Verify_Send_End;
 				break;
 			case Verify_Send_End:
-				ms_Count++;
-				if(ms_Count == 2){
-					ms_Count = 0;
-					if((Readbyte_value&=SOCKET_NUM_BASE)&Sn_IR_RECV ){
-						gu8Socket_Sever_Step[SocketNum] = Clear_SendOK_INT_Flag;
-					}else{
-						gu8Socket_Sever_Step[SocketNum] =  Read_Socket_INT_event_1;
-					}
+				if((Readbyte_value&=SOCKET_NUM_BASE)&Sn_IR_RECV ){
+					gu8Socket_Sever_Step[SocketNum] = Clear_Recv_INT_Flag;
+				}else{
+					gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_Event_New_1;
 				}
+			case Clear_Recv_INT_Flag:
+				smp_w5500_spiDMA_write_byte(Sn_IR(SocketNum), ((Sn_IR_RECV|Sn_IR_SENDOK)&SOCKET_NUM_BASE)); 
+				gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event_1;
+				Socket_Event_Handling_Status[SocketNum] = Event_Handle_Done;
 				break;
-			case Clear_SendOK_INT_Flag:
-				smp_w5500_spiDMA_write_byte(Sn_IR(SocketNum), (Sn_IR_RECV &SOCKET_NUM_BASE)); 
-				gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event;
-			break;
 			/************ End ************/
 			/******* Socket disconnect *******/	
 			case Set_Socket_Disconnect:
@@ -852,30 +964,20 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 				if(Readbyte_value!=0){
 					gu8Socket_Sever_Step[SocketNum] = Read_Cmd_Register_Status_5;
 				}else{
-					gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_event_2;
+					gu8Socket_Sever_Step[SocketNum] = Clear_DISCON_INT_Flag;
 				}
 				break;	
-			case Read_Socket_INT_event_2:
-				smp_w5500_spiDMA_read_byte(Sn_IR(SocketNum));
-				gu8Socket_Sever_Step[SocketNum] = Verify_Disconnct_End;
-				break;
-			case Verify_Disconnct_End:
-				ms_Count++;
-				if(ms_Count == 2){
-					ms_Count = 0;
-					if((Readbyte_value&=SOCKET_NUM_BASE)&Sn_IR_DISCON ){
-						gu8Socket_Sever_Step[SocketNum] = Clear_DISCON_INT_Flag;
-					}else{
-						gu8Socket_Sever_Step[SocketNum] =  Read_Socket_INT_event_2;
+			case Clear_DISCON_INT_Flag:
+				if(ms_Count==0){
+					smp_w5500_spiDMA_write_byte(Sn_IR(SocketNum), (Sn_IR_DISCON &SOCKET_NUM_BASE)); 
+					ms_Count++;
+				}else{
+					W5500_Socket_Reopen_Step(gu8Socket_Reopen_Step[SocketNum],SocketNum);
+					if(Socket_Event_Handling_Status[SocketNum] == Event_Handle_Done){
+						ms_Count = 0;
+						gu8Socket_Sever_Step[SocketNum] = Read_Socket_INT_Event_New_1;
 					}
 				}
-				break;
-			case Clear_DISCON_INT_Flag:
-				smp_w5500_spiDMA_write_byte(Sn_IR(SocketNum), (Sn_IR_DISCON &SOCKET_NUM_BASE)); 
-				gu8Socket_Sever_Step[SocketNum] = Server_Read_Socket_Status;
-				break;
-			/************ End ************/
-			default:
 				break;
 		}
 	}
@@ -883,3 +985,4 @@ int8_t W5500_Server_Step(uint8_t Step, uint8_t SocketNum){
 	return smpResult;
 
 }
+
