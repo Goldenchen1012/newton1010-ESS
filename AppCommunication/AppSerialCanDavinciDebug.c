@@ -191,29 +191,14 @@ static void DavinciCanDebugCurrentSimu(smp_can_package_t *pCanPkg)
 
 static void DavinciCanDebugGpio(smp_can_package_t *pCanPkg)
 {
-	int32_t	adc;
-	char	str[100];
+	uint32_t	mask;
+	uint32_t	dat;
+	uint16_t	subindex;
 	
-	switch(pCanPkg->dat[0])
-	{
-	case 0:
-		//HalBslK1Ctrl(pCanPkg->dat[1]);
-		break;
-	case 1:
-		//HalBspK2Ctrl(pCanPkg->dat[1]);
-		break;
-	case 2:
-		//HalBspK3Ctrl(pCanPkg->dat[1]);
-		//HalBspReleaseCtrl(pCanPkg->dat[1]);
-		break;
-	case 3:
-		//HalBspK4Ctrl(pCanPkg->dat[1]);
-		//HalBspRelayPsCtrl(pCanPkg->dat[1]);
-		break;
-	}
-
-	//sprintf(str,"Gpio Ctrl %d %d", pCanPkg->dat[0] ,pCanPkg->dat[1]);
-	//appSerialCanDavinciDebugMsg(str);
+	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
+	mask = (uint32_t)GET_DWORD(&pCanPkg->dat[0]);
+	dat = (uint32_t)GET_DWORD(&pCanPkg->dat[4]);
+	halBspGpioControl(subindex, mask, dat);	
 }
 
 
@@ -310,6 +295,23 @@ static void DavinciCanDebugRelayControl(smp_can_package_t *pCanPkg)
 	}
 }
 
+void halAfeClearTestCount(void);
+
+static void DavinciCanDebugClearTestCount(smp_can_package_t *pCanPkg)
+{
+#define	CLEAR_AFE_TEST_COUNT	0	
+	uint8_t		i;
+	uint16_t	subindex, voltage;
+	char	str[100];
+	
+	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
+	if(subindex == CLEAR_AFE_TEST_COUNT)
+	{
+		halAfeClearTestCount();
+	}
+
+}
+
 
 SMP_CAN_DECODE_CMD_START(mDavinciDebugCanDecodeTab)
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_DEBUG_RX, 0,
@@ -368,10 +370,17 @@ SMP_CAN_DECODE_CMD_START(mDavinciDebugCanDecodeTab)
 								DavinciCanDebugVBatSimu)
 
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_DEBUG_RX, 0,
-									SMP_RELAY_CONTROL_OBJ_INDEX,
+									SMP_DEBUG_RELAY_CONTROL_OBJ_INDEX,
 									0),
 								CHECK_SMP_CAN_OBJ,
 								DavinciCanDebugRelayControl)
+								
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_DEBUG_RX, 0,
+									SMP_DEBUG_CLEAR_TEST_COUNT_OBJ_INDEX,
+									0),
+								CHECK_SMP_CAN_OBJ,
+								DavinciCanDebugClearTestCount)
+								
 
 
 

@@ -44,7 +44,7 @@ enum{
 /* Private typedef -----------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static uint8_t	adcChannel = 4;
+static uint8_t	adcChannel = 0;
 
 static uint8_t	Callback_flag = 0;
 static uint8_t	TimeOutCoiunt = 0;
@@ -123,6 +123,7 @@ static void halAfeCurrentGetCurrentValue(void)
 
 static void currentSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
+	int8_t	res;
 	static	uint8_t	count =0;
 	static uint8_t	step =0;
 //	GPIOD->ODR |= GPIO_PIN_14;
@@ -148,24 +149,28 @@ static void currentSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr
 			switch(adcChannel)
 			{
 			case ADC_CURR_P:
-				smp_ADS7946_get_data(channel_1,CS_0,ads7946_callBack);
+				res = smp_ADS7946_get_data(channel_1,CS_0,ads7946_callBack);
 			//	halAfeADS7946DebugMsg("ch 1 CS 0");
 				break;
 			case ADC_CURR_N:
-				smp_ADS7946_get_data(channel_1,CS_1,ads7946_callBack);	
+				res = smp_ADS7946_get_data(channel_1,CS_1,ads7946_callBack);	
 			//	halAfeADS7946DebugMsg("ch 1 CS 1");
 				break;
 			case ADC_VB_INT:
-				smp_ADS7946_get_data(channel_0,CS_0,ads7946_callBack);
+				res = smp_ADS7946_get_data(channel_0,CS_0,ads7946_callBack);
 			//	halAfeADS7946DebugMsg("ch 0 CS 0");
 				break;
 			case ADC_VB_EXT:
-				smp_ADS7946_get_data(channel_0,CS_1,ads7946_callBack);
+				res = smp_ADS7946_get_data(channel_0,CS_1,ads7946_callBack);
 			//	halAfeADS7946DebugMsg("ch 0 CS 1");
 				break;
 			}
 		}
 		//GPIOD->ODR ^= GPIO_PIN_14;
+	}
+	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_8)
+	{
+		
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{

@@ -109,6 +109,15 @@ tErrCode HalTimerOpen(tHalTimer *pHalTimer, tHalTimerEvtHandler evtHandler)
 	return RES_SUCCESS;
 }
 
+uint16_t halTimerGetCountValue(tHalTimer *pHalTimer)
+{
+	if(pHalTimer->TimerNo == 3)
+	{
+		return __HAL_TIM_GET_COUNTER(&TimHandle3);
+	}
+	return 0;
+	
+}
 
 tErrCode HalTimerClose(tHalTimer *pHalTimer)
 {

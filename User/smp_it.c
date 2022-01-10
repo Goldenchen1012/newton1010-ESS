@@ -42,6 +42,7 @@
 #include "Bsp.h"
 #include "stm32l4xx_Davinci.h"
 #include "smp_gpio.h"
+#include "smp_w5500_DMA.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -49,4 +50,22 @@
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
+/**
+  * @brief EXTI line detection callbacks
+  * @param GPIO_Pin: Specifies the pins connected EXTI line
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+#if	0	
+  if (GPIO_Pin == W5500_INT_PIN)
+  {
+		W5500INT_Low = 1;//true; 
+		GPIOC->ODR ^= GPIO_PIN_6;
+  }
+#endif	
+}
+/**
+  * @}
+  */
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

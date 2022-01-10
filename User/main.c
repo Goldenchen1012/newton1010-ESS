@@ -36,31 +36,31 @@
 #include "SEGGER_RTT.h"
 #include "RTT_Log.h"
 
-#if 1
+#if 0
 #define G_TEST_INT_ADC
 #endif
 
-#if 1
+#if 0
 #define G_TEST_MX25LXX_FLASH 
 #endif
 
-#if 1
+#if 0
 #define G_TEST_MAX7219_LCD_MARITEX
 #endif
 
-#if 1
+#if 0
 #define G_TEST_AD7946_ADC
 #endif
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_SETTING_INIT_WITHOUT_STEP
 #endif 
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP
 #endif
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
 #endif
 
@@ -72,7 +72,7 @@
 #define G_TEST_IRM_FUNCTION
 #endif 
 
-#if 1
+#if 0
 #define G_TEST_EVENT_LOG_FUNC
 #endif
 
@@ -557,7 +557,7 @@ int main(void)
 	#endif
   SystemClock_Config_HSE_80MHz();
 	
-	smp_DMA_Init();
+//	smp_DMA_Init();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -604,7 +604,8 @@ int main(void)
   #if 0
   HAL_GPIO_Init(GPIOB, &GPIO_InitStructure); 
   #endif
-	
+
+#if	1
 	GPIO_InitStructure.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
 	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStructure.Pull = GPIO_PULLUP;
@@ -614,7 +615,7 @@ int main(void)
 	
 	SEGGER_RTT_Init();
 	SEGGER_RTT_printf(0,"  start\r\n" );
-	
+#endif	
   // MAX7219 LCD Maritex Test
 	//-------------------------------------------
 	#ifdef G_TEST_MAX7219_LCD_MARITEX
@@ -634,7 +635,7 @@ int main(void)
 	
 	// MCU UART3 Test
 	//-------------------------------------------
-  appSerialUartSendMessage("12345678");
+//  appSerialUartSendMessage("12345678");
 	//-------------------------------------------
 	
 	// MX25LXX Flash Test
@@ -934,7 +935,7 @@ int main(void)
 
 	#endif
   //------------------------------------------------------------------------------------------
-
+#if	0
   apiFuCheckMagicCode();
 	
   for(int k=0 ;k<64; k++){
@@ -943,7 +944,7 @@ int main(void)
   }
 
 	drv_bq796xx_clear_fifobuffer();
-	 
+#endif	 
 	//IRM Test(2021/12/21)
 	//----------------------------------------------------------------------------------------- 
 	#ifdef G_TEST_IRM_FUNCTION
@@ -1443,7 +1444,7 @@ void HAL_SYSTICK_Callback(void)
   }
 }
 
-
+#if 0
 /**
   * @brief EXTI line detection callbacks
   * @param GPIO_Pin: Specifies the pins connected EXTI line
@@ -1463,6 +1464,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     
   }
 }
+#endif
 
 #ifdef  USE_FULL_ASSERT
 

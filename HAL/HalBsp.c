@@ -334,8 +334,25 @@ uint8_t HalBspGetOdInStatus(void)
 		return 0;
 }
 
+typedef void (* tGpioControlFun)(void);
 
+typedef struct{
+	uint8_t	group;
+	uint32_t	bits;
+	tGpioControlFun	HiFun;
+	tGpioControlFun	LoFun;
+}tGpioCtrlGroup;
+tGpioCtrlGroup	GpioCtrlGroup[]={
+{0} 
+	
+};
+	
 
+void halBspGpioControl(uint8_t group, uint32_t mask, uint32_t dat)
+{
+	//group
+	
+}
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

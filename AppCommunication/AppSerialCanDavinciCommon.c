@@ -135,10 +135,37 @@ static void DavinciCommonResetScuId(smp_can_package_t *pCanPkg)
 	}
 }
 
+static void DavinciCommonFindFirstScu(smp_can_package_t *pCanPkg)
+{
+	uint8_t	source_id;
+	uint8_t	scuid;
+	smp_can_package_t	CanPkg;
+	
+	if(memcmp(&pCanPkg->dat, "FirstScu", 8) == 0)
+	{
+		appBmsFindFirstScu();
+		canCommonDebugMsg("FIND SCU ID");
+	}
+}
 
 //DavinciCommonResponseScuId
 //----------------------------------------------------------
 SMP_CAN_DECODE_CMD_START(mDavinciCommonCanDecodeTab)
+
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
+									SMP_COMMON_FIND_FIRST_SCU_OBJ_INDEX,
+									0),
+								CHECK_SMP_CAN_FUN | CHECK_SMP_CAN_OBJ,
+								DavinciCommonFindFirstScu)
+
+
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
+									SMP_COMMON_RESET_SCU_ID_OBJ_INDEX,
+									0),
+								CHECK_SMP_CAN_FUN | CHECK_SMP_CAN_OBJ,
+								DavinciCommonResetScuId)
+
+
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
 									SMP_COMMON_GET_SCUID_OBJ_INDEX,
 									0),
@@ -163,11 +190,6 @@ SMP_CAN_DECODE_CMD_START(mDavinciCommonCanDecodeTab)
 								CHECK_SMP_CAN_FUN | CHECK_SMP_CAN_OBJ,
 								DavinciCommonStopScuIdRequest)
 
-	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
-									SMP_COMMON_RESET_SCU_ID_OBJ_INDEX,
-									0),
-								CHECK_SMP_CAN_FUN | CHECK_SMP_CAN_OBJ,
-								DavinciCommonResetScuId)
 												
 								
 								
