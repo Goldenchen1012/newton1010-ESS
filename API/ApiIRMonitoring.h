@@ -127,9 +127,9 @@ typedef struct{
 
 #define IRM_RA							       800000.0f                                            //Unit:Ohm
 #define IRM_RB							       800000.0f                                            //Unit:Ohm
-#define IRM_RC							       2200.0f	                                             //Unit:Ohm
+#define IRM_RC							       2200.0f	                                            //Unit:Ohm
 #define IRM_RD							       500000.0f                                            //Unit:Ohm
-#define IRM_RSW							       0.0f		                                             //Unit:Ohm
+#define IRM_RSW							       0.0f		                                              //Unit:Ohm
 
 #define IRM_K1                     ((IRM_RA + IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)        //Unit: NA
 #define IRM_K2                     ((IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)                 //Unit: NA

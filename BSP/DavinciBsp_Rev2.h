@@ -32,6 +32,7 @@ uint16_t      gpio_pin;
 }bsp_adc_init_io_config;
 
 /* Public define ------------------------------------------------------------*/
+#define BSP_BQ7600	
 #define BSP_AD7946 
 #define BSP_MX25L
 #define BSP_W5500
@@ -290,6 +291,17 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 										                           GPIO_SPEED_FREQ_HIGH);}
 #define BSP_RS485_DERE_HI()                    (BSP_RS485_DERE_GPIO->BSRR = BSP_RS485_DERE_PIN)
 #define BSP_RS485_DERE_LO()                    (BSP_RS485_DERE_GPIO->BRR = BSP_RS485_DERE_PIN)
+																							 
+																							 
+/********************************* BSP_BQ79600 I/O Pin define(please use "smp_gpio.h") *************/
+#ifdef BSP_BQ7600																							 
+#define BSP_BQ796XX_NCS_PIN                    PIN4
+#define BSP_BQ796XX_NCS_PORT                   SMP_GPIOD
+
+#define BSP_BQ796XX_RX_PIN                     PIN5
+#define BSP_BQ796XX_RX_PORT                    SMP_GPIOD																							 
+#endif									
+																							 
 /********************************* BSP_ADS7946 I/O Pin define(please use "smp_gpio.h") *************/	
 #ifdef BSP_AD7946 																							 
 #define BSP_ADS7946_CH_SEL_PIN                 PIN5
@@ -373,9 +385,9 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_UART0_TX_DMA_CHANNEL             	 DMA1_Channel7
 #define BSP_UART0_RX_DMA_CHANNEL             	 DMA1_Channel6
 
-/* Definition for BSP_UART0 DMA Request */
-#define BSP_UART0_TX_DMA_REQUEST             	 DMA_REQUEST_1
-#define BSP_UART0_RX_DMA_REQUEST             	 DMA_REQUEST_1
+/* Definition for BSP_UART0 DMA Request(MCU UART1~UART5 must be setting DMA_REQUEST_2, acorrding STM32L496 p.339) */
+#define BSP_UART0_TX_DMA_REQUEST             	 DMA_REQUEST_2
+#define BSP_UART0_RX_DMA_REQUEST             	 DMA_REQUEST_2
 
 /* Definition for BSP_UART0 NVIC */
 #define BSP_UART0_DMA_TX_IRQn                	 DMA1_Channel7_IRQn
@@ -412,7 +424,7 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_UART1_RX_DMA_CHANNEL           	   DMA1_Channel3
 #endif
 
-/* Definition for BSP_UART1 DMA Request */
+/* Definition for BSP_UART1 DMA Request(MCU UART1~UART5 must be setting DMA_REQUEST_2, acorrding STM32L496 p.339) */
 #define BSP_UART1_TX_DMA_REQUEST           		 DMA_REQUEST_2
 #define BSP_UART1_RX_DMA_REQUEST           		 DMA_REQUEST_2
 
