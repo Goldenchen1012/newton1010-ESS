@@ -68,7 +68,7 @@
 #define G_TEST_BQ796XX_CELL_BALANCE_FUNC 
 #endif
 
-#if 1
+#if 0
 #define G_TEST_IRM_FUNCTION
 #endif 
 

@@ -20,6 +20,9 @@
 #include "Bsp.h"
 #include "HalBsp.h"
 
+void appSerialCanDavinciSendTextMessage(char *str);
+#define	halbspDebugMsg(str)	appSerialCanDavinciSendTextMessage(str);
+
 /* Private macro -------------------------------------------------------------*/
 
 
@@ -66,6 +69,7 @@ void HalBspInit(void)
 	BSP_PS2_OK_OPEN();
 	BSP_PS3_OK_OPEN();
 	BSP_BUTTON_OPEN();
+	BSP_NFAULT_OPEN();
 	
 //	BSP_K1_FB_OPEN();
 //	BSP_K1_FB_READ();
@@ -333,25 +337,229 @@ uint8_t HalBspGetOdInStatus(void)
 	else
 		return 0;
 }
+uint8_t halBspGetNfaultStatus(void)
+{
+	if(BSP_NFAULT_READ())
+		return 1;
+	else
+		return 0;
+}
+
+
+static void K1Hi(void)
+{
+	BSP_K1_HI();
+}
+
+static void K1Lo(void)
+{
+	BSP_K1_LO();
+}
+
+static void K2Hi(void)
+{
+	BSP_K2_HI();
+}
+
+static void K2Lo(void)
+{
+	BSP_K2_LO();
+}
+
+static void K3Hi(void)
+{
+	BSP_K3_HI();
+}
+
+static void K3Lo(void)
+{
+	BSP_K3_LO();
+}
+static void K4Hi(void)
+{
+	BSP_K4_HI();
+}
+
+static void K4Lo(void)
+{
+	BSP_K4_LO();
+}
+
+static void Do1Hi(void)
+{
+	BSP_DO1_HI();
+}
+static void Do1Lo(void)
+{
+	BSP_DO1_LO();
+}
+
+static void Do2Hi(void)
+{
+	BSP_DO2_HI();
+}
+static void Do2Lo(void)
+{
+	BSP_DO2_LO();
+}
+static void relayPsHi(void)
+{
+	BSP_RELAY_PS_HI();
+}
+static void relayPsLo(void)
+{
+	BSP_RELAY_PS_LO();
+}
+static void odOutHi(void)
+{
+	BSP_OD_OUT_HI();
+}
+static void odOutLo(void)
+{
+	BSP_OD_OUT_LO();
+}
+static void ocpReleaseHi(void)
+{
+	BSP_OCP_RELEASE_HI();
+}
+static void ocpReleaseLo(void)
+{
+	BSP_OCP_RELEASE_LO();
+}
+
+static void irmSw1Hi(void)
+{	
+	BSP_IRM_SW1_ON();
+}
+static void irmSw1Lo(void)
+{	
+	BSP_IRM_SW1_OFF();
+}
+static void irmSw2Hi(void)
+{	
+	BSP_IRM_SW2_ON();
+}
+static void irmSw2Lo(void)
+{	
+	BSP_IRM_SW2_OFF();
+}	
+
+static void irmSw3Hi(void)
+{	
+	BSP_IRM_SW3_ON();
+}
+static void irmSw3Lo(void)
+{	
+	BSP_IRM_SW3_OFF();
+}	
+static void towerRedLedHi(void)
+{
+	BSP_TOWER_LIGHT_RED_HI();
+}
+static void towerRedLedLo(void)
+{
+	BSP_TOWER_LIGHT_RED_LO();
+}
+static void towerOrangeLedHi(void)
+{
+	BSP_TOWER_LIGHT_ORANGE_HI();
+}
+static void towerOrangeLedLo(void)
+{
+	BSP_TOWER_LIGHT_ORANGE_LO();
+}
+static void towerGreenLedHi(void)
+{
+	BSP_TOWER_LIGHT_GREEN_HI();
+}
+static void towerGreenLedLo(void)
+{
+	BSP_TOWER_LIGHT_GREEN_LO();
+}
+static void termlrHi(void)
+{
+	BSP_TERMLR_HI();
+}
+static void termlrLo(void)
+{
+	BSP_TERMLR_LO();
+}
 
 typedef void (* tGpioControlFun)(void);
 
+
 typedef struct{
-	uint8_t	group;
-	uint32_t	bits;
+	uint8_t			group;
+	uint32_t		bits;
 	tGpioControlFun	HiFun;
 	tGpioControlFun	LoFun;
+	char			*msg;
 }tGpioCtrlGroup;
-tGpioCtrlGroup	GpioCtrlGroup[]={
-{0} 
+const tGpioCtrlGroup	GpioCtrlGroup[]={
+{0, (1<<0) ,K1Hi, K1Lo,								"K1      "},
+{0, (1<<1) ,K2Hi, K2Lo,								"K2      "},
+{0, (1<<2) ,K3Hi, K3Lo,								"K3      "},
+{0, (1<<3) ,K4Hi, K4Lo,								"K4      "},
+{0, (1<<4) ,Do1Hi, Do1Lo,							"DO1     "},
+{0, (1<<5) ,Do2Hi, Do2Lo,							"DO2     "},
+{0, (1<<6) ,relayPsHi, relayPsLo,					"RelayPS "},
+{0, (1<<7) ,odOutHi, odOutLo,						"OD_O    "},
+{0, (1<<8) ,ocpReleaseHi, ocpReleaseLo,				"OcpRels."},
+{0, (1<<9) ,irmSw1Hi, irmSw1Lo,						"I.R. Sw1"},
+{0, (1<<10) ,irmSw2Hi, irmSw2Lo,					"I.R. Sw2"},
+{0, (1<<11) ,irmSw3Hi, irmSw3Lo,					"I.R. Sw3"},
+{0, (1<<12) ,towerRedLedHi, towerRedLedLo,			"TowerRed"},
+{0, (1<<13) ,towerOrangeLedHi, towerOrangeLedLo,	"TowerOrg"},
+{0, (1<<14) ,towerGreenLedHi, towerGreenLedLo,		"TowerGre"},
+{0, (1<<15) ,termlrHi, termlrLo,					"TermlR  "},
+
+{0,0,0,0}
 	
 };
 	
+char *halBspGetGpioControlMsg(uint8_t group, uint32_t mask)
+{
+	uint8_t		i;
+	
+	for(i=0; i<250; i++)
+	{
+		if(GpioCtrlGroup[i].bits == 0)
+			break;
+		if(GpioCtrlGroup[i].group == group &&
+		   GpioCtrlGroup[i].bits == mask)
+		{
+			return GpioCtrlGroup[i].msg;
+		}		   
+	}
+	return "        ";
+}
 
 void halBspGpioControl(uint8_t group, uint32_t mask, uint32_t dat)
 {
-	//group
+	uint8_t		i;
 	
+	for(i=0; i<250; i++)
+	{
+		if(GpioCtrlGroup[i].bits == 0)
+			break;
+		if(GpioCtrlGroup[i].group == group &&
+		   GpioCtrlGroup[i].bits == mask)
+		{
+			halbspDebugMsg(GpioCtrlGroup[i].msg);
+
+			if(mask & dat)
+			{
+				halbspDebugMsg("Hi");
+				GpioCtrlGroup[i].HiFun();
+			}
+			else
+			{
+				halbspDebugMsg("Lo");
+				GpioCtrlGroup[i].LoFun();
+			}
+			break;
+		}		   
+	}
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

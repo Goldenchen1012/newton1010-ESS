@@ -52,6 +52,7 @@
 #include "smp_w5500_DMA.h"
 #include "AppTcpipSmp.h"
 #include "HalSpirom.h"
+#include "AppProjectHvEss_IR.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
@@ -73,6 +74,8 @@ static uint8_t	SystemReadyFlag = 0;
 static uint8_t	RelayOnFlag = 0;
 
 /* Private function prototypes -----------------------------------------------*/
+static void releaseOCP(void);
+
 static void relayOff(void)
 {
 	apiRelayControlMainRelayOff();
@@ -352,16 +355,16 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		relayOff();
 		break;
 	case APP_SIGNAL_FB_EVT_SP_HI:
-	//	appProjectDebugMsg("SP Hi");
+		appProjectDebugMsg("SP Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_SP_LO:
-	//	appProjectDebugMsg("SP Low");
+		appProjectDebugMsg("SP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_HI:
-	//	appProjectDebugMsg("PS1 Hi");
+		appProjectDebugMsg("PS1 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_LO:
-	//	appProjectDebugMsg("PS1 Low");
+		appProjectDebugMsg("PS1 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS2_HI:
 	//	appProjectDebugMsg("PS2 Hi");
@@ -408,12 +411,14 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_HI:
 		appProjectDebugMsg("DOCP Hi");
+		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_LO:
 		appProjectDebugMsg("DOCP Lo");
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_HI:
 		appProjectDebugMsg("COCP Hi");
+		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_LO:
 		appProjectDebugMsg("COCP Low");
@@ -423,6 +428,12 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_LO:
 		//appProjectDebugMsg("OD IN Low");
+		break;
+	case APP_SIGNAL_FB_EVT_NFAULT_HI:
+		appProjectDebugMsg("Nfault Hi");
+		break;
+	case APP_SIGNAL_FB_EVT_NFAULT_LO:
+		appProjectDebugMsg("Nfault Lo");
 		break;
 	}
 }
@@ -703,7 +714,6 @@ void appProjectOpen(void){
 	halafeOpen(afeEventHandler);
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
-  	
 
 	halSpiromOpen();
 	
@@ -717,7 +727,7 @@ void appProjectOpen(void){
 	sprintf(str,"Par Len = %d", len);
 	appProjectDebugMsg(str);
 	appBalanceOpen(appProjectDavinciBalanceEventHandler);
-	apiSignalFeedbackOpen(0);//signalFeedbackEventHandler);
+	apiSignalFeedbackOpen(signalFeedbackEventHandler);
   	LibSwTimerOpen(appProjectSwTimerHandler, 0);
   	releaseOCP(); 
   	apiRelayControlOpen();
@@ -728,7 +738,8 @@ void appProjectOpen(void){
 	appButtonOpen(buttonEventHandler);
 	
 	appTcpipSmpOpen();
-
+	IrFunctionOpen();
+	
 //HalBspReleaseCtrl
 //	NtcTest();
 	{

@@ -429,12 +429,14 @@ static void IRMonitoringSwTimerHandler(__far void *dest, uint16_t evt, void *vDa
 {
 	static IRMonitoring_step_ret_type res;
 	
-	#if 1
-	GPIOD->ODR ^= GPIO_PIN_13;
-	#endif 
+	
 	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
+		#if 1
+	GPIOD->ODR ^= GPIO_PIN_13;
+	#endif 
+		
       if(irm_flag ==1){
           res =IRMonitoringMeasure_Steps(irm_mes_step);
       

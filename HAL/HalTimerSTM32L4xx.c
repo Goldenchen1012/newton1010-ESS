@@ -52,7 +52,7 @@ void TIM3_IRQHandler(void)
 		
 	#if 0
 	GPIOA->ODR ^= (GPIO_PIN_1 | GPIO_PIN_3);//| GPIO_PIN_1 | GPIO_PIN_2);
-/	GPIOD->ODR ^= GPIO_PIN_13;
+	GPIOD->ODR ^= GPIO_PIN_13;
   #endif
 	
 }

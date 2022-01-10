@@ -463,6 +463,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\smp_log_managment.c</FilePath>
             </File>
+            <File>
+              <FileName>AppProjectHvEss_IR.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppProjectHvEss_IR.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -607,6 +612,36 @@
               <FileName>ApiFuFlashRom.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiFuFlashRom.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiFu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiFu.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiEventFlashRom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiEventFlashRom.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiIRMonitoring.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiIRMonitoring.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiModbusTCPIP.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiModbusTCPIP.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiCanbusPkgFu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiCanbusPkgFu.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiFuSpiRom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiFuSpiRom.c</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -658,36 +693,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-            <File>
-              <FileName>ApiFu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\API\ApiFu.c</FilePath>
-            </File>
-            <File>
-              <FileName>ApiEventFlashRom.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\API\ApiEventFlashRom.c</FilePath>
-            </File>
-            <File>
-              <FileName>ApiIRMonitoring.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\API\ApiIRMonitoring.c</FilePath>
-            </File>
-            <File>
-              <FileName>ApiModbusTCPIP.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\API\ApiModbusTCPIP.c</FilePath>
-            </File>
-            <File>
-              <FileName>ApiCanbusPkgFu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\API\ApiCanbusPkgFu.c</FilePath>
-            </File>
-            <File>
-              <FileName>ApiFuSpiRom.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\API\ApiFuSpiRom.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2796,6 +2801,11 @@
               <FileName>smp_log_managment.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\smp_log_managment.c</FilePath>
+            </File>
+            <File>
+              <FileName>AppProjectHvEss_IR.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppProjectHvEss_IR.c</FilePath>
             </File>
           </Files>
         </Group>

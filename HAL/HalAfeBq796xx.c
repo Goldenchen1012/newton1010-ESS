@@ -46,7 +46,8 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 
 #define	afeBmuNumber()					apiSysParGetBmuNumber()
 
-#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01,GPIOD->ODR ^= GPIO_PIN_13;}
+//#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01,GPIOD->ODR ^= GPIO_PIN_13;}
+#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01;}
 
 #define	AFE_COMM_FLAG_L1		0x01
 #define	AFE_COMM_FLAG_L2		0x02
@@ -1125,6 +1126,8 @@ static void AfeBq796xxIniHandler(uint16_t evt)
 	uint8_t res;
 	//wake_sw
 	//WAKE_TONE_DISABLE
+	if(appProjectIsInEngMode() && afe_steps == AFE_INIT_IDLE)
+		return;
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{  
 		GPIOD->ODR ^= GPIO_PIN_14;

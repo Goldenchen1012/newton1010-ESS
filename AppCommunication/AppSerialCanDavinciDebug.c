@@ -33,10 +33,11 @@
 #include "AppProject.h"
 		  
 
-void appSerialUartSendMessage(char *str);
+void appSerialCanDavinciSendTextMessage(char *str);
 #define	appSerialCanDavinciDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define		canDbgScuId()		appProjectGetScuId()
 
 /* Private macro -------------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
@@ -194,11 +195,33 @@ static void DavinciCanDebugGpio(smp_can_package_t *pCanPkg)
 	uint32_t	mask;
 	uint32_t	dat;
 	uint16_t	subindex;
-	
+	char		*ptr;
+	uint8_t	i;
+	smp_can_package_t	CanPkg;
+	char	str[100];
+
 	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
-	mask = (uint32_t)GET_DWORD(&pCanPkg->dat[0]);
-	dat = (uint32_t)GET_DWORD(&pCanPkg->dat[4]);
-	halBspGpioControl(subindex, mask, dat);	
+
+	if(subindex & 0x200)	//get gpio name
+	{
+		mask = 1 << ((subindex&0x1f0)/ 0x10);
+		ptr = halBspGetGpioControlMsg(subindex&0x0f, mask);
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_DEBUG_TX, canDbgScuId(),
+							SMP_DEBUG_GPIO_OBJ_INDEX,
+							subindex);
+		CanPkg.dlc = 8;
+		memcpy(CanPkg.dat, ptr, 8);
+		appSerialCanDavinciPutPkgToCanFifo(&CanPkg);	
+		sprintf(str,"Get Gpio Name %d %d", subindex&0x0f, (subindex&0x1f0)/0x10);
+		appSerialCanDavinciDebugMsg(str);
+	}
+	else
+	{
+		mask = (uint32_t)GET_DWORD(&pCanPkg->dat[0]);
+		dat = (uint32_t)GET_DWORD(&pCanPkg->dat[4]);		
+		halBspGpioControl(subindex, mask, dat);	
+		appSerialCanDavinciDebugMsg("Gpio Debu");
+	}
 }
 
 
