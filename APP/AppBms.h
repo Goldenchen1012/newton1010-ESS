@@ -34,6 +34,7 @@ void appBmsSetScuCurrent(uint8_t scuid, int32_t CurrentP, int32_t CurrentN);
 void appBmsSetScuVbat(uint8_t scuid, uint32_t VbInt, uint32_t VbExt);
 
 
+void appBmsSendFindFirstScuCanPackage(void);
 
 void appBmsStopOutputAssignIdSignal(void);
 
@@ -45,6 +46,7 @@ void appBmsExitScuIdRequestMode(void);
 void appBmsEnterScuIdAssignMode(void);
 void appBmsRcvScuIdBrocast(uint8_t scuid);
 
+void appBmsFindFirstScu(void);
 void appBmsResetScuId(void);
 uint8_t appBmsGetScuId(void);
 

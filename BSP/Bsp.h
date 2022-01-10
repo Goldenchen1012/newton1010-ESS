@@ -3,7 +3,7 @@
   * @file        Bsp.h
   * @author      Golden Chen
   * @version     v0.0.1
-  * @date        2021/12/28
+  * @date        2022/01/06
   * @brief       
   ******************************************************************************
   * @attention
@@ -15,7 +15,7 @@
   */
 
 // Select your board BSP
-#define BSP_REV                                1	
+#define BSP_REV                                2	
 	
 #ifndef _BSP_H_
 #define _BSP_H_

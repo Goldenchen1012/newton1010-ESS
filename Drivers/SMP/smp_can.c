@@ -3,7 +3,7 @@
   * @file    smp_can.c
   * @author  Johnny/ Golden
   * @version V0.0.1
-  * @date    2022/01/03
+  * @date    2022/01/06
   * @brief   
   ******************************************************************************
   * @attention
@@ -52,8 +52,8 @@ uint8_t                        can1_rx_buffer[BSP_CAN1_RX_BUFFER_SIZE] = {0};
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-extern smp_gpio_t 						gpio_test_p;
-extern smp_gpio_state					gpio_test_p_state;	
+//extern smp_gpio_t 						gpio_test_p;
+//extern smp_gpio_state					gpio_test_p_state;	
 
 int8_t can_fifo_init(smp_can_fifo_t * p_fifo, smp_can_package_t * p_buf, uint16_t buf_size)
 {
@@ -94,7 +94,7 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		if (HAL_CAN_Init(&smp_can0_handle) != HAL_OK)
   		{
     		/* Initialization Error */
-    		return -1;//SMP_ERROR_NOT_FOUND;//Error_Handler();
+    		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
   
 		/*##-2- Configure the CAN Filter ###########################################*/
@@ -107,12 +107,12 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		sFilterConfig.FilterMaskIdLow = 0x0000;
   		sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
   		sFilterConfig.FilterActivation = ENABLE;
-  		sFilterConfig.SlaveStartFilterBank = 14;
+  		sFilterConfig.SlaveStartFilterBank = 0;
 
   		if (HAL_CAN_ConfigFilter(&smp_can0_handle, &sFilterConfig) != HAL_OK)
   		{
     		/* Filter configuration Error */
-    		return -2;//SMP_ERROR_NOT_FOUND;//Error_Handler();
+    		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
 
   		/*##-3- Start the CAN peripheral ###########################################*/
@@ -120,15 +120,23 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		{
     		/* Start Error */
     		//Error_Handler();
-    		return -3;//SMP_ERROR_NOT_FOUND;
-  		}
-  		
+    		return SMP_ERROR_NOT_FOUND;
+  		}	
+		/*##-4- Activate CAN RX notification #######################################*/
+		if (HAL_CAN_ActivateNotification(&smp_can0_handle,
+				(CAN_IT_RX_FIFO0_MSG_PENDING |
+				  CAN_IT_TX_MAILBOX_EMPTY
+				)) != HAL_OK)
+		{
+			/* Notification Error */
+			//Error_Handler();
+			return SMP_ERROR_NOT_FOUND;
+		}  
 		can0_evt_cb = smp_can_event_handler;
 		// Configure buffer RX buffer.
 		can_fifo_init(&can0_rx_fifo, p_can->buffers.rx_buf, p_can->buffers.rx_buf_size);
 		// Configure buffer TX buffer.
 		can_fifo_init(&can0_tx_fifo, p_can->buffers.tx_buf, p_can->buffers.tx_buf_size);
-
 
 	}else	if(p_can->num == __CAN1){
 		  smp_can1_handle.Instance = BSP_CAN1;
@@ -232,27 +240,38 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 
 	
 	if(p_can->num == __CAN0){
-		#if	0
-        if (smp_fifo_push(&uart0_tx_fifo, byte) == SMP_SUCCESS){
-        // The new byte has been added to FIFO. It will be picked up from there
-        // (in 'uart_event_handler') when all preceding bytes are transmitted.
-        // But if UART is not transmitting anything at the moment, we must start
-        // a new transmission here.
-            if((smp_uart0_handle.gState == HAL_UART_STATE_READY)||(smp_uart0_handle.gState == HAL_UART_STATE_BUSY_RX)){
-				        if(smp_fifo_get_size(&uart0_tx_fifo,&size)==SMP_SUCCESS){
-                    if(size>UART_TX_BUFFER_SIZE)	size = UART_TX_BUFFER_SIZE;
-						        // This operation should be almost always successful, since we've
-						        // just added a byte to FIFO, but if some bigger delay occurred
-						        // (some heavy interrupt handler routine has been executed) since
-						       // that time, FIFO might be empty already.
-						        for(i=0;i<size;i++){	
-							          smp_fifo_pop(&uart0_tx_fifo, (char *)&uart0_tx_buffer[i]);
-						        }
-						        HAL_UART_Transmit_DMA(&smp_uart0_handle, &uart0_tx_buffer[0], size);
-			         }
-           }
-	     }
-	     #endif
+		smp_can_fifo_push(&can0_tx_fifo, pCanDat);// == SMP_SUCCESS)
+//			 if (smp_can_fifo_push(&can1_tx_fifo, pCanDat) == SMP_SUCCESS)
+		if(1)
+        {
+        	//if()	//check empty mailbox
+        	if(HAL_CAN_GetTxMailboxesFreeLevel(&smp_can0_handle) != 0)
+        	{
+//				GPIOD->ODR |= GPIO_PIN_13;
+       			if(smp_can_fifo_pop(&can0_tx_fifo, &CanPkg) == SMP_SUCCESS)
+       			{
+       				if(CanPkg.id & CAN_STD_MASK)
+       				{
+						TxHeader.StdId = (CanPkg.id & CAN_ID_MASK);
+						TxHeader.IDE = CAN_ID_STD;
+					}
+					else
+					{
+						TxHeader.ExtId = (CanPkg.id & CAN_ID_MASK);
+						TxHeader.IDE = CAN_ID_EXT;
+					}
+					if(CanPkg.id & CAN_RTR_MASK)
+						TxHeader.RTR = CAN_RTR_REMOTE;
+					else
+						TxHeader.RTR = CAN_RTR_DATA;
+  					TxHeader.DLC = CanPkg.dlc;
+					TxHeader.TransmitGlobalTime = DISABLE;
+					HAL_CAN_AddTxMessage(&smp_can0_handle, &TxHeader, CanPkg.dat, &TxMailbox);
+      			}
+//				GPIOD->ODR &= ~GPIO_PIN_13;
+
+  			}	
+	   	}		
 	}else if(p_can->num == __CAN1){		
         smp_can_fifo_push(&can1_tx_fifo, pCanDat);// == SMP_SUCCESS)
 //			 if (smp_can_fifo_push(&can1_tx_fifo, pCanDat) == SMP_SUCCESS)
@@ -319,23 +338,30 @@ void PutCanDataToMailBox(CAN_HandleTypeDef *hcan)
 
 
 	if(hcan->Instance == BSP_CAN0){
-		#if	0
-		if(smp_fifo_get_size(&uart0_tx_fifo,&size)==SMP_SUCCESS){
-			if(size>UART_TX_BUFFER_SIZE)
-				size = UART_TX_BUFFER_SIZE;
-			// This operation should be almost always successful, since we've
-			// just added a byte to FIFO, but if some bigger delay occurred
-			// (some heavy interrupt handler routine has been executed) since
-			// that time, FIFO might be empty already.
-			for(i=0;i<size;i++){
-				smp_fifo_pop(&uart0_tx_fifo, (char *)&uart0_tx_buffer[i]);
-			}
-			HAL_UART_Transmit_DMA(&smp_uart0_handle, &uart0_tx_buffer[0], size);
-		}else{
-			if(uart0_evt_cb)
-				uart0_evt_cb(UART_TX_EMPTY);
-		}
-		#endif
+		if(HAL_CAN_GetTxMailboxesFreeLevel(hcan) != 0)
+        {
+//        	GPIOD->ODR ^= GPIO_PIN_14;
+       		if(smp_can_fifo_pop(&can0_tx_fifo, &CanPkg) == SMP_SUCCESS)
+       		{
+       			if(CanPkg.id & CAN_STD_MASK)
+       			{
+					TxHeader.StdId = (CanPkg.id & CAN_ID_MASK);
+					TxHeader.IDE = CAN_ID_STD;
+				}
+				else
+				{
+					TxHeader.ExtId = (CanPkg.id & CAN_ID_MASK);
+					TxHeader.IDE = CAN_ID_EXT;
+				}
+				if(CanPkg.id & CAN_RTR_MASK)
+					TxHeader.RTR = CAN_RTR_REMOTE;
+				else
+					TxHeader.RTR = CAN_RTR_DATA;
+  					TxHeader.DLC = CanPkg.dlc;
+				TxHeader.TransmitGlobalTime = DISABLE;
+				HAL_CAN_AddTxMessage(&smp_can0_handle, &TxHeader, CanPkg.dat, &TxMailbox);
+      		}
+  		}			
 	}else if(hcan->Instance == BSP_CAN1){
 		
 		//if()	//check empty mailbox
@@ -363,23 +389,6 @@ void PutCanDataToMailBox(CAN_HandleTypeDef *hcan)
 				HAL_CAN_AddTxMessage(&smp_can1_handle, &TxHeader, CanPkg.dat, &TxMailbox);
       		}
   		}	
-		#if	0
-		if(smp_fifo_get_size(&uart1_tx_fifo,&size)==SMP_SUCCESS){
-			if(size>UART3_TX_BUFFER_SIZE)
-				size = UART3_TX_BUFFER_SIZE;
-			// This operation should be almost always successful, since we've
-			// just added a byte to FIFO, but if some bigger delay occurred
-			// (some heavy interrupt handler routine has been executed) since
-			// that time, FIFO might be empty already.
-			for(i=0;i<size;i++){
-				smp_fifo_pop(&uart1_tx_fifo, (char *)&uart1_tx_buffer[i]);
-			}
-			HAL_UART_Transmit_DMA(&smp_uart1_handle, &uart1_tx_buffer[0], size);
-		}else{
-			if(uart1_evt_cb)
-				uart1_evt_cb(UART_TX_EMPTY);
-		}
-		#endif
 	}
 }
 
@@ -405,29 +414,39 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 	
 	if(hcan->Instance == BSP_CAN0){
-		#if 0
-		if(smp_fifo_push(&uart0_rx_fifo, (char)uart0_rx_buffer[0]) == SMP_SUCCESS){
-			flag = 1;
-		}else{
-			flag = 0;
-		}		
-			
-		if(HAL_UART_Receive_DMA(huart, uart0_rx_buffer, UART_RX_BUFFER_SIZE) != HAL_OK){
+		/* Get RX message */
+		if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK)
+		{
+			/* Reception Error */
+			//Error_Handler();
 			return;
 		}
+		if(RxHeader.IDE == CAN_ID_STD)
+		{
+			CanPkg.id = RxHeader.StdId;
+			CanPkg.id |= CAN_STD_MASK;
+		}
+		else
+		{
+			CanPkg.id = RxHeader.ExtId;
+		}
+		if(RxHeader.RTR == CAN_RTR_REMOTE)
+		{
+			CanPkg.id |= CAN_RTR_MASK;
+		}
+		CanPkg.dlc = RxHeader.DLC;
+		if(CanPkg.dlc > 8)
+			CanPkg.dlc = 8;
+		memcpy(CanPkg.dat, RxData, CanPkg.dlc);
 		
-		if(flag == 1){
-			if(uart0_evt_cb)
-				uart0_evt_cb(UART_DATA_READY);
+		if(smp_can_fifo_push(&can0_rx_fifo, &CanPkg) == SMP_SUCCESS)
+		{
+			if(can0_evt_cb)
+				can0_evt_cb(CAN_DATA_READY);
 		}else{
-			if(uart0_evt_cb)
-				uart0_evt_cb(UART_BUFFER_FULL);
+			if(can0_evt_cb)
+				can0_evt_cb(CAN_BUFFER_FULL);
 		}			
-		#endif
-		/* Test debug, but may demage the uart function.
-    gpio_test_p_state = GPIO_ACTIVE_TOGGLE;
-    smp_gpio_set_state(&gpio_test_p, gpio_test_p_state);		
-		*/
 		
 	}else if(hcan->Instance == BSP_CAN1){
 //			GPIOD->ODR ^= GPIO_PIN_15;
@@ -464,32 +483,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			if(can1_evt_cb)
 				can1_evt_cb(CAN_BUFFER_FULL);
 		}		
-  
-		#if	0
-		if(smp_fifo_push(&uart1_rx_fifo, (char)uart1_rx_buffer[0]) == SMP_SUCCESS){
-			flag = 1;
-		}else{
-			flag = 0;
-		}		
-			
-		if(HAL_UART_Receive_DMA(huart, uart1_rx_buffer, UART3_RX_BUFFER_SIZE) != HAL_OK){
-			return;
-		}
-		
-		if(flag == 1){
-			if(uart1_evt_cb)
-				uart1_evt_cb(UART_DATA_READY);
-		}else{
-			if(uart1_evt_cb)
-				uart1_evt_cb(UART_BUFFER_FULL);
-		}			
-		#endif
-		/* Test debug, but may demage the uart function.
-    gpio_test_p_state = GPIO_ACTIVE_TOGGLE;
-    smp_gpio_set_state(&gpio_test_p, gpio_test_p_state);		
-		*/	
-	}		
-
+  	}
 }
 
 
@@ -502,7 +496,7 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef *hcan)
 	if(hcan->Instance == BSP_CAN0)
 	{
 		/*##-1- Enable peripherals and GPIO Clocks #################################*/
-		/* BSP_CAN0 Periph clock enable */
+		/* BSP_CAN1 Periph clock enable */
 		BSP_CAN0_CLK_ENABLE();
 		/* Enable GPIO clock ****************************************/
 		BSP_CAN0_RX_GPIO_CLK_ENABLE();
@@ -515,11 +509,8 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef *hcan)
 		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 		GPIO_InitStruct.Pull = GPIO_PULLUP;
 		GPIO_InitStruct.Alternate =  BSP_CAN0_TX_AF;
-		
-		#if 0
-    HAL_GPIO_Init(BSP_CAN0_TX_GPIO_PORT, &GPIO_InitStruct);
-    #endif
-		
+		HAL_GPIO_Init(BSP_CAN0_TX_GPIO_PORT, &GPIO_InitStruct);
+
 		/* BSP_CAN0 RX GPIO pin configuration */
 		GPIO_InitStruct.Pin = BSP_CAN0_RX_PIN;
 		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -527,16 +518,16 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef *hcan)
 		GPIO_InitStruct.Pull = GPIO_PULLUP;
 		GPIO_InitStruct.Alternate =  BSP_CAN0_RX_AF;
 
-    #if 0
 		HAL_GPIO_Init(BSP_CAN0_RX_GPIO_PORT, &GPIO_InitStruct);
-    #endif
-		
+
 		/*##-3- Configure the NVIC #################################################*/
-		/* NVIC configuration for CAN1 Reception complete interrupt */
-    #if 0
-    HAL_NVIC_SetPriority(BSP_CAN0_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(BSP_CAN0_IRQn);
-    #endif	
+		/* NVIC configuration for BSP_CAN1 Reception complete interrupt */
+		HAL_NVIC_SetPriority(BSP_CAN0_RX_IRQn, 1, 0);
+		HAL_NVIC_EnableIRQ(BSP_CAN0_RX_IRQn); 	
+
+		HAL_NVIC_SetPriority(BSP_CAN0_TX_IRQn, 1, 0);
+		HAL_NVIC_EnableIRQ(BSP_CAN0_TX_IRQn); 	
+				
 	}
 	else if(hcan->Instance == BSP_CAN1)
 	{

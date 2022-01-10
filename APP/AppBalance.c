@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file        AppBalance.h
+  * @file        AppBalance.c
   * @author      Johnny
-  * @version     v0.0
+  * @version     v0.0.1
   * @date        2021/10/12
   * @brief       
   ******************************************************************************
@@ -357,6 +357,9 @@ static void appBalanceCheck(void)
 static void appBalanceSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
 //	GPIOD->ODR |= GPIO_PIN_14;
+	if(appProjectIsInSimuMode()==0 &&  halAfeGetState() != AFE_STATE_NORMAL)
+		return;
+
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
 		if(balanceFunProcessor)

@@ -50,6 +50,8 @@
 #include "SmpEventType.h"
 #include "AppButton.h"
 #include "smp_w5500_DMA.h"
+#include "AppTcpipSmp.h"
+#include "HalSpirom.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
@@ -405,16 +407,16 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 	//	appProjectDebugMsg("K4 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_HI:
-	//	appProjectDebugMsg("DOCP Hi");
+		appProjectDebugMsg("DOCP Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_LO:
-	//	appProjectDebugMsg("DOCP Lo");
+		appProjectDebugMsg("DOCP Lo");
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_HI:
-	//	appProjectDebugMsg("COCP Hi");
+		appProjectDebugMsg("COCP Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_LO:
-	//	appProjectDebugMsg("COCP Low");
+		appProjectDebugMsg("COCP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_HI:
 		//appProjectDebugMsg("OD IN Hi");
@@ -481,6 +483,7 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
+		GPIOD->ODR ^= GPIO_PIN_14;
 			;
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
@@ -676,6 +679,11 @@ uint8_t	appProjectIsRtcValid(void)
 	return RtcValid;
 }
 
+uint16_t appProjectGetTimerCount(void)
+{
+	return halTimerGetCountValue(&mHalTimer3);
+}
+
 void appProjectOpen(void){
 	char	str[100];
 	uint32_t	len;
@@ -685,20 +693,20 @@ void appProjectOpen(void){
 	HalTimerOpen(&mHalTimer3, appProjectHwTimerHandler);
 	appSerialUartDavinciOpen();
 	appSerialCanDavinciOpen();
-	
+	appTcpipSmpOpen();
   	//------------------------------------------
 	appProjectDebugMsg("--------- Start Run -----------...9");
 	len = apiSysParOpen();
 	
 	appProtectOpen(protectEventHandler);
 	appGaugeOpen(gaugeEventHandler);
-	
-	//Golden 2021/12/16 disable
-	//halafeOpen(afeEventHandler);
-	
+	halafeOpen(afeEventHandler);
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
   	
+
+	halSpiromOpen();
+	
   	//------------------------------------------
 	//appProjectDebugMsg("Start Run !!");
 
@@ -718,6 +726,8 @@ void appProjectOpen(void){
   	apiSystemFlagOpen();
   	apiEventLogOpen();
 	appButtonOpen(buttonEventHandler);
+	
+	appTcpipSmpOpen();
 
 //HalBspReleaseCtrl
 //	NtcTest();

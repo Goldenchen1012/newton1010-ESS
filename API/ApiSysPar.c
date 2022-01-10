@@ -39,6 +39,7 @@ void DumpBuffer(uint8_t *pBuf,uint16_t len);
 /* Private typedef -----------------------------------------------------------*/
 #define	BATINFO_OVP_PF_FLAG		0x0001
 #define	BATINFO_UVP_PF_FLAG		0x0002
+#define	MAX_BMU_NUM				64
 
 typedef struct{
 	uint8_t			HeadInfo[8];
@@ -64,8 +65,8 @@ typedef struct{
 	uint16_t		MinChargeDischargeCurrent;
 	uint16_t		MinFlatVoltage;
 	uint16_t		MaxFlatVoltage;
-	uint32_t		CellFlag[64];
-	uint32_t		NtcFlag[64];
+	uint32_t		CellFlag[MAX_BMU_NUM];
+	uint32_t		NtcFlag[MAX_BMU_NUM];
 	uint8_t			BmuNumber;
 	uint16_t		TerminateVoltage;
 

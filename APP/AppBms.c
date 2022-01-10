@@ -20,10 +20,7 @@
 #include "define.h"
 #include "main.h"
 #include "halafe.h"
-#include "ApiSysPar.h"
-#include "AppGauge.h"
 #include "LibSwTimer.h"
-#include "LibHwTimer.h"
 #include "HalRtc.h"
 #include "ApiRamData.h"
 #include "ApiSysPar.h"
@@ -39,18 +36,24 @@ void appSerialCanDavinciSendTextMessage(char *str);
 #define	CHECK_SCU_ID
 
 /* Private define ------------------------------------------------------------*/
-#define	relayOnDiffVoltage()	apiSysParGetRelayOnDiffVoltage()
-#define	MASTER_BTN_CLICK_COUNT	1500
-#define	SIGNAL_T_BASE_COUNT		30
-#define	SIGNAL_HI_BASE_NUM		1
-#define	SIGNAL_LO_BASE_NUM		1
-#define	VALID_CYCLE_COUNT		(((SIGNAL_HI_BASE_NUM + SIGNAL_LO_BASE_NUM) *	\
-									SIGNAL_T_BASE_COUNT) * 9 / 10)
-#define	MAX_CYCLE_COUNT		((SIGNAL_HI_BASE_NUM + SIGNAL_LO_BASE_NUM) *	\
-									SIGNAL_T_BASE_COUNT)
+#define	relayOnDiffVoltage()		apiSysParGetRelayOnDiffVoltage()
+#define	MASTER_BTN_CLICK_COUNT		1500
+#define	SIGNAL_T_BASE_COUNT			15
+#define	ASSIGN_ID_HI_BASE_NUM		2
+#define	ASSIGN_ID_LO_BASE_NUM		2
+#define	FIND_SCUID_HI_BASE_NUM		3
+#define	FIND_SCUID_LO_BASE_NUM		1
+#define	VALID_CYCLE_COUNT		((SIGNAL_T_BASE_COUNT * 4) * 9 / 10)
+#define	MAX_CYCLE_COUNT			( 4 * SIGNAL_T_BASE_COUNT)
+
 #define	VALID_MODE_COUNT			3
 
-#define MASTER_MODE_DUTY			95
+#define	FIND_FIRST_SCU_COUNT		2000
+#define	ASSIGN_NEXT_SCUID_COUNT		5000
+
+#define	FIND_FIRST_SCUID_DUTY_L		65
+#define	FIND_FIRST_SCUID_DUTY_H		85
+
 #define HOST_SETUP_ID_MODE_DUTY_L	40
 #define	HOST_SETUP_ID_MODE_DUTY_H	60
 #define	STANDBY_MODE_DUTY			5
@@ -68,6 +71,7 @@ enum{
 	OD_IN_MODE_STANDBY = 1,
 	OD_IN_MODE_HOST_SETUP_ID,
 	OD_IN_MODE_MSATER,
+	OD_IN_MODE_FIND_FIRST_SCUID,
 	OD_IN_MODE_UNKNOW
 };
 
@@ -83,11 +87,19 @@ typedef struct{
 	int32_t		CurrentN;
 	uint32_t	RM;				//mAh	甧秖 RM
 	uint32_t	FCC;			//mAh	骸甧秖
-	uint16_t	MaxVoltage;		//cell 程筿溃 0.1mV
-	uint16_t	MinVoltage;		//cell 程筿溃 0.1mV
+	uint16_t	MaxVoltage;		//cell 程筿溃 1mV
+	uint8_t		MaxVoltageBmu;
+	uint8_t		MaxVoltagPosition;
+	uint16_t	MinVoltage;		//cell 程筿溃 1mV
+	uint8_t		MinVoltageBmu;
+	uint8_t		MinVoltagePosition;	
 	uint16_t	MaxNtcTemp;		//Ntcs 程蔼放
+	uint8_t		MaxNtcBmu;
+	uint8_t		MaxNtcPosition;
 	uint16_t	MinNtcTemp;
-	uint32_t	SystemFlag1;		//BMU1 & BMU2
+	uint8_t		MinNtcBmu;
+	uint8_t		MinNtcPosition;
+	uint32_t	SystemFlag1;		//SCU1 & SCU2
 	uint32_t	SystemFlag2;
 }tBmsBuf;
 
@@ -98,17 +110,16 @@ static tBmsBuf	mBmsBuf[SYSTEM_MAX_SCU_NUM];
 	static uint8_t	ScuID = 0x01;
 #endif
 static uint8_t	MasterFlag = 0;
-//static uint8_t	OdInStatus;
 static uint8_t	WaitTime;
 static uint8_t  OdInHiCount = 0;
 static uint8_t	OdInLoCount = 0;
-
+static uint8_t	OdInSignalMode = OD_IN_MODE_UNKNOW;
 static void (*OdOutSignalProcessor)(void) = {0};
-//static void (*OdInSignalProcessor)(void) = {0};
 
 static uint8_t	AssignNextScuIdModeFlag = 0;
 static uint8_t	ScuIdRequestModeFlag = 0;
-//OdInSignalProcessor
+static uint16_t	OdOutOutputCount = 0;
+//outputCount
 
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -184,8 +195,8 @@ static void checkWhichScuRelayOn(void)
 		}
 	}
 	
-	sprintf(str,"Turn On Relay Num=%d",RelayOnNum);
-	appBmsDebugMsg(str);
+	//sprintf(str,"Turn On Relay Num=%d",RelayOnNum);
+	//appBmsDebugMsg(str);
 	
 	if(RelayOnNum == 0)
 	{		
@@ -276,16 +287,89 @@ static void checkWhichScuRelayOn(void)
 	}
 }
 
-static void outputNextScuCanRequestIdSignal(void)	//1T+2T
+
+static void outputNextScuCanRequestIdSignal(void)	//2T+2T
 {
-	static	uint8_t	count = 0;
+//	static uint16_t	outputCount = 0;
+	static	uint8_t	count = MAX_CYCLE_COUNT;
+	
 	count++;
-	if(count == 1)
-		HalBspOdOutCtrl(1);
-	else if(count == (SIGNAL_HI_BASE_NUM * SIGNAL_T_BASE_COUNT))
-		HalBspOdOutCtrl(0);
-	else if(count >= ((SIGNAL_HI_BASE_NUM + SIGNAL_LO_BASE_NUM) * SIGNAL_T_BASE_COUNT))
+	OdOutOutputCount++;
+	
+	if(count >= ((ASSIGN_ID_HI_BASE_NUM + ASSIGN_ID_LO_BASE_NUM) * SIGNAL_T_BASE_COUNT))
+	{
 		count = 0;
+		if(OdOutOutputCount >= ASSIGN_NEXT_SCUID_COUNT)
+		{
+			OdOutOutputCount = 0;
+			HalBspOdOutCtrl(0);
+			//appBmsDebugMsg("Stop OD Out");
+			OdOutSignalProcessor = 0;
+		}
+		else
+			HalBspOdOutCtrl(1);
+	}
+	else if(count == (ASSIGN_ID_HI_BASE_NUM * SIGNAL_T_BASE_COUNT))
+		HalBspOdOutCtrl(0);
+	
+}
+static void sendResetScuIdCanPackage(void)
+{
+	smp_can_package_t	CanPkg;
+	uint8_t	u8;
+
+	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
+									SMP_COMMON_RESET_SCU_ID_OBJ_INDEX,
+									0);
+
+	CanPkg.dlc = 8;
+	memcpy(&CanPkg.dat[0], "RstScuID", 8);
+	appBmsDebugMsg("Reset All ScuID");
+
+	for(u8=0; u8<5; u8++)
+		appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+}
+
+static void enterMasterMode(void)
+{
+	ScuID = 1;	
+	sendResetScuIdCanPackage();
+	saveScuIdPar(1);
+	MasterFlag = 1;
+	appBmsExitScuIdRequestMode();
+	LibSwTimerOpen(masterSwTimerHandler, 0);
+	appBmsEnterScuIdAssignMode();
+	appBmsDebugMsg("I am Master");
+}
+
+static void outputFindFirstScuSignal(void)	//3T+1T
+{
+//	static uint16_t	outputCount = 0;
+	static	uint8_t	count = MAX_CYCLE_COUNT;
+	
+	count++;
+	OdOutOutputCount++;
+	if(count >= ((FIND_SCUID_HI_BASE_NUM + FIND_SCUID_LO_BASE_NUM) * SIGNAL_T_BASE_COUNT))
+	{
+		count = 0;
+		if(OdOutOutputCount >= FIND_FIRST_SCU_COUNT)
+		{
+			OdOutOutputCount = 0;
+			HalBspOdOutCtrl(0);
+			//appBmsDebugMsg("Stop OD Out");
+			OdOutSignalProcessor = 0;
+		
+			if(OdInSignalMode == OD_IN_MODE_UNKNOW)	
+			{
+				appBmsDebugMsg("I am first SCU !!");			
+				enterMasterMode();
+			}
+		}
+		else
+			HalBspOdOutCtrl(1);
+	}
+	else if(count == (FIND_SCUID_HI_BASE_NUM * SIGNAL_T_BASE_COUNT))
+		HalBspOdOutCtrl(0);
 }
 
 static void masterProcessor(void)
@@ -321,10 +405,9 @@ static uint8_t getOdInMode(void)
 //	sprintf(str,"OD in Duty = %d", duty);
 //	appBmsDebugMsg(str);
 
-//	if(duty >= MASTER_MODE_DUTY)
-//		return OD_IN_MODE_MSATER;
-//	else 
-	if(duty >= HOST_SETUP_ID_MODE_DUTY_L && duty <= HOST_SETUP_ID_MODE_DUTY_H)
+	if(duty >= FIND_FIRST_SCUID_DUTY_L && duty <= FIND_FIRST_SCUID_DUTY_H)
+		return OD_IN_MODE_FIND_FIRST_SCUID;
+	else if(duty >= HOST_SETUP_ID_MODE_DUTY_L && duty <= HOST_SETUP_ID_MODE_DUTY_H)
 		return OD_IN_MODE_HOST_SETUP_ID;
 	else if(duty < STANDBY_MODE_DUTY)
 		return OD_IN_MODE_STANDBY;
@@ -397,22 +480,7 @@ static uint8_t getOdInSignalDuty(void)
 	}
 	return 0;
 }
-static void sendResetScuIdCanPackage(void)
-{
-	smp_can_package_t	CanPkg;
-	uint8_t	u8;
 
-	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
-									SMP_COMMON_RESET_SCU_ID_OBJ_INDEX,
-									0);
-
-	CanPkg.dlc = 8;
-	memcpy(&CanPkg.dat[0], "RstScuID", 8);
-	appBmsDebugMsg("Reset All ScuID");
-
-	for(u8=0; u8<5; u8++)
-		appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
-}
 
 
 static void sendRequestIdCanPackage(void)
@@ -429,6 +497,9 @@ static void sendRequestIdCanPackage(void)
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
 	appBmsDebugMsg("ID Request");
 }
+
+
+
 
 static void checkOdInSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
@@ -453,31 +524,26 @@ static void checkOdInSwTimerHandler(__far void *dest, uint16_t evt, void *vDataP
 		
 		if(mode == OD_IN_MODE_MSATER)// && ScuID == 0xff)
 		{
-			ScuID = 1;	
-			sendResetScuIdCanPackage();
-			saveScuIdPar(1);
-			MasterFlag = 1;
-			appBmsExitScuIdRequestMode();
-			LibSwTimerOpen(masterSwTimerHandler, 0);
-			appBmsEnterScuIdAssignMode();
-			appBmsDebugMsg("I am Master");
-			sprintf(str,"Oder In Hi=%d Lo= %d",	OdInHiCount, OdInLoCount);
-			appBmsDebugMsg(str);
-			return ; 
+			appBmsSendFindFirstScuCanPackage();
+			appBmsFindFirstScu();
+		//	enterMasterMode();
+			return; 
 		}
 		mode_count++;
 		if(mode_count < VALID_MODE_COUNT)
 			return;
 		if(mode == OD_IN_MODE_HOST_SETUP_ID)
 		{
+			OdInSignalMode = OD_IN_MODE_HOST_SETUP_ID;
 			sendRequestIdCanPackage();
+		}
+		else if(mode == OD_IN_MODE_FIND_FIRST_SCUID)
+		{
+			OdInSignalMode = OD_IN_MODE_FIND_FIRST_SCUID;
 		}
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{
-		//sprintf(str,"Oder In Hi=%d Lo= %d",	OdInHiCount, OdInLoCount);
-		//appBmsDebugMsg(str);
-
 		mode = getOdInMode();
 		switch(mode)
 		{
@@ -486,6 +552,9 @@ static void checkOdInSwTimerHandler(__far void *dest, uint16_t evt, void *vDataP
 			break;
 		case OD_IN_MODE_HOST_SETUP_ID:
 			appBmsDebugMsg("OD in Setup ID Mode");
+			break;
+		case OD_IN_MODE_FIND_FIRST_SCUID:
+			appBmsDebugMsg("OD in Find First SCU");
 			break;
 		case OD_IN_MODE_MSATER:
 			appBmsDebugMsg("OD in Master Mode");
@@ -535,11 +604,38 @@ static void updateScuIdleCount(uint8_t scuid)
 		return;
 	mBmsBuf[scuid-1].IdleCount = BMS_IDLE_COUNT;
 }
+
 /* Public function prototypes -----------------------------------------------*/
+void appBmsSendFindFirstScuCanPackage(void)
+{
+	smp_can_package_t	CanPkg;
+	uint8_t	u8;
+
+	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_COMMON_RX, 0,
+									SMP_COMMON_FIND_FIRST_SCU_OBJ_INDEX,
+									0);
+
+	CanPkg.dlc = 8;
+	memcpy(&CanPkg.dat[0], "FirstScu", 8);
+	for(u8=0; u8<5; u8++)
+		appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+	appBmsDebugMsg("Find First Scu");
+}
+
+
 void appBmsRcvScuIdBrocast(uint8_t scuid)
 {
+	char	str[100];
+	
+	sprintf(str, "My ID = %d RcvId = %d", ScuID, scuid);
+	//appBmsDebugMsg(str);
+	appSerialCanDavinciSendTextMessage(str);
 	if(scuid == ScuID)
+	{
 		appBmsDebugMsg("=========== ID Error ============");
+		appBmsSendFindFirstScuCanPackage();
+		appBmsFindFirstScu();
+	}
 }
 
 void appBmsResetScuId(void)
@@ -548,10 +644,34 @@ void appBmsResetScuId(void)
 	LibSwTimerClose(masterSwTimerHandler, 0);
 	AssignNextScuIdModeFlag = 0;
 	OdOutSignalProcessor = 0;
+	OdOutOutputCount = 0;
 	ScuIdRequestModeFlag = 1;
 }
 
+void appBmsFindFirstScu(void)
+{
+	ScuID = 0xff;
+	LibSwTimerClose(masterSwTimerHandler, 0);
+	AssignNextScuIdModeFlag = 0;
+	ScuIdRequestModeFlag = 0;
+	OdInSignalMode = OD_IN_MODE_UNKNOW;
+	OdOutOutputCount = 0;
+	OdOutSignalProcessor = outputFindFirstScuSignal;
+}
+#if	0
+void appBmsSetScuMinMaxValue(uint8_t scuid, uint16_t MinCellVoltage,
+				uint16_t MaxCellVoltage, uint16_t MintNtcTemp,
+a
+void appBmsSetScuMinMaxValue(uint8_t scuid, uint16_t MinCellVoltage,
+				uint16_t MaxCellVoltage, uint16_t MintNtcTemp,
+axCv,
+	uint16_t voltage)
+{
 	
+}
+	#endif
+
+
 void appBmsSetScuSystemFlag(uint8_t scuid, uint32_t flag1, uint32_t flag2)
 {
 //	appBmsDebugMsg("Rcv system flag..0");
@@ -590,8 +710,8 @@ void appBmsSetScuVbat(uint8_t scuid, uint32_t VbInt, uint32_t VbExt)
 
 void appBmsStopOutputAssignIdSignal(void)
 {
-	if(AssignNextScuIdModeFlag == 0)
-		return;
+//	if(AssignNextScuIdModeFlag == 0)
+//		return;
 	OdOutSignalProcessor = 0;
 	
 	//LibSwTimerClose(assignSlaveIdSwTimerHandler, 0);
@@ -624,6 +744,7 @@ void  appBmsExitScuIdRequestMode(void)
 void appBmsEnterScuIdAssignMode(void)
 {
 	AssignNextScuIdModeFlag = 1;
+	OdOutOutputCount = 0;
 	OdOutSignalProcessor = outputNextScuCanRequestIdSignal;
 	//LibSwTimerOpen(assignSlaveIdSwTimerHandler, 0);
 }
@@ -663,7 +784,16 @@ void appBmsOpen(void)
 		LibSwTimerOpen(masterSwTimerHandler, 0);
 		ScuIdRequestModeFlag = 0;
 	}
-//	OdInStatus = 0;
+	{
+		char	str[100];
+		sprintf(str, "SCUID = %d", ScuID);
+		appSerialCanDavinciSendTextMessage(str);
+	}
+	if(appBmsIsValidScuid(ScuID) == 0)
+	{
+		appBmsSendFindFirstScuCanPackage();
+		appBmsFindFirstScu();
+	}
 	LibSwTimerOpen(checkOdInSwTimerHandler, 0);
 	
 #else

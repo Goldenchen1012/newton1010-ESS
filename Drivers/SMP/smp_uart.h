@@ -20,7 +20,8 @@ typedef enum{
 	UART_DATA_READY = 0,					/* UART data has been received */
 	UART_BUFFER_FULL,       			/* An error in the FIFO buffer full. The FIFO error code is stored in uart_evt_type. */
 	UART_COMMUNICATION_ERR,				/* UART has occurred during reception */
-	UART_TX_EMPTY									/* UART has complete transmission of all variable data */
+	UART_TX_EMPTY,							  /* UART has complete transmission of all variable data */ 
+	UART_TX_READY_TO_SEND         /* UART data TX  for RS485 directiion use.*/
 }uart_evt_type;
 
 typedef void(*smp_uart_event_t)(uart_evt_type p_evt);

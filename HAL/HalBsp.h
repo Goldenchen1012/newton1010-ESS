@@ -64,6 +64,7 @@ uint8_t HalBspGetDocpLatchStatus(void);
 uint8_t HalBspGetCocpLatchStatus(void);
 uint8_t HalBspGetOdInStatus(void);
 
+void halBspGpioControl(uint8_t group, uint32_t mask, uint32_t dat);
 
 
 #ifdef __cplusplus

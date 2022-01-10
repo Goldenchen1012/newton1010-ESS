@@ -72,9 +72,32 @@ static void scuVbat(smp_can_package_t *pCanPkg)
 	scuid = SMP_CAN_GET_SCU_ID(pCanPkg->id);
 	appBmsSetScuVbat(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
 }
+static void scuMinMaxValue(smp_can_package_t *pCanPkg)
+{
+	uint8_t	scuid;
+	tIbyte	MinCellVoltage;
+	tIbyte	MaxCellVoltage;
+	tIbyte	MinNtcTemp;
+	tIbyte	MaxNtcTemp;	
+	
+	scuid = SMP_CAN_GET_SCU_ID(pCanPkg->id);
+	
+	MinCellVoltage.b[0] = pCanPkg->dat[0];
+	MinCellVoltage.b[1] = pCanPkg->dat[1];
+
+	MaxCellVoltage.b[0] = pCanPkg->dat[2];
+	MaxCellVoltage.b[1] = pCanPkg->dat[3];
+
+	MinNtcTemp.b[0] = pCanPkg->dat[4];
+	MinNtcTemp.b[1] = pCanPkg->dat[5];
+
+	MaxNtcTemp.b[0] = pCanPkg->dat[6];
+	MaxNtcTemp.b[1] = pCanPkg->dat[7];	
+	
+	appBmsSetScuVbat(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
 
 
-
+}
 
 SMP_CAN_DECODE_CMD_START(mDavinciCanBaseRxTxTab)
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, 0,
@@ -101,19 +124,11 @@ SMP_CAN_DECODE_CMD_START(mDavinciCanBaseRxTxTab)
 								CHECK_SMP_CAN_OBJ,
 								scuVbat)
 
-/*
-#define	SMP_BASE_SCU_ID_OBJ_INDEX				0x00
-#define	SMP_BASE_RM_QMAX_OBJ_INDEX				0x02
-#define					0x03
-#define	SMP_BASE_FCC_OBJ_INDEX					0x04
-#define	SMP_BASE_VB_OBJ_INDEX					0x05
-#define	SMP_BASE_MIN_MAX_VALUE_OBJ_INDEX		0x06
-#define	SMP_BASE_VALID_BMU_OBJ_INDEX			0x07
-//#define	SMP_BASE_ID_ASSIGN_OBJ_INDEX			0x08
-#define	SMP_BASE_SCU_NTC_VOLTAGE_OBJ_INDEX		0x09
-#define	SMP_BASE_SCU_NTC_TEMP_OBJ_INDEX			0x0A
-
-*/
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, 0,
+									SMP_BASE_MIN_MAX_VALUE_OBJ_INDEX,
+									0),
+								CHECK_SMP_CAN_OBJ,
+								scuMinMaxValue)
 
 
 

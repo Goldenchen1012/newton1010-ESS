@@ -69,20 +69,26 @@ static void notifyFunNone(void)
 static void notifyBaseScuId(void)
 {
 	smp_can_package_t	CanPkg;
-	uint16_t	subindex;
+	tIbyte	subindex;
+			
 	
 #define	CHIP_ID0	(DWORD)(*(DWORD*)(0x1FFF7590UL))
 #define	CHIP_ID1	(DWORD)(*(DWORD*)(0x1FFF7594UL)) 
 #define	CHIP_ID2	(DWORD)(*(DWORD*)(0x1FFF7598UL)) 
 
-	subindex = CHIP_ID0;
-	subindex ^= CHIP_ID1;
-	subindex ^= CHIP_ID2;
-	subindex &= 0x3ff;
+	subindex.i = appProjectGetTimerCount();
+	subindex.i ^= subindex.b[1];
+		
+//	subindex = CHIP_ID0;
+//	subindex ^= CHIP_ID1;
+//	subindex ^= CHIP_ID2;
+	subindex.i &= 0x3fe;
+	if(appBmsIsMaster())
+		subindex.i |= 0x01;
 	
 	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, notifyScuId(),
 									SMP_BASE_SCU_ID_OBJ_INDEX,
-									subindex);
+									subindex.i);
 	CanPkg.dlc = 0;
 	
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);

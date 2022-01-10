@@ -51,11 +51,13 @@
 /* Private functions ---------------------------------------------------------*/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == W5500_INT_PIN)
+  if (GPIO_Pin == SMP_GPIO_PIN(BSP_W5500_INT_PIN))
   {
     //Flag_W5500_INT = true;
 	W5500_INT_Cnt++;
 	W5500_Read_SnIR_End = false;  
   }
 }
+
+
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

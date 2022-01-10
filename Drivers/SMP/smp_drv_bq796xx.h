@@ -367,11 +367,11 @@ typedef enum{
 #define BQ796XX_RES_ERR_CRC													  0xFE
 
 
-#define BQ796XX_NCS_PIN																PIN15
-#define BQ796XX_NCS_PORT															SMP_GPIOA
+#define BQ796XX_NCS_PIN																BSP_BQ796XX_NCS_PIN
+#define BQ796XX_NCS_PORT															BSP_BQ796XX_NCS_PORT
 
-#define BQ796XX_RX_PIN																PIN10
-#define BQ796XX_RX_PORT																SMP_GPIOC
+#define BQ796XX_RX_PIN																BSP_BQ796XX_RX_PIN
+#define BQ796XX_RX_PORT																BSP_BQ796XX_RX_PORT
 
 // ******************** AFE registers ********************
 #define BQ796XX_DEV_CONF															0x0002

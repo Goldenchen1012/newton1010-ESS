@@ -26,8 +26,149 @@
 #define _W5500_SPI_FDM_OP_LEN1_     0x01
 #define _W5500_SPI_FDM_OP_LEN2_     0x02
 #define _W5500_SPI_FDM_OP_LEN4_     0x03
-
 #define SOCK_ANY_PORT_NUM  0xC000
+
+typedef struct{
+	uint32_t AddrSel;
+	uint16_t Len;
+	uint8_t *pData;
+}R_W_NetInfo;
+
+typedef struct{
+	uint8_t SocketStatus;
+	smp_w5500_event_t cbFunPtr;	
+	W5500_Socket_parm Parm;
+
+}W5500_RegisterList;	
+/********** W5500 Init Step **********/
+typedef enum{
+	Init_HW_Reset_1,
+	Init_HW_Reset_2,
+	Init_SW_Reset,
+	Init_PHY_Conf,
+	Init_PHY_Read,
+	Init_PHY_Rst,
+	Init_PHY_Verify_Read,
+	Init_PHY_Verify,
+	Init_SET_NetInfo,
+	Init_Read_NetInfo,
+	Init_Verify_NetInfo,
+	Init_SET_SUBMask,
+	Init_SET_LocalIP,
+	Init_INT_MASK_Config,
+	Init_SocketNum_INT_MASK_Config,
+	Init_SocketEvent_INT_MASK_Config,
+	Init_End
+}W5500_init_step;
+/*************************************/
+/********* W5500 Server Step *********/
+typedef enum{
+	/******* Socket reset and open *******/
+	Server_Read_Socket_Status,
+	Server_Check_Socket_Status,
+	Socket_Open_Read_IP,
+	Socket_Open_Check_IP,
+	Set_Socket_Close,
+	Read_Cmd_Register_Status_0,
+	Check_Close_Cmd_Recv,
+	RST_All_INT_Flag,
+	Read_Socket_Status_0,
+	Verify_Socket_Close_0,
+	Set_Socket_Mode,
+	Set_Socket_Port_Highbyte,
+	Set_Socket_Port_Lowbyte,
+	Set_Socket_Open,
+	Read_Cmd_Register_Status_1,
+	Check_Open_Cmd_Recv,
+	Read_Socket_Status_1,
+	Verify_Socket_Close_1,
+	/******* Socket listen *******/	
+	Socket_Listen_Read_Mode,
+	Socket_Listen_Verify_Mode,
+	Set_Socket_Listen,
+	Read_Cmd_Register_Status_2,
+	Check_Listen_Cmd_Recv,
+	Read_Socket_Status_2,
+	Verify_Socket_Listen,
+	/****** Socket establish *****/	
+	Read_SIR_Register,
+	Check_SocketNum_Int,
+	Read_SIR_End,
+	Read_Socket_INT_event,
+	Verify_Connect_Event,
+	Clear_CON_INT_Flag,
+	Read_Remote_IP,
+	Read_Remote_Port_HighByte,
+	Save_High_Byte_Read_Remote_Port_LowByte,
+	Save_Port_Low_Byte,
+	Read_Recv_Cnt_HighByte,
+	Read_Recv_Cnt_LowByte,
+	Check_Recv_Data,
+	Read_Buf_Max_Len,
+	Check_Oversize_Event,
+	Read_Socket_Buf_Addr_HighByte,
+	Read_Socket_Buf_Addr_LowByte,
+	Read_Socket_Buf_data,
+	ParserData,
+	Update_Buf_Offset_Highbyte,
+	Update_Buf_Offset_Lowbyte,
+	Set_Scoket_Recv,
+	Read_Cmd_Register_Status_3,
+	Check_Recv_Cmd_Recv,
+	Clear_Recv_INT_Flag,
+	Read_Tx_Buf_Max_Len,
+	Check_Response_Oversize,
+	Read_W5500_Tx_FSR_High,
+	Read_W5500_Tx_FSR_Low,
+	Read_W5500_Tx_Ptr_Highbyte,
+	Read_W5500_Tx_Ptr_Lowbyte,
+	Get_W5500_Tx_Ptr_Addr_and_Trans,
+	Update_Tx_Ptr_Highbyte,
+	Update_Tx_Ptr_Lowbyte,
+	Set_Socket_Send,
+	Read_Cmd_Register_Status_4,
+	Check_Send_Cmd_Recv,
+	Read_Socket_INT_event_1,
+	Clear_SendOK_INT_Flag,
+	Verify_Send_End,
+	/****** Socket disconnect *****/		
+	Set_Socket_Disconnect,
+	Read_Cmd_Register_Status_5,
+	Check_Discon_Cmd_Recv,
+	Read_Socket_INT_event_2,
+	Verify_Disconnct_End,
+	Clear_DISCON_INT_Flag,
+	Server_End,
+	//----------------
+	Read_Socket_INT_Event_New_1,
+	Check_INT_Event,
+}W5500_server_step;
+
+/*************************************/
+enum{
+	W5500_SPI_Idle = 0,
+	W5500_SPI_Busy,
+	W5500_SPI_Done
+};
+
+enum{
+	Socket_Disable = 0,
+	Socket_Enable,
+	Socket_Close,
+	Socket_Open
+};
+enum{
+	Event_Handle_Done,
+	Event_Handle_Ing
+};
+
+enum{
+	W5500_Status_Reset,
+	W5500_Status_Init_End,
+	W5500_Status_Server_Open
+};
+
+
 static uint16_t sock_any_port = SOCK_ANY_PORT_NUM;
 static uint16_t sock_io_mode = 0;
 static uint16_t sock_is_sending = 0;
@@ -64,8 +205,9 @@ uint32_t gu32Temp;
 volatile bool W5500_Read_SnIR_End;
 volatile uint16_t W5500_INT_Cnt = 0;
 
-
-smp_gpio_t		PB12;
+smp_gpio_t		W5500_RST_PIN;
+smp_gpio_t		W5500_INT_PIN;
+smp_gpio_t		W5500_SPI_CS_PIN;
 smp_spi_cs_t 	W5500_CS;
 smp_spi_t 		SPI_W5500;
 
@@ -74,21 +216,17 @@ wiz_NetInfo TmpNetInfo,RemoteNetInfo;
 
 W5500_RegisterList smpW5500Socket[W5500_MAX_SOCKET_NUM];
 
+
+
 /**
   * @brief This function handles W5500 INT EXTI Pin interrupt.
   */
 void EXTI9_5_IRQHandler(void)
 {
-#ifdef PCB_VER_1
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
-#else
-	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
-#endif
-
+	HAL_GPIO_EXTI_IRQHandler(SMP_GPIO_PIN(BSP_W5500_INT_PIN));
 }
 
 void smp_w5500_spiDMA_write_byte(uint32_t AddrSel, uint8_t Value){
-	uint8_t spi_data[4];
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_WRITE_ | _W5500_SPI_VDM_OP_);
 	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
@@ -99,9 +237,7 @@ void smp_w5500_spiDMA_write_byte(uint32_t AddrSel, uint8_t Value){
 
 }
 
-void smp_w5500_spiDMA_read_byte(uint32_t AddrSel){
-	uint8_t spi_data[3];
-	
+void smp_w5500_spiDMA_read_byte(uint32_t AddrSel){	
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_READ_ | _W5500_SPI_VDM_OP_);
 	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
@@ -111,8 +247,6 @@ void smp_w5500_spiDMA_read_byte(uint32_t AddrSel){
 	
 }
 void smp_w5500_spiDMA_read_byte_block(uint32_t AddrSel){
-	uint8_t spi_data[3];
-	
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_READ_ | _W5500_SPI_VDM_OP_);
 	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
@@ -137,8 +271,6 @@ void smp_w5500_spiDMA_WriteMulti(uint32_t AddrSel, uint8_t* pBuf,uint16_t Len){
 }
 
 void smp_w5500_spiDMA_ReadMulti(uint32_t AddrSel, uint16_t Len, uint8_t* Ptr){
-	uint8_t spi_data[3];
-	
 	gu8W5500_SPI_Status = W5500_SPI_Busy;
 	AddrSel |= (_W5500_SPI_READ_ | _W5500_SPI_VDM_OP_);
 	W5500_tx_Buf[0] = (AddrSel & 0x00FF0000) >> 16;
@@ -287,46 +419,40 @@ void smp_w5500_spi_config(void){
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 
-	
-	
-#ifdef PCB_VER_1
-	/*Configure GPIO pins : PE1 RST for PCB 1*/
-	__HAL_RCC_GPIOE_CLK_ENABLE();
-	GPIO_InitStruct.Pin = GPIO_PIN_1;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-	
-	/*Configure GPIO pin : PB7 INT Pin for PCB 1 */  
-	GPIO_InitStruct.Pin = GPIO_PIN_7;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-#else
 	/*Configure GPIO pins : PB6 RST */
-	GPIO_InitStruct.Pin = GPIO_PIN_6;
+	/*GPIO_InitStruct.Pin = BSP_W5500_RST_PIN ;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	HAL_GPIO_Init(BSP_W5500_RST_PORT, &GPIO_InitStruct);*/
+	
+	W5500_RST_PIN.pin = BSP_W5500_RST_PIN;
+	W5500_RST_PIN.port = BSP_W5500_RST_PORT;
+	W5500_RST_PIN.mode = SMP_GPIO_MODE_OUTPUT_PP;
+	smp_gpio_init(&W5500_RST_PIN); 
+		
 	
 	/*Configure GPIO pin : PD8 INT Pin */  
-	GPIO_InitStruct.Pin = GPIO_PIN_8;
+	/*GPIO_InitStruct.Pin = BSP_W5500_INT_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-#endif	
+	HAL_GPIO_Init(BSP_W5500_INT_PORT , &GPIO_InitStruct);*/
 	
-	/*EXTI interrupt init*/
-	HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+	/*EXTI Pin init*/
+	W5500_INT_PIN.pin = BSP_W5500_INT_PIN;
+	W5500_INT_PIN.port = BSP_W5500_INT_PORT;
+	W5500_INT_PIN.mode = SMP_GPIO_MODE_IT_FALLING;
+	smp_gpio_init(&W5500_INT_PIN);
 	
-	PB12.port = SMP_GPIOB;
-	PB12.pin = PIN12;	
+	/*EXTI interrupt vector init*/
+	HAL_NVIC_SetPriority(BSP_W5500_INT_PIN_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(BSP_W5500_INT_PIN_IRQn);
+	
+	W5500_SPI_CS_PIN.pin = BSP_W5500_SPI_SCS_PIN;
+	W5500_SPI_CS_PIN.port = BSP_W5500_SPI_SCS_PORT;	
 	
 	W5500_CS.spi_num = SPI_module2;
-	W5500_CS.cs_handler = PB12;	
+	W5500_CS.cs_handler = W5500_SPI_CS_PIN;	
 	smp_spi_master_cs_init(&W5500_CS);
 	
 	SPI_W5500.num = SPI_module2;
@@ -392,14 +518,16 @@ int8_t W5500_Init_Step(uint8_t Step){
 	if(gu8W5500_SPI_Status == W5500_SPI_Idle){	
 		switch(Step){
 			case Init_HW_Reset_1:
-				HAL_GPIO_WritePin(W5500_RST_PORT, W5500_RST_PIN, GPIO_PIN_RESET);
+				//HAL_GPIO_WritePin(BSP_W5500_RST_PORT, BSP_W5500_RST_PIN, GPIO_PIN_RESET);
+				smp_gpio_set_state(&W5500_RST_PIN, GPIO_ACTIVE_LOW);
 				ms_Count = 0;
 				gu8_W5500_Init_Steps = Init_HW_Reset_2;
 			case Init_HW_Reset_2:
 				ms_Count++;
 				if(ms_Count == HW_RESET_DELAY_TIME_MS){
 					ms_Count = 0;
-					HAL_GPIO_WritePin(W5500_RST_PORT, W5500_RST_PIN, GPIO_PIN_SET);
+					//HAL_GPIO_WritePin(BSP_W5500_RST_PORT, BSP_W5500_RST_PIN, GPIO_PIN_SET);
+					smp_gpio_set_state(&W5500_RST_PIN, GPIO_ACTIVE_HIGH);
 					gu8_W5500_Init_Steps = Init_SW_Reset;
 				}
 				break;
@@ -693,7 +821,6 @@ int8_t W5500_Server_Step_New(uint8_t Step, uint8_t SocketNum){
 	TempSocket = &smpW5500Socket[SocketNum];
 	if(gu8W5500_SPI_Status == W5500_SPI_Idle){	
 		switch(Step){
-#ifdef DMA_Test 
 			case Read_Socket_INT_Event_New_1:
 				smp_w5500_spiDMA_read_byte(Sn_IR(SocketNum));
 				gu8Socket_Sever_Step[SocketNum] = Check_INT_Event;
@@ -721,30 +848,6 @@ int8_t W5500_Server_Step_New(uint8_t Step, uint8_t SocketNum){
 						break;
 				}
 				break;
-#else
-			case Read_Socket_INT_Event_New_1:
-				smp_w5500_spiDMA_read_byte_block(Sn_IR(SocketNum));
-				switch(Readbyte_value){
-					case Sn_IR_CON:
-						gu8Socket_Sever_Step[SocketNum] = Clear_CON_INT_Flag;
-						break;
-					case Sn_IR_RECV:
-						gu8Socket_Sever_Step[SocketNum] = Read_Recv_Cnt_HighByte;
-						break;
-					case Sn_IR_DISCON:
-						gu8Socket_Sever_Step[SocketNum] = Set_Socket_Disconnect;
-						break;
-					case Sn_IR_TIMEOUT:
-						//while(1);
-						break;
-					case Sn_IR_SENDOK:
-						//while(1);
-						break;
-					default:
-						break;
-				}
-				break;
-#endif
 			/****** Socket establish : Sn_IR_CON*****/			
 			case Clear_CON_INT_Flag:
 				smp_w5500_spiDMA_write_byte(Sn_IR(SocketNum), (Sn_IR_CON&SOCKET_NUM_BASE)); 

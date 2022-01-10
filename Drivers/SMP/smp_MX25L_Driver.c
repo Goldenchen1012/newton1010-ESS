@@ -19,6 +19,8 @@
 #include "smp_debug.h"
 #include "smp_gpio.h"
 #include "smp_fifo_flash.h"
+#include "LibSwTimer.h"
+
 #include <string.h>	
 
 #if 0
@@ -85,6 +87,7 @@
                             }  
 
 smp_gpio_t MX25L_write_protection_handler;
+smp_gpio_t MX25L_hold_handler;
 smp_gpio_t MX25L_PIN;
 smp_spi_cs_t MX25L_CS0;
 smp_spi_t MX25L_SPI_1;
@@ -98,7 +101,28 @@ smp_flash_package flash_read_buffer[FLASH_READ_BUFFER_SIZE];
 smp_flash_t mDavinci_flash = MX25L_FLAH_BUFFER;
 void MX25L_SPI_1_event_handler(smp_spi_evt_type p_evt);
 bool UseDMAFlag = false;
-													
+			
+int8_t smp_mx25l_flash_read_status(smp_mx25l_status *mx251_status);
+
+
+static void smp_mx25l_flash_SwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
+{
+//	char	str[100];
+//	static uint8_t	count = 0;
+	smp_mx25l_status mx251_status;
+	
+	//GPIOD->ODR |= GPIO_PIN_14;
+	if(evt == LIB_SW_TIMER_EVT_SW_10MS_2)
+	{
+		GPIOD->ODR |= GPIO_PIN_15;
+//		smp_mx25l_flash_read_status(&mx251_status);
+		GPIOD->ODR &= ~GPIO_PIN_15;
+//		if((mx251_status.status1&STATUS_WRITE_IN_PROGRESS)==0){		
+//			 MX25L_SPI_send_command();
+//		}
+	}
+}
+		
 int8_t flash_fifo_init(smp_fifo_flash_t * p_fifo, smp_flash_package * p_buf, uint16_t buf_size)
 {
     // Check buffer for null pointer.
@@ -118,7 +142,7 @@ int8_t smp_mx25l_flash_init(void)
 	//initial MX25L write protection pin
 	MX25L_write_protection_handler.port = BSP_MX25L_WRITE_PROTECTON_GPIO_PORT;
 	MX25L_write_protection_handler.pin = BSP_MX25L_WRITE_PROTECTON_PIN;
-	MX25L_write_protection_handler.mode = SMP_GPIO_MODE_OUTPUT_OD;	
+	MX25L_write_protection_handler.mode = SMP_GPIO_MODE_OUTPUT_PP;	
 	
 	#ifdef MX25LXXX_DEBUG_PRINTF 
 	printf("flash init\r\n");
@@ -128,15 +152,25 @@ int8_t smp_mx25l_flash_init(void)
 		return SMP_ERROR_NOT_FOUND;
 	}
 	smp_gpio_set_state(&MX25L_write_protection_handler, GPIO_ACTIVE_HIGH);
+
+	MX25L_hold_handler.port = BSP_MX25L_HOLD_GPIO_PORT;
+	MX25L_hold_handler.pin = BSP_MX25L_HOLD_PIN;
+	MX25L_hold_handler.mode = SMP_GPIO_MODE_OUTPUT_PP;	
+	
+	if(smp_gpio_init(&MX25L_hold_handler) != HAL_OK){
+		return SMP_ERROR_NOT_FOUND;
+	}
+	smp_gpio_set_state(&MX25L_hold_handler, GPIO_ACTIVE_HIGH);
+
 	
 	// CS Initial
 	MX25L_PIN.port = BSP_MX25L_CS_GPIO_PORT;
 	MX25L_PIN.pin = BSP_MX25L_CS_PIN;	
-	MX25L_CS0.spi_num = SPI_module2;
+	MX25L_CS0.spi_num = SPI_module3;
 	MX25L_CS0.cs_handler = MX25L_PIN;	
 	smp_spi_master_cs_init(&MX25L_CS0);
 	
-	MX25L_SPI_1.num = SPI_module2;
+	MX25L_SPI_1.num = SPI_module3;
 	MX25L_SPI_1.mode = SPI_mode0;
 	if(smp_spi_master_init(&MX25L_SPI_1, MX25L_SPI_1_event_handler, false) != SMP_SUCCESS){
 		return SMP_ERROR_NOT_FOUND;
@@ -145,6 +179,8 @@ int8_t smp_mx25l_flash_init(void)
 	flash_fifo_init(&flash_read_fifo, mDavinci_flash.buffers.rx_buf, mDavinci_flash.buffers.rx_buf_size);
 	smp_fifo_flash_open(&flash_read_fifo);
 	
+//	LibSwTimerOpen(smp_mx25l_flash_SwTimerHandler, 0);
+
 	return SMP_SUCCESS;	
 }
 

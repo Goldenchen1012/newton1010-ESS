@@ -41,10 +41,12 @@ void HalBspInit(void)
 	BSP_DO1_OPEN();
 	BSP_DO2_OPEN();
 	
+	#if 0
 	BSP_ADC_CH_SEL_OPEN();
 	BSP_ADC_CS_MAIN_OPEN();
 	BSP_ADC_CS_AUX_OPEN();
-
+  #endif 
+	
 	BSP_K1_OPEN();
 	BSP_K2_OPEN();
 	BSP_K3_OPEN();
@@ -93,6 +95,7 @@ void HalBspDO2Ctrl(uint8_t hi)
 		BSP_DO2_LO();
 }
 
+#if 0
 void HalBspAdcChCtrl(uint8_t hi)
 {
 	if(hi)
@@ -115,6 +118,8 @@ void HalBspAdcCsAuxCtrl(uint8_t hi)
 	else
 		BSP_ADC_CS_AUX_LO();
 }
+#endif 
+
 void HalBslK1Ctrl(uint8_t hi)
 {
 	if(hi)
@@ -329,8 +334,25 @@ uint8_t HalBspGetOdInStatus(void)
 		return 0;
 }
 
+typedef void (* tGpioControlFun)(void);
 
+typedef struct{
+	uint8_t	group;
+	uint32_t	bits;
+	tGpioControlFun	HiFun;
+	tGpioControlFun	LoFun;
+}tGpioCtrlGroup;
+tGpioCtrlGroup	GpioCtrlGroup[]={
+{0} 
+	
+};
+	
 
+void halBspGpioControl(uint8_t group, uint32_t mask, uint32_t dat)
+{
+	//group
+	
+}
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

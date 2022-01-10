@@ -13,8 +13,8 @@
   *
   ******************************************************************************
   */
-#ifndef _DAVINCI_BSP_REV1_H_
-#define _DAVINCI_BSP_REV1_H_
+#ifndef _DAVINCI_BSP_REV2_H_
+#define _DAVINCI_BSP_REV2_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include "stm32l4xx_hal.h"
@@ -32,8 +32,10 @@ uint16_t      gpio_pin;
 }bsp_adc_init_io_config;
 
 /* Public define ------------------------------------------------------------*/
+#define BSP_BQ7600	
 #define BSP_AD7946 
 #define BSP_MX25L
+#define BSP_W5500
 #define BSP_IRM
 
 #ifndef SMP_APP_FM_NOR_FLASH_ENABLE
@@ -148,6 +150,13 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 										                           GPIO_MODE_INPUT, GPIO_NOPULL, \
 										                           GPIO_SPEED_FREQ_HIGH);}
 #define BSP_OD_IN_READ()                       (BSP_OD_IN_GPIO->IDR & BSP_OD_IN_PIN)
+																							 
+#define	BSP_NFAULT_GPIO                         GPIOE
+#define	BSP_NFAULT_PIN                          GPIO_PIN_4
+#define BSP_NFAULT_OPEN()                       {HalBspSetGpio(BSP_NFAULT_GPIO,BSP_NFAULT_PIN, \
+										                            GPIO_MODE_INPUT, GPIO_NOPULL, \
+										                            GPIO_SPEED_FREQ_HIGH);}
+#define BSP_NFAULT_READ()                       (BSP_NFAULT_GPIO->IDR & BSP_NFAULT_PIN)	 
 //----------------------------------------------------------------------------------
 
 // Board Output function pin define
@@ -167,7 +176,8 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 										                           GPIO_SPEED_FREQ_HIGH);}
 #define BSP_DO2_HI()                           (BSP_DO2_GPIO->BSRR = BSP_DO2_PIN)
 #define BSP_DO2_LO()                           (BSP_DO2_GPIO->BRR = BSP_DO2_PIN)
-										
+	
+#if 0																							 
 #define	BSP_ADC_CH_SEL_GPIO                    GPIOC
 #define	BSP_ADC_CH_SEL_PIN                     GPIO_PIN_5
 #define BSP_ADC_CH_SEL_OPEN()                  {HalBspSetGpio(	BSP_ADC_CH_SEL_GPIO, BSP_ADC_CH_SEL_PIN, \
@@ -191,6 +201,8 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 										                           GPIO_SPEED_FREQ_HIGH);}
 #define BSP_ADC_CS_AUX_HI()                    (BSP_ADC_CS_AUX_GPIO->BSRR = BSP_ADC_CS_AUX_PIN)
 #define BSP_ADC_CS_AUX_LO()                    (BSP_ADC_CS_AUX_GPIO->BRR = BSP_ADC_CS_AUX_PIN)
+
+#endif
 
 #define	BSP_K1_GPIO                            GPIOD
 #define	BSP_K1_PIN                             GPIO_PIN_9
@@ -224,8 +236,8 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_K4_HI()                            (BSP_K4_GPIO->BSRR = BSP_K4_PIN)
 #define BSP_K4_LO()                            (BSP_K4_GPIO->BRR = BSP_K4_PIN)
 
-#define	BSP_RELAY_PS_GPIO				               GPIOA
-#define	BSP_RELAY_PS_PIN                       GPIO_PIN_12
+#define	BSP_RELAY_PS_GPIO				               GPIOB
+#define	BSP_RELAY_PS_PIN                       GPIO_PIN_2
 #define BSP_RELAY_PS_OPEN()                    {HalBspSetGpio(	BSP_RELAY_PS_GPIO, BSP_RELAY_PS_PIN, \
                                                GPIO_MODE_OUTPUT_PP, GPIO_PULLUP, \
                                                GPIO_SPEED_FREQ_HIGH);}
@@ -272,7 +284,24 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_OD_OUT_HI()                        (BSP_OD_OUT_GPIO->BSRR = BSP_OD_OUT_PIN)
 #define BSP_OD_OUT_LO()                        (BSP_OD_OUT_GPIO->BRR = BSP_OD_OUT_PIN)
 
+#define	BSP_RS485_DERE_GPIO                    GPIOB
+#define	BSP_RS485_DERE_PIN                     GPIO_PIN_7
+#define BSP_RS485_DERE_OPEN()                  {HalBspSetGpio(	BSP_RS485_DERE_GPIO,BSP_RS485_DERE_PIN, \
+										                           GPIO_MODE_OUTPUT_PP, GPIO_PULLUP, \
+										                           GPIO_SPEED_FREQ_HIGH);}
+#define BSP_RS485_DERE_HI()                    (BSP_RS485_DERE_GPIO->BSRR = BSP_RS485_DERE_PIN)
+#define BSP_RS485_DERE_LO()                    (BSP_RS485_DERE_GPIO->BRR = BSP_RS485_DERE_PIN)
+																							 
+																							 
+/********************************* BSP_BQ79600 I/O Pin define(please use "smp_gpio.h") *************/
+#ifdef BSP_BQ7600																							 
+#define BSP_BQ796XX_NCS_PIN                    PIN4
+#define BSP_BQ796XX_NCS_PORT                   SMP_GPIOD
 
+#define BSP_BQ796XX_RX_PIN                     PIN5
+#define BSP_BQ796XX_RX_PORT                    SMP_GPIOD																							 
+#endif									
+																							 
 /********************************* BSP_ADS7946 I/O Pin define(please use "smp_gpio.h") *************/	
 #ifdef BSP_AD7946 																							 
 #define BSP_ADS7946_CH_SEL_PIN                 PIN5
@@ -285,21 +314,53 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 																							 
 /*********************************BSP_MX25L  (SPI Flash)I/O Pin define(please use "smp_gpio.h") ***/
 #ifdef BSP_MX25L 
-#define BSP_MX25L_WRITE_PROTECTON_PIN          PIN4
-#define BSP_MX25L_WRITE_PROTECTON_GPIO_PORT    SMP_GPIOB
+#define BSP_MX25L_WRITE_PROTECTON_PIN          PIN0
+#define BSP_MX25L_WRITE_PROTECTON_GPIO_PORT    SMP_GPIOE
 
-#define BSP_MX25L_CS_PIN                       PIN3
-#define BSP_MX25L_CS_GPIO_PORT                 SMP_GPIOB
+#define BSP_MX25L_CS_PIN                       PIN15
+#define BSP_MX25L_CS_GPIO_PORT                 SMP_GPIOA
+
+#define BSP_MX25L_HOLD_PIN                     PIN9
+#define BSP_MX25L_HOLD_GPIO_PORT               SMP_GPIOB
+
 #endif
-																				
+					
+/*********************************BSP_W5500 (SPI to TCPIP)I/O Pin define ***/
+#ifdef BSP_W5500
+#define BSP_W5500_RST_PORT                     SMP_GPIOB
+#define BSP_W5500_RST_PIN                      PIN6
+
+#define BSP_W5500_INT_PORT                     SMP_GPIOD
+#define BSP_W5500_INT_PIN                      PIN8
+//Add By Steve at 2022/1/10
+#define	BSP_W5500_INT_PIN_IRQn				   EXTI9_5_IRQn 
+
+#define BSP_W5500_SPI_SCS_PORT				   SMP_GPIOB
+#define BSP_W5500_SPI_SCS_PIN				   PIN12
+
+#define BSP_W5500_RST_GPIO_CLK_ENABLE()		   __HAL_RCC_GPIOB_CLK_ENABLE();
+#define BSP_W5500_INT_GPIO_CLK_ENABLE()		   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+#endif
+
 /********************************* BSP_IRM I/O Pin define ****************************************/
 #ifdef BSP_IRM
-#define BSP_IRM_SW1_PORT                       GPIOD        
-#define BSP_IRM_SW1_PIN                        GPIO_PIN_14
-#define BSP_IRM_SW2_PORT                       GPIOD        
-#define BSP_IRM_SW2_PIN                        GPIO_PIN_15
-#define BSP_IRM_SW3_PORT                       GPIOC        
-#define BSP_IRM_SW3_PIN                        GPIO_PIN_6
+
+#define BSP_IRM_SW_BAT_PORT                    GPIOC        
+#define BSP_IRM_SW_BAT_PIN                     GPIO_PIN_9
+
+#define BSP_IRM_SW_E_R_PORT                    GPIOE        
+#define BSP_IRM_SW_E_R_PIN                     GPIO_PIN_15
+
+#define BSP_IRM_SW_E_PORT                      GPIOA        
+#define BSP_IRM_SW_E_PIN                       GPIO_PIN_8
+
+#define BSP_IRM_SW1_PORT                       BSP_IRM_SW_BAT_PORT        
+#define BSP_IRM_SW1_PIN                        BSP_IRM_SW_BAT_PIN
+#define BSP_IRM_SW2_PORT                       BSP_IRM_SW_E_R_PORT        
+#define BSP_IRM_SW2_PIN                        BSP_IRM_SW_E_R_PIN
+#define BSP_IRM_SW3_PORT                       BSP_IRM_SW_E_PORT        
+#define BSP_IRM_SW3_PIN                        BSP_IRM_SW_E_PIN
 #define BSP_IRM_SW1_ON()                       (BSP_IRM_SW1_PORT->ODR |= BSP_IRM_SW1_PIN) 
 #define BSP_IRM_SW1_OFF()                      (BSP_IRM_SW1_PORT->ODR &= ~BSP_IRM_SW1_PIN) 
 #define BSP_IRM_SW2_ON()                       (BSP_IRM_SW2_PORT->ODR |= BSP_IRM_SW2_PIN) 
@@ -311,41 +372,41 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 /********************************* BSP_UART0 I/O Pin define ****************************************/
 
 /* Definition for BSP_UART0 clock resources */
-#define BSP_UART0                        			 UART4
-#define BSP_UART0_CLK_ENABLE()           			 __HAL_RCC_UART4_CLK_ENABLE()
-#define BSP_UART0_DMA_CLK_ENABLE()          	 __HAL_RCC_DMA2_CLK_ENABLE()
-#define BSP_UART0_RX_GPIO_CLK_ENABLE()      	 __HAL_RCC_GPIOC_CLK_ENABLE()
-#define BSP_UART0_TX_GPIO_CLK_ENABLE()      	 __HAL_RCC_GPIOC_CLK_ENABLE()
+#define BSP_UART0                        			 USART2
+#define BSP_UART0_CLK_ENABLE()           			 __HAL_RCC_USART2_CLK_ENABLE()
+#define BSP_UART0_DMA_CLK_ENABLE()          	 __HAL_RCC_DMA1_CLK_ENABLE()
+#define BSP_UART0_RX_GPIO_CLK_ENABLE()      	 __HAL_RCC_GPIOD_CLK_ENABLE()
+#define BSP_UART0_TX_GPIO_CLK_ENABLE()      	 __HAL_RCC_GPIOD_CLK_ENABLE()
 
-#define BSP_UART0_FORCE_RESET()             	 __HAL_RCC_UART4_FORCE_RESET()
-#define BSP_UART0_RELEASE_RESET()           	 __HAL_RCC_UART4_RELEASE_RESET()
+#define BSP_UART0_FORCE_RESET()             	 __HAL_RCC_USART2_FORCE_RESET()
+#define BSP_UART0_RELEASE_RESET()           	 __HAL_RCC_USART2_RELEASE_RESET()
 
 /* Definition for BSP_UART0 Pins */
-#define BSP_UART0_TX_GPIO_PORT                 GPIOC
-#define BSP_UART0_TX_PIN                       GPIO_PIN_10
-#define BSP_UART0_TX_AF                        GPIO_AF8_UART4
+#define BSP_UART0_TX_GPIO_PORT                 GPIOD
+#define BSP_UART0_TX_PIN                       GPIO_PIN_5
+#define BSP_UART0_TX_AF                        GPIO_AF7_USART2
 
-#define BSP_UART0_RX_GPIO_PORT                 GPIOC
-#define BSP_UART0_RX_PIN                       GPIO_PIN_11
-#define BSP_UART0_RX_AF                     	 GPIO_AF8_UART4
+#define BSP_UART0_RX_GPIO_PORT                 GPIOD
+#define BSP_UART0_RX_PIN                       GPIO_PIN_6
+#define BSP_UART0_RX_AF                     	 GPIO_AF7_USART2
 
 /* Definition for BSP_UART0 DMA */
-#define BSP_UART0_TX_DMA_CHANNEL             	 DMA2_Channel3
-#define BSP_UART0_RX_DMA_CHANNEL             	 DMA2_Channel5
+#define BSP_UART0_TX_DMA_CHANNEL             	 DMA1_Channel7
+#define BSP_UART0_RX_DMA_CHANNEL             	 DMA1_Channel6
 
-/* Definition for BSP_UART0 DMA Request */
+/* Definition for BSP_UART0 DMA Request(MCU UART1~UART5 must be setting DMA_REQUEST_2, acorrding STM32L496 p.339) */
 #define BSP_UART0_TX_DMA_REQUEST             	 DMA_REQUEST_2
 #define BSP_UART0_RX_DMA_REQUEST             	 DMA_REQUEST_2
 
 /* Definition for BSP_UART0 NVIC */
-#define BSP_UART0_DMA_TX_IRQn                	 DMA2_Channel3_IRQn
-#define BSP_UART0_DMA_RX_IRQn                	 DMA2_Channel5_IRQn
-#define BSP_UART0_DMA_TX_IRQHandler          	 DMA2_Channel3_IRQHandler
-#define BSP_UART0_DMA_RX_IRQHandler          	 DMA2_Channel5_IRQHandler
+#define BSP_UART0_DMA_TX_IRQn                	 DMA1_Channel7_IRQn
+#define BSP_UART0_DMA_RX_IRQn                	 DMA1_Channel6_IRQn
+#define BSP_UART0_DMA_TX_IRQHandler          	 DMA1_Channel7_IRQHandler
+#define BSP_UART0_DMA_RX_IRQHandler          	 DMA1_Channel6_IRQHandler
 
 /* Definition for BSP UART0 NVIC */
-#define BSP_UART0_IRQn                      	 UART4_IRQn
-#define BSP_UART0_IRQHandler                	 UART4_IRQHandler
+#define BSP_UART0_IRQn                      	 USART2_IRQn
+#define BSP_UART0_IRQHandler                	 USART2_IRQHandler
 
 /********************************* BSP_UART1 I/O Pin define ***************************************/
 /* Definition for BSP_UART1 clock resources */
@@ -372,7 +433,7 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_UART1_RX_DMA_CHANNEL           	   DMA1_Channel3
 #endif
 
-/* Definition for BSP_UART1 DMA Request */
+/* Definition for BSP_UART1 DMA Request(MCU UART1~UART5 must be setting DMA_REQUEST_2, acorrding STM32L496 p.339) */
 #define BSP_UART1_TX_DMA_REQUEST           		 DMA_REQUEST_2
 #define BSP_UART1_RX_DMA_REQUEST           		 DMA_REQUEST_2
 
@@ -674,6 +735,6 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 }
 #endif
 
-#endif /* _DAVINCI_BSP_REV1_H_ */
+#endif /* _DAVINCI_BSP_REV2_H_ */
 
 /************************ (C) COPYRIGHT *****END OF FILE****/    

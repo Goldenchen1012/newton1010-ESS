@@ -36,31 +36,31 @@
 #include "SEGGER_RTT.h"
 #include "RTT_Log.h"
 
-#if 1
+#if 0
 #define G_TEST_INT_ADC
 #endif
 
-#if 1
+#if 0
 #define G_TEST_MX25LXX_FLASH 
 #endif
 
-#if 1
+#if 0
 #define G_TEST_MAX7219_LCD_MARITEX
 #endif
 
-#if 1
+#if 0
 #define G_TEST_AD7946_ADC
 #endif
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_SETTING_INIT_WITHOUT_STEP
 #endif 
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP
 #endif
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
 #endif
 
@@ -72,7 +72,7 @@
 #define G_TEST_IRM_FUNCTION
 #endif 
 
-#if 1
+#if 0
 #define G_TEST_EVENT_LOG_FUNC
 #endif
 
@@ -156,7 +156,7 @@ void SystemClock_Config_24MHz (void);
 /* Private functions ---------------------------------------------------------*/
 
 //IRM GPIO Call Back Function---------------------------------------------------
-#define ADS7946_VREF                           5.0f
+#define ADS7946_VREF                           4.096f
 #define ADS7946_RESOLUTION_B                   14
 
 apiIRMonitoring_cb_t app_irm_event_cb;
@@ -252,9 +252,9 @@ static void app_imr_ads7946_callBack(uint8_t *pDat, uint8_t size)
 	AdcValue.b[1] = pDat[2];
 	AdcValue.b[0] = pDat[3];
 	AdcValue.i >>= 3;
+	volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
 	
 	if(irm_fun_ptr !=NULL){
-	    volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
 		  irm_fun_ptr(&volt_data);
 	}
 	
@@ -279,35 +279,6 @@ IRMonitoring_event_read_cb_type app_irm_trigger_voltage_data_cb(void){
 
 void app_irm_get_device_init_cb(void){
     smp_ADS7946_init();
-}
-//--------------------------------------------------
-
-static void smp_DMA_Init(void)
-{
-	/* DMA controller clock enable */
-	BSP_SPI1_DMAx_CLK_ENABLE();
-	BSP_SPI2_DMAx_CLK_ENABLE();
-	BSP_SPI3_DMAx_CLK_ENABLE();
-	/* DMA interrupt init */
-	/* DMA1_Channel2_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI1_DMA_RX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI1_DMA_RX_IRQn);
-	/* DMA1_Channel3_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI1_DMA_TX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI1_DMA_TX_IRQn);
-	/* DMA1_Channel4_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI2_DMA_RX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI2_DMA_RX_IRQn);
-	/* DMA1_Channel5_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI2_DMA_TX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI2_DMA_TX_IRQn);
-	/* DMA2_Channel1_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI3_DMA_RX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI3_DMA_RX_IRQn);
-	/* DMA2_Channel2_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI3_DMA_TX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI3_DMA_TX_IRQn);
-
 }
 
 #ifdef G_TEST_EVENT_LOG_FUNC
@@ -557,7 +528,7 @@ int main(void)
 	#endif
   SystemClock_Config_HSE_80MHz();
 	
-	smp_DMA_Init();
+//	smp_DMA_Init();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -604,7 +575,8 @@ int main(void)
   #if 0
   HAL_GPIO_Init(GPIOB, &GPIO_InitStructure); 
   #endif
-	
+
+#if	1
 	GPIO_InitStructure.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
 	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStructure.Pull = GPIO_PULLUP;
@@ -614,7 +586,7 @@ int main(void)
 	
 	SEGGER_RTT_Init();
 	SEGGER_RTT_printf(0,"  start\r\n" );
-	
+#endif	
   // MAX7219 LCD Maritex Test
 	//-------------------------------------------
 	#ifdef G_TEST_MAX7219_LCD_MARITEX
@@ -628,13 +600,13 @@ int main(void)
 	HAL_Delay(1000);
 	#endif
   //-------------------------------------------
-
+  
 	appProjectOpen();
 	LibSwTimerClearCount();
 	
 	// MCU UART3 Test
 	//-------------------------------------------
-  appSerialUartSendMessage("12345678");
+//  appSerialUartSendMessage("12345678");
 	//-------------------------------------------
 	
 	// MX25LXX Flash Test
@@ -650,6 +622,20 @@ int main(void)
 	smp_ADS7946_init();
 	#endif
 	//------------------------------------------
+	
+	
+	//Test IRM SW1 mesaure Vstack(Total Battreary Voltage)
+	#if 0
+	app_irm_sw_gpio_init_cb();
+	BSP_IRM_SW1_ON();
+	BSP_IRM_SW3_OFF();
+	BSP_IRM_SW3_OFF();
+	
+	while(1){
+	   app_irm_trigger_voltage_data_cb();
+	   HAL_Delay(500);
+	}
+	#endif
 	
 	//ADC Test
 	//------------------------------------------
@@ -668,7 +654,7 @@ int main(void)
 		
 		LOG_BLUE("TEST ADC#%04d %04d,%04d,%04d,%04d,%04d\r\n", test_cont,app_adc_temp[0],app_adc_temp[1],app_adc_temp[2],app_adc_temp[3],app_adc_temp[4]);
 		
-		drv_bq796xx_delay_ms(50);
+		HAL_Delay(50);
 		
 		test_cont++;
 		if(test_cont>=50) break;
@@ -695,7 +681,7 @@ int main(void)
   #endif 
 	
 	drv_bq796xx_Read_Stack_FaultSummary(0);
-	drv_bq796xx_delay_ms(10);
+	HAL_Delay(10);
 				
   for(int k=0; k<10*BMU_TOTAL_BOARDS; k++){			
 	    res = drv_bq796xx_data_frame_parser(); 	
@@ -934,7 +920,7 @@ int main(void)
 
 	#endif
   //------------------------------------------------------------------------------------------
-
+#if	0
   apiFuCheckMagicCode();
 	
   for(int k=0 ;k<64; k++){
@@ -943,7 +929,7 @@ int main(void)
   }
 
 	drv_bq796xx_clear_fifobuffer();
-	 
+#endif	 
 	//IRM Test(2021/12/21)
 	//----------------------------------------------------------------------------------------- 
 	#ifdef G_TEST_IRM_FUNCTION
@@ -975,7 +961,7 @@ int main(void)
 	
 	app_flash_log_managment_init(app_flash_log_event_handler);
 	HAL_Delay(1000);
-	while(test_event_log_cnt<300)
+	while(test_event_log_cnt<50)
 	{
 		
 	  smp_mx25l_flash_read_status(&mx251_status);
@@ -986,7 +972,7 @@ int main(void)
 		test_uart_rx_process();
 		
 		test_event_log_cnt++;
-		HAL_Delay(500);
+		HAL_Delay(100);
 		LOG_WHITE("Event log#%d transfer\r\n", test_event_log_cnt);
 	}
 	#endif
@@ -1442,9 +1428,6 @@ void HAL_SYSTICK_Callback(void)
     TimingDelay = LED_TOGGLE_DELAY;
   }
 }
-
-
-
 
 #ifdef  USE_FULL_ASSERT
 
