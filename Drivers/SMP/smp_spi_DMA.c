@@ -355,12 +355,20 @@ int8_t smp_spi_master_send_recv(smp_spi_t *spi, uint8_t *tx_data,uint16_t tx_siz
 	return SMP_SUCCESS;	
 }
 
+uint8_t smp_spi_master_is_spi_ready(smp_spi_t *spi)
+{
+	if(uSPIFlag[spi->num] != SPI_Done)
+		return 0;
+	return 1;
+}
+
 int8_t smp_spi_master_send_recv_blocking(smp_spi_t *spi, uint8_t *tx_data,uint16_t tx_size, uint8_t *rx_data, uint16_t rx_size,smp_spi_cs_t *p_cs)
 {
 	HAL_StatusTypeDef status;
 	SPI_HandleTypeDef temp_spi_handle;
 	uint8_t temp_spi_cnt = 0;
 	smp_spi_master_cs_set(p_cs,GPIO_ACTIVE_LOW);
+	#if	0
 	while (uSPIFlag[spi->num] != SPI_Done) {
 		HAL_Delay(10);
 		temp_spi_cnt++;
@@ -368,7 +376,7 @@ int8_t smp_spi_master_send_recv_blocking(smp_spi_t *spi, uint8_t *tx_data,uint16
 			return SMP_ERROR_BUSY;
 		}
 	}
-	
+	#endif
 	CS[spi->num] = *p_cs;
 	
 	if( spi->num == SPI_module1){

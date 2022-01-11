@@ -280,35 +280,6 @@ IRMonitoring_event_read_cb_type app_irm_trigger_voltage_data_cb(void){
 void app_irm_get_device_init_cb(void){
     smp_ADS7946_init();
 }
-//--------------------------------------------------
-
-static void smp_DMA_Init(void)
-{
-	/* DMA controller clock enable */
-	BSP_SPI1_DMAx_CLK_ENABLE();
-	BSP_SPI2_DMAx_CLK_ENABLE();
-	BSP_SPI3_DMAx_CLK_ENABLE();
-	/* DMA interrupt init */
-	/* DMA1_Channel2_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI1_DMA_RX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI1_DMA_RX_IRQn);
-	/* DMA1_Channel3_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI1_DMA_TX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI1_DMA_TX_IRQn);
-	/* DMA1_Channel4_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI2_DMA_RX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI2_DMA_RX_IRQn);
-	/* DMA1_Channel5_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI2_DMA_TX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI2_DMA_TX_IRQn);
-	/* DMA2_Channel1_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI3_DMA_RX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI3_DMA_RX_IRQn);
-	/* DMA2_Channel2_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(BSP_SPI3_DMA_TX_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(BSP_SPI3_DMA_TX_IRQn);
-
-}
 
 #ifdef G_TEST_EVENT_LOG_FUNC
 extern uint16_t Davinci_uart_rx_cnt;
@@ -1457,28 +1428,6 @@ void HAL_SYSTICK_Callback(void)
     TimingDelay = LED_TOGGLE_DELAY;
   }
 }
-
-#if 0
-/**
-  * @brief EXTI line detection callbacks
-  * @param GPIO_Pin: Specifies the pins connected EXTI line
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if (GPIO_Pin == USER_BUTTON_PIN)
-  {
-    /* Reconfigure LED1 */
-    BSP_LED_Init(LED1); 
-    /* Switch on LED1 */
-    BSP_LED_On(LED1);
-    
-    /**/
-    button_pressed = 1;
-    
-  }
-}
-#endif
 
 #ifdef  USE_FULL_ASSERT
 

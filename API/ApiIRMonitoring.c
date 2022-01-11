@@ -24,6 +24,7 @@
 #include "ApiIRMonitoring.h"
 #include "LibSwTimer.h"
 #include "LibHwTimer.h"
+#include "ApiSysPar.h"
 
 /* Private define ------------------------------------------------------------*/
 
@@ -73,6 +74,8 @@ static uint8_t irm_data_ready_f = 0;
 static void getIRMonitoringVoValue_cb(float *read_volt_data)
 {
 	  irm_adc_data = *read_volt_data;  //Get Voltage data
+	  irm_adc_data /= IRM_K1;
+	  irm_adc_data *= 2;
 	  irm_data_ready_f = 1;	           //Setting data ready falg
 }
 static uint8_t IRMonitoring_Init(uint8_t exe_interval_s, uint16_t sw_delay_ms, apiIRMonitoring_cb_t callbackfunc)
@@ -217,7 +220,9 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 						  irm_data_ready_f = 0;
 						
 				      irm_data.Vo_stack = irm_adc_data;
-			        irm_data.V_stack  = (irm_data.Vo_stack * IRM_K1);
+				      //	irm_data.Vo_stack = doCalibration(&SysCalPar.RamPar.VBat[0], irm_adc_data);
+
+			        irm_data.V_stack  = (irm_data.Vo_stack * IRM_K1 / 2 );
 			
               //If callback function exist then execution this.
 	            if((irm_event_cb.irm_outdata != NULL) && (irm_vstack_f==1)){	
@@ -429,12 +434,15 @@ static void IRMonitoringSwTimerHandler(__far void *dest, uint16_t evt, void *vDa
 {
 	static IRMonitoring_step_ret_type res;
 	
-	
+	if(appProjectIsInEngMode())
+	{
+		return;
+	}
 	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
 		#if 1
-	GPIOD->ODR ^= GPIO_PIN_13;
+//	GPIOD->ODR ^= GPIO_PIN_13;
 	#endif 
 		
       if(irm_flag ==1){
@@ -485,6 +493,7 @@ uint8_t apiIRMonitoringOpen(uint8_t exe_interval_s, uint16_t sw_delay_ms, apiIRM
 void apiIRMonitoringGetVstack(void){
     irm_vstack_f = 1;
 	  irm_flag = 1;
+	  irm_mes_step = IRM_S1; 
 }
 
 /************************ (C) COPYRIGHT ***END OF FILE****/

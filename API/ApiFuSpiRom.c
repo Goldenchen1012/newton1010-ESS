@@ -24,6 +24,7 @@
 #include "ApiFu.h"
 #include "HalEeprom.h"
 #include "smp_fifo_flash.h"
+#include "smp_MX25L_Driver.h"
 
 
 void appSerialCanDavinciSendTextMessage(char *str);
@@ -37,6 +38,13 @@ void appSerialCanDavinciSendTextMessage(char *str);
 #define	FW_UPDATE_STATUS_VERSION		0x02
 #define	FW_UPDATE_STATUS_PACKAGENUM		0x04
 #define	FW_UPDATE_STATUS_BASEADDR		0x08
+
+enum{
+	FW_VERIFY_STEP_READ_DATA = 0,
+	FW_VERIFY_STEP_WAIT_READ_DATA,
+	FW_VERIFY_STEP_READ_DATA_DONE,
+	FW_VERIFY_STEP_END
+};
 
 /* Private typedef -----------------------------------------------------------*/
 #define	FW_CODE_BUF_ITEM	2
@@ -53,7 +61,7 @@ typedef struct{
 	BYTE		FwBufIndexSptr;
 	BYTE		FwBufIndexEptr;
 	BYTE		InfoStatus;
-	uint8_t		CodeBuf[FW_CODE_BUF_ITEM][256] ;//__ALIGNED(4);
+	uint8_t		CodeBuf[FW_CODE_BUF_ITEM][256] __ALIGNED(4);
 	uint8_t		FwCheckStatus;
 	tApiFuCallbackFunction CbFunction;
 	struct{
@@ -62,15 +70,35 @@ typedef struct{
 	}FwCheck;
 }tFwUpdateInfo;
 
+
 /* Private macro -------------------------------------------------------------*/
-/* Private typedef -----------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static tFwUpdateInfo	FwUpdateInfo;
+static uint8_t			VerifyFlagStep;
 /* Private function prototypes -----------------------------------------------*/
-void spiromEventHandler(smp_flash_evt_type p_evt)
+static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr);
+
+
+static void spiromEventHandler(smp_flash_evt_type p_evt)
 {
-	
+	switch(p_evt)
+	{
+	case SMP_FLASH_EVENT_READ_DONE:
+		fuDebugMsg("Spi Read Done");
+		VerifyFlagStep = FW_VERIFY_STEP_READ_DATA_DONE;
+		;//log_evt_cb(SMP_LOG_EVENT_PAGE_LOAD_DONE);
+		break;
+	case SMP_FLASH_EVENT_WRITE_DONE:
+		fuDebugMsg("Spi Write Done");
+		;//log_evt_cb(SMP_LOG_EVENT_PAGE_SAVE_DONE);
+		break;
+	case SMP_FLASH_EVENT_ERASE_DONE:
+		fuDebugMsg("Spi Erase Done");
+		break;
+	default:
+		break;
+	}
 }
 static uint8_t isValidInfoStatus(void)
 {
@@ -104,8 +132,6 @@ static void writeCodeDataToSpiRom(uint32_t addr, uint8_t *pDatBuf, uint16_t leng
 		fuDebugMsg(str);
 //		addr
 //		smp_mx25l_flash_sector_erase_addr(uint8_t *flash_addr , smp_flash_event_t smp_flash_event_handle)
-
-		
 	}
 	//smp_mx25l_flash_page_program(uint16_t page,pDatBuf,uint16_t write_byte_num,smp_flash_event_t smp_flash_event_handle);
 	page = addr / 256;
@@ -131,71 +157,116 @@ static uint8_t isCorrectFwCodeHead2(uint8_t *pHeadinfo)
 	return 0;
 }
 
-
-static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
+static void verifyReadData(void)
 {
 	uint8_t		i;
-	uint32_t		buffer[65];
-	tHalEeProm		mHalEeProm;
+	uint32_t	*pDat;
 	uint8_t			MsgBuf[10];
-
-	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
-		;
-	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_7)
+	
+	pDat = (uint32_t *)&FwUpdateInfo.CodeBuf[0][0];
+	if(FwUpdateInfo.FwCheck.PackageNumCnt == 0)
 	{
-		GPIOD->ODR |= GPIO_PIN_13;
-		mHalEeProm.StartAddress = FwUpdateInfo.FwCheck.PackageNumCnt;
-		mHalEeProm.StartAddress *= 256;
-		mHalEeProm.StartAddress += FLASHROM_FU_START_ADDR;
-		mHalEeProm.Length = 256;
-		mHalEeProm.pDataBuffer = (uint8_t *)&buffer[0];
-		HalEePromRead(&mHalEeProm);
-		if(FwUpdateInfo.FwCheck.PackageNumCnt == 0)
+		if(isCorrectFwCodeHead1((uint8_t *)&pDat[0]) &&
+		   isCorrectFwCodeHead2((uint8_t *)&pDat[12]))
 		{
-			if(isCorrectFwCodeHead1((uint8_t *)&buffer[0]) &&
-			   isCorrectFwCodeHead2((uint8_t *)&buffer[12]))
-			{
-				
-			}
-			else
+			;	
+		}
+		else
+		{
+			if(FwUpdateInfo.CbFunction)
 			{
 				MsgBuf[0] = 1;
 				FwUpdateInfo.CbFunction(API_FU_EVT_CHECK_RESULT, MsgBuf);
-				FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECK_FAIL;
-				LibSwTimerClose(checkFuCodeDataSwTimerHandler, 0);
-				fuDebugMsg("Fw Check error");
 			}
+			FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECK_FAIL;
+			LibSwTimerClose(checkFuCodeDataSwTimerHandler, 0);
+			fuDebugMsg("Fw Check error");
 		}
-		for(i=0; i<64; i++)
+	}
+	for(i=0; i<64; i++)
+	{
+		FwUpdateInfo.FwCheck.CheckSum ^= pDat[i];
+	}
+	FwUpdateInfo.FwCheck.PackageNumCnt++;
+	if(FwUpdateInfo.FwCheck.PackageNumCnt >= FwUpdateInfo.FwPackageNum)
+	{
+		if(FwUpdateInfo.FwCheck.CheckSum == 0)
 		{
-			FwUpdateInfo.FwCheck.CheckSum ^= buffer[i];
-		}
-		FwUpdateInfo.FwCheck.PackageNumCnt++;
-		if(FwUpdateInfo.FwCheck.PackageNumCnt >= FwUpdateInfo.FwPackageNum)
-		{
-			if(FwUpdateInfo.FwCheck.CheckSum == 0)
+			if(FwUpdateInfo.CbFunction)
 			{
 				MsgBuf[0] = 0;
 				FwUpdateInfo.CbFunction(API_FU_EVT_CHECK_RESULT, MsgBuf);
-				LibSwTimerClose(checkFuCodeDataSwTimerHandler, 0);
-				FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECK_SUCCESS;
-				fuDebugMsg("Fw Check success");
 			}
-			else
-				FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECK_FAIL;
 			LibSwTimerClose(checkFuCodeDataSwTimerHandler, 0);
-			fuDebugMsg("FW Check Finish");
+			FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECK_SUCCESS;
+			fuDebugMsg("Fw Check success");
 		}
 		else
+			FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECK_FAIL;
+		LibSwTimerClose(checkFuCodeDataSwTimerHandler, 0);
+		fuDebugMsg("FW Check Finish");
+	}
+	else
+	{
+		if(FwUpdateInfo.CbFunction)
 		{
 			MsgBuf[0] = FwUpdateInfo.FwCheck.PackageNumCnt % 0x100;
 			MsgBuf[1] = FwUpdateInfo.FwCheck.PackageNumCnt / 0x100;
 			FwUpdateInfo.CbFunction(API_FU_EVT_FW_CHECKING, MsgBuf);	
-			
-			//MsgBuf[0] = 1;
-			//FwUpdateInfo.CbFunction(API_FU_EVT_CHECK_RESULT, MsgBuf);
 		}
-		GPIOD->ODR &= ~GPIO_PIN_13;
+		VerifyFlagStep = FW_VERIFY_STEP_READ_DATA;
+	}
+	GPIOD->ODR &= ~GPIO_PIN_13;
+}
+
+static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
+{
+	uint8_t		wait_count;
+	uint8_t		i;
+//	uint32_t		buffer[65];
+//	tHalEeProm		mHalEeProm;
+	uint8_t			MsgBuf[10];
+	uint8_t			addr[3];
+	tLbyte			Lbyte;
+
+	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
+	{
+		if(VerifyFlagStep == FW_VERIFY_STEP_READ_DATA_DONE)
+		{
+			verifyReadData();
+		}
+	}
+	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_7)
+	{
+		if(VerifyFlagStep == FW_VERIFY_STEP_READ_DATA)
+		{
+			GPIOD->ODR |= GPIO_PIN_13;
+	//		mHalEeProm.StartAddress = FwUpdateInfo.FwCheck.PackageNumCnt;
+	//		mHalEeProm.StartAddress *= 256;
+	//		mHalEeProm.StartAddress += FLASHROM_FU_START_ADDR;
+	//		mHalEeProm.Length = 256;
+	//		mHalEeProm.pDataBuffer = (uint8_t *)&buffer[0];
+			Lbyte.l = FwUpdateInfo.FwCheck.PackageNumCnt;
+			Lbyte.l *= 256L;		
+			addr[0] = Lbyte.b[2];
+			addr[1] = Lbyte.b[1];
+			addr[2] = Lbyte.b[0];
+//			smp_mx25l_flash_read_data_bytes(addr, &FwUpdateInfo.CodeBuf[0][0], 256, spiromEventHandler);
+//			smp_mx25l_flash_read_data_bytes(&FwUpdateInfo.CodeBuf[0][0],  spiromEventHandler);
+
+			smp_mx25l_flash_fast_read_data_bytes_addr(addr, &FwUpdateInfo.CodeBuf[0][0], 256, spiromEventHandler);
+			VerifyFlagStep = FW_VERIFY_STEP_WAIT_READ_DATA;
+			wait_count = 0;
+		}
+		else if(VerifyFlagStep == FW_VERIFY_STEP_WAIT_READ_DATA)
+		{
+			wait_count++;
+			if(wait_count >= 5)
+			{
+				VerifyFlagStep = FW_VERIFY_STEP_READ_DATA;
+			}
+		}
+
 	}	
 }
 
@@ -215,6 +286,7 @@ static void checkRcvFuCodeData(void)
 			FwUpdateInfo.CbFunction(API_FU_EVT_START_FW_CHECK, MsgBuf);				
 		}
 		FwUpdateInfo.FwCheckStatus = API_FU_FW_CHECKING;
+		VerifyFlagStep = FW_VERIFY_STEP_READ_DATA;
 		LibSwTimerOpen(checkFuCodeDataSwTimerHandler, 0);
 	}
 }		

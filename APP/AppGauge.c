@@ -1364,6 +1364,12 @@ static void gaugeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 			//appSerialCanDavinciSendTextMessage(str);
 			count1 = 0;
 		}
+		if(evt == LIB_SW_TIMER_EVT_SW_10MS_2)
+		{
+			gaugeUpdateCurrentMode();
+			gaugeCalAvgCurrent();
+		}
+		
 		return;
 	}
 	if(count1 >= 2000)

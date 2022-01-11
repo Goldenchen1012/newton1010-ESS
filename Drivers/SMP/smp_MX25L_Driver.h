@@ -51,7 +51,7 @@ int8_t smp_mx25l_flash_read_ID(smp_mx25l_ID *mx251_ID);
 int8_t smp_mx25l_flash_read_status(smp_mx25l_status *mx251_status);
 int8_t smp_mx25l_flash_read_configuration(smp_mx25l_config *mx251_config);
 int8_t smp_mx25l_flash_write_status(smp_mx25l_status *mx251_status,smp_mx25l_config *mx251_config);
-int8_t smp_mx25l_flash_read_data_bytes(uint8_t *flash_addr,uint16_t read_byte_num,smp_flash_event_t smp_flash_event_handle);
+int8_t smp_mx25l_flash_read_data_bytes(uint8_t *flash_addr,uint8_t *buffer,uint16_t read_byte_num,smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_fast_read_data_bytes_addr(uint8_t *flash_addr ,uint8_t *buffer, uint16_t read_byte_num , smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_fast_read_data_bytes_page(uint16_t page, uint8_t *buffer,uint16_t read_byte_num , smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_sector_erase(uint8_t *flash_addr,smp_flash_event_t smp_flash_event_handle);

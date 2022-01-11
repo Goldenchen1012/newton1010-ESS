@@ -123,12 +123,16 @@ static void app_imr_ads7946_callBack(uint8_t *pDat, uint8_t size)
 	tIbyte	AdcValue;
 	static float volt_data;
 	static float adc_bits;
-  adc_bits = (float)(1<<ADS7946_RESOLUTION_B); 	
 	
 	AdcValue.b[1] = pDat[2];
 	AdcValue.b[0] = pDat[3];
-	AdcValue.i >>= 3;
+	AdcValue.i >>= 2;
+#if 1	
+	volt_data = doCalibration(&SysCalPar.RamPar.VBat[0], AdcValue.i);
+#else	
+  	adc_bits = (float)(1<<ADS7946_RESOLUTION_B); 	
 	volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
+#endif	
 	
 	if(irm_fun_ptr !=NULL){
 		  irm_fun_ptr(&volt_data);
@@ -159,20 +163,35 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
   static IRMonitoring_Resistor_t temp_irm_data;
   static float temp_irm_vstack;
 	
+	char	str[100];
+	
+	/*
+	uint16_t Rp_kohm;
+	uint16_t Rn_kohm;
+	float V_stack;   
+	*/
  	switch(irm_event)
  	{
  	case IRM_EVENT_BALANCE:
-    temp_irm_data = *irm_res_data;
+    	temp_irm_data = *irm_res_data;
+    	projectIrDbgMsg("IRM_EVENT_BALANCE");
 		break;
  	case IRM_EVENT_UNBALANCE:
-    temp_irm_data = *irm_res_data;
+    	temp_irm_data = *irm_res_data;
+    	projectIrDbgMsg("IRM_EVENT_UNBALANCE");
 		break;
  	case IRM_EVENT_GET_VSTACK:
-    temp_irm_vstack = irm_res_data->V_stack;
+    	temp_irm_vstack = irm_res_data->V_stack;
+    	projectIrDbgMsg("IRM_EVENT_GET_VSTACK");
+    	sprintf(str,"Vbat = %.3f", temp_irm_vstack);
+    	projectIrDbgMsg(str);
 		break;	
  	case IRM_EVENT_OTHER_ERR:
-
+		projectIrDbgMsg("IRM_EVENT_OTHER_ERR");
 		break;
+	default:
+		projectIrDbgMsg("default");
+		break;		
   }
 	
 	#if 1
@@ -203,7 +222,7 @@ void IrFunctionOpen(void)
 	res = apiIRMonitoringOpen(Par.SetValue.l, Par.STime.l, app_irm_event_cb);
 	
 	//Get current Vstack, IRM use callback notification Vstack.
-	apiIRMonitoringGetVstack();
+	//apiIRMonitoringGetVstack();
 
 
 }

@@ -179,6 +179,8 @@ void apiRelayControlSetMasterTurnOnFlag(void)
 
 void apiRelayControlMainRelayOff(void)
 {
+	RELAY_POWER_OFF();
+	
 	halBspPostiveRelayOff();
 	halBspNegtiveRelayOff();
 	

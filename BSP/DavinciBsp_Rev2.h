@@ -335,11 +335,20 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 					
 /*********************************BSP_W5500 (SPI to TCPIP)I/O Pin define ***/
 #ifdef BSP_W5500
-#define BSP_W5500_RST_PORT                     GPIOB
-#define BSP_W5500_RST_PIN                      GPIO_PIN_6
+#define BSP_W5500_RST_PORT                     SMP_GPIOB
+#define BSP_W5500_RST_PIN                      PIN6
 
-#define BSP_W5500_INT_PORT                     GPIOD
-#define BSP_W5500_INT_PIN                      GPIO_PIN_8
+#define BSP_W5500_INT_PORT                     SMP_GPIOD
+#define BSP_W5500_INT_PIN                      PIN8
+//Add By Steve at 2022/1/10
+#define	BSP_W5500_INT_PIN_IRQn				   EXTI9_5_IRQn 
+
+#define BSP_W5500_SPI_SCS_PORT				   SMP_GPIOB
+#define BSP_W5500_SPI_SCS_PIN				   PIN12
+
+#define BSP_W5500_RST_GPIO_CLK_ENABLE()		   __HAL_RCC_GPIOB_CLK_ENABLE();
+#define BSP_W5500_INT_GPIO_CLK_ENABLE()		   __HAL_RCC_GPIOD_CLK_ENABLE();
+
 #endif
 
 /********************************* BSP_IRM I/O Pin define ****************************************/

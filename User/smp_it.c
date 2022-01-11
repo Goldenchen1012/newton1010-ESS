@@ -49,23 +49,15 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-
-/**
-  * @brief EXTI line detection callbacks
-  * @param GPIO_Pin: Specifies the pins connected EXTI line
-  * @retval None
-  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-#if	0	
-  if (GPIO_Pin == W5500_INT_PIN)
+  if (GPIO_Pin == SMP_GPIO_PIN(BSP_W5500_INT_PIN))
   {
-		W5500INT_Low = 1;//true; 
-		GPIOC->ODR ^= GPIO_PIN_6;
+    //Flag_W5500_INT = true;
+	W5500_INT_Cnt++;
+	W5500_Read_SnIR_End = false;  
   }
-#endif	
 }
-/**
-  * @}
-  */
+
+
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

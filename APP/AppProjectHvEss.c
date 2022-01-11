@@ -77,7 +77,7 @@ static uint8_t	RelayOnFlag = 0;
 static void releaseOCP(void);
 
 static void relayOff(void)
-{
+{	
 	apiRelayControlMainRelayOff();
 	RelayOnFlag = 0;
 }
@@ -93,7 +93,7 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_PROTECT_OVP_L3_SET:
 		relayOff();
-		appProjectDebugMsg("OVP L3 set");
+		//appProjectDebugMsg("OVP L3 set");
 		saveEventLog(EVENT_TYPE_OVP_L3_SET, libGetUint16((uint8_t *)pData));
 		break;
 	case APP_PROTECT_OVP_L1_RELEASE:
@@ -355,16 +355,16 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		relayOff();
 		break;
 	case APP_SIGNAL_FB_EVT_SP_HI:
-		appProjectDebugMsg("SP Hi");
+		//appProjectDebugMsg("SP Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_SP_LO:
-		appProjectDebugMsg("SP Low");
+		//appProjectDebugMsg("SP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_HI:
-		appProjectDebugMsg("PS1 Hi");
+		//appProjectDebugMsg("PS1 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_LO:
-		appProjectDebugMsg("PS1 Low");
+		//appProjectDebugMsg("PS1 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS2_HI:
 	//	appProjectDebugMsg("PS2 Hi");
@@ -410,18 +410,18 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 	//	appProjectDebugMsg("K4 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_HI:
-		appProjectDebugMsg("DOCP Hi");
+		//appProjectDebugMsg("DOCP Hi");
 		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_LO:
-		appProjectDebugMsg("DOCP Lo");
+		//appProjectDebugMsg("DOCP Lo");
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_HI:
-		appProjectDebugMsg("COCP Hi");
+		//appProjectDebugMsg("COCP Hi");
 		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_LO:
-		appProjectDebugMsg("COCP Low");
+		//appProjectDebugMsg("COCP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_HI:
 		//appProjectDebugMsg("OD IN Hi");
@@ -430,10 +430,10 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		//appProjectDebugMsg("OD IN Low");
 		break;
 	case APP_SIGNAL_FB_EVT_NFAULT_HI:
-		appProjectDebugMsg("Nfault Hi");
+		//appProjectDebugMsg("Nfault Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_NFAULT_LO:
-		appProjectDebugMsg("Nfault Lo");
+		//appProjectDebugMsg("Nfault Lo");
 		break;
 	}
 }
@@ -494,7 +494,7 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
-		GPIOD->ODR ^= GPIO_PIN_14;
+//		GPIOD->ODR ^= GPIO_PIN_14;
 			;
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
@@ -704,7 +704,7 @@ void appProjectOpen(void){
 	HalTimerOpen(&mHalTimer3, appProjectHwTimerHandler);
 	appSerialUartDavinciOpen();
 	appSerialCanDavinciOpen();
-	
+	appTcpipSmpOpen();
   	//------------------------------------------
 	appProjectDebugMsg("--------- Start Run -----------...9");
 	len = apiSysParOpen();

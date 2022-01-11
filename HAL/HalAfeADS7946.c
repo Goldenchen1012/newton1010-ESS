@@ -25,6 +25,8 @@
 #include "smp_ADS7946_Driver.h"
 #include "ApiSysPar.h"
 #include "AppProject.h"
+#include "ApiIRMonitoring.h"
+
 
 void appSerialUartSendMessage(char *str);
 void appSerialCanDavinciSendTextMessage(char *str);
@@ -39,15 +41,23 @@ enum{
 	ADC_VB_INT,
 	ADC_VB_EXT
 };
+#define	CURR_P_FLAG		0x01
+#define	CURR_N_FLAG		0x02
+#define	VPACK_FLAG		0x04
+#define	VBAT_FLAG		0x08
+
 /* Private macro -------------------------------------------------------------*/
 
 /* Private typedef -----------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+void (*adc7946FunctionProcessor)(void) = {0};
+
 static uint8_t	adcChannel = 0;
 
-static uint8_t	Callback_flag = 0;
-static uint8_t	TimeOutCoiunt = 0;
+static uint8_t	WaitAdcCallbackCount;
+static uint8_t	AdcFlag = 0;
+
 
 //int32_t	ads_7945_adcValue[4];
 
@@ -72,7 +82,95 @@ static void updateExternalVbatVoltage(void)
 		//HalAfeSetCurrentValue(1, doCalibration(&SysCalPar.RamPar.Current[1], halAfeGetCurrentAdcValue(1)));		
 	}
 }
+static void getCurrentP(void);
+static void getCurrentN(void);
+static void ads7946_callBack(uint8_t *pDat, uint8_t size);
+static void getVpack(void);
+static void getVbat(void);
 
+
+static void getCurrentPWaitResponse(void)
+{
+	WaitAdcCallbackCount++;
+	if(WaitAdcCallbackCount >= 5)
+		adc7946FunctionProcessor = getCurrentP;
+}
+
+static void getCurrentP(void)
+{
+	int8_t	res;
+	GPIOD->ODR |= GPIO_PIN_14;	
+	res = smp_ADS7946_get_data(channel_1, CS_0, ads7946_callBack);
+	if(res == SMP_SUCCESS)
+	{
+		adc7946FunctionProcessor = getCurrentPWaitResponse;
+		WaitAdcCallbackCount = 0;
+	}
+}
+
+static void getCurrentNWaitResponse(void)
+{
+	WaitAdcCallbackCount++;
+	if(WaitAdcCallbackCount >= 5)
+		adc7946FunctionProcessor = getCurrentN;
+}
+
+static void getCurrentN(void)
+{
+	int8_t	res;
+	GPIOD->ODR |= GPIO_PIN_14;	
+	res = smp_ADS7946_get_data(channel_1, CS_1, ads7946_callBack);	
+	if(res == SMP_SUCCESS)
+	{
+		adc7946FunctionProcessor = getCurrentNWaitResponse;
+		WaitAdcCallbackCount = 0;
+	}
+}
+static void getVpackWaitResponse(void)
+{
+	WaitAdcCallbackCount++;
+	if(WaitAdcCallbackCount >= 5)
+	{
+		adc7946FunctionProcessor = getVpack;
+		//halAfeADS7946DebugMsg("get VPack-2");
+	}
+}
+
+static void getVpack(void)
+{
+	int8_t	res;
+	GPIOD->ODR |= GPIO_PIN_14;	
+	//halAfeADS7946DebugMsg("get VPack-1");
+	res = smp_ADS7946_get_data(channel_0, CS_1, ads7946_callBack);
+	if(res == SMP_SUCCESS)
+	{
+		adc7946FunctionProcessor = getVpackWaitResponse;
+		WaitAdcCallbackCount = 0;
+	}
+}
+
+static void getVbatWaitResponse(void)
+{
+	WaitAdcCallbackCount++;
+	if(WaitAdcCallbackCount >= 5)
+	{
+		adc7946FunctionProcessor = getVbat;
+		//halAfeADS7946DebugMsg("get Vbat-2");
+	}
+}
+
+static void getVbat(void)
+{
+	int8_t	res;
+	GPIOD->ODR |= GPIO_PIN_14;	
+	//halAfeADS7946DebugMsg("get Vbat-1");
+	res = smp_ADS7946_get_data(channel_0, CS_0, ads7946_callBack);
+	if(res == SMP_SUCCESS)
+	{
+		adc7946FunctionProcessor = getVbatWaitResponse;
+		WaitAdcCallbackCount = 0;
+	}
+}
 static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 {
 	char	str[100];
@@ -80,33 +178,74 @@ static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 		
 	AdcValue.b[1] = pDat[2];
 	AdcValue.b[0] = pDat[3];
-	AdcValue.i >>= 3;
+	AdcValue.i >>= 2;
 	
 //	sprintf(str,"Adc 7946 =0x %.2X %.2X %.2x %.2X ==> %d", 
 //				pDat[0], pDat[1], pDat[2], pDat[3], 
 //				AdcValue.i);
 //	halAfeADS7946DebugMsg(str);//"ads7946_cb");
-	Callback_flag = 1;
+	GPIOD->ODR &= ~GPIO_PIN_14;	
 
-	if(appProjectIsInSimuMode() != 0)
-		return;
-	switch(adcChannel)
+	if(adc7946FunctionProcessor == getCurrentPWaitResponse)
 	{
-	case ADC_CURR_P:
-		halAfeSetCurrentAdcValue(0, AdcValue.i);
-		break;
-	case ADC_CURR_N:
-		halAfeSetCurrentAdcValue(1, AdcValue.i);
-		break;
-	case ADC_VB_INT:
-		halAfeSetVBatAdcValue(0, AdcValue.i);
-		updateInternalVbatVoltage();
-		break;
-	case ADC_VB_EXT:
-		halAfeSetVBatAdcValue(1, AdcValue.i);
-		updateExternalVbatVoltage();
-		break;
-	}	
+		AdcFlag &= ~CURR_P_FLAG;
+		if(appProjectIsInSimuMode() == 0)
+			halAfeSetCurrentAdcValue(0, AdcValue.i);	
+	}
+	else if(adc7946FunctionProcessor == getCurrentNWaitResponse)
+	{
+		AdcFlag &= ~CURR_N_FLAG;
+		if(appProjectIsInSimuMode() == 0)
+			halAfeSetCurrentAdcValue(1, AdcValue.i);
+	}
+	else if(adc7946FunctionProcessor == getVpackWaitResponse)
+	{
+		AdcFlag &= ~VPACK_FLAG;
+		if(appProjectIsInSimuMode() == 0)
+		{
+			halAfeSetVBatAdcValue(1, AdcValue.i);
+			updateExternalVbatVoltage();
+		}
+#if	0		
+		if((AdcFlag & VBAT_FLAG) == 0)
+		{
+			halAfeADS7946DebugMsg("Get Vbat...");
+			apiIRMonitoringGetVstack();
+		}
+#endif		
+	}
+	else if(adc7946FunctionProcessor == getVbatWaitResponse)
+	{
+		AdcFlag &= ~VBAT_FLAG;
+		if(appProjectIsInSimuMode() == 0)
+		{
+			halAfeSetVBatAdcValue(0, AdcValue.i);
+			updateInternalVbatVoltage();
+		}
+	}
+	
+	if(AdcFlag & CURR_P_FLAG)
+	{
+		adc7946FunctionProcessor = getCurrentP;
+	}
+	else if(AdcFlag & CURR_N_FLAG)
+	{
+		adc7946FunctionProcessor = getCurrentN;
+	}
+	else if(AdcFlag & VPACK_FLAG)
+	{
+		adc7946FunctionProcessor = getVpack;
+	}
+	else if(AdcFlag & VBAT_FLAG)
+	{
+		adc7946FunctionProcessor = getVbat;
+		//halAfeADS7946DebugMsg("get Vbat-0");
+	}
+	else
+		adc7946FunctionProcessor = 0;
+	
+	//if(AdcFlag)
+	//	GPIOD->ODR |= GPIO_PIN_14;	
 }
 
 
@@ -120,82 +259,57 @@ static void halAfeCurrentGetCurrentValue(void)
 	}
 }
 
+//adc7946FunctionProcessor
 
 static void currentSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
-	int8_t	res;
-	static	uint8_t	count =0;
-	static uint8_t	step =0;
-//	GPIOD->ODR |= GPIO_PIN_14;
+	static	uint16_t	count =0;
 	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
-		
+//		GPIOD->ODR ^= GPIO_PIN_15;	
+		if(adc7946FunctionProcessor)
+			adc7946FunctionProcessor();
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_3)
 	{
 		halAfeCurrentGetCurrentValue();
-		TimeOutCoiunt++;
-		//if(Callback_flag || TimeOutCoiunt >= 3)
+		//GPIOD->ODR ^= GPIO_PIN_14;
+		if(adc7946FunctionProcessor == 0)
+			adc7946FunctionProcessor = getCurrentP;
+		AdcFlag |= (CURR_P_FLAG + CURR_N_FLAG);
+		//AdcFlag |= (CURR_P_FLAG + 0);
+
+	}
+	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_8)
+	{
 		count++;
 		if(count >= 50)
 		{
 			count = 0;
-			//step = 1;
-			adcChannel++;
-			if(adcChannel >= 4)
-				adcChannel = 0;
-				
-			switch(adcChannel)
+			if(appProjectIsInEngMode())
 			{
-			case ADC_CURR_P:
-				res = smp_ADS7946_get_data(channel_1,CS_0,ads7946_callBack);
-			//	halAfeADS7946DebugMsg("ch 1 CS 0");
-				break;
-			case ADC_CURR_N:
-				res = smp_ADS7946_get_data(channel_1,CS_1,ads7946_callBack);	
-			//	halAfeADS7946DebugMsg("ch 1 CS 1");
-				break;
-			case ADC_VB_INT:
-				res = smp_ADS7946_get_data(channel_0,CS_0,ads7946_callBack);
-			//	halAfeADS7946DebugMsg("ch 0 CS 0");
-				break;
-			case ADC_VB_EXT:
-				res = smp_ADS7946_get_data(channel_0,CS_1,ads7946_callBack);
-			//	halAfeADS7946DebugMsg("ch 0 CS 1");
-				break;
+				AdcFlag |= (VPACK_FLAG + VBAT_FLAG);
+				//count = 30;	
+				//halAfeADS7946DebugMsg("Read Int Ext");
 			}
-		}
-		//GPIOD->ODR ^= GPIO_PIN_14;
+			else
+			{
+				AdcFlag |= (VPACK_FLAG);
+				//halAfeADS7946DebugMsg("Read Ext");
+			}
+			if(adc7946FunctionProcessor == 0)
+				adc7946FunctionProcessor = getVpack;
+		}	
 	}
-	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_8)
-	{
-		
-	}
-	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
-	{
-	///	 smp_ADS7946_get_data(channel_0,CS_0);
-	//	HAL_Delay(10);
-	//	smp_ADS7946_get_data(channel_1,CS_0);
-	//	HAL_Delay(10);
-	//	smp_ADS7946_get_data(channel_0,CS_1);
-	//	HAL_Delay(10);
-	//	smp_ADS7946_get_data(channel_1,CS_1);
-		
-	//	halAfeADS7946DebugMsg("ADS7946 1sec");
-	}
-	
-//	GPIOD->ODR &= ~GPIO_PIN_14;
 }
 /* Public function prototypes -----------------------------------------------*/
 
 void halAfeCurrentOpen(void)
 {
-//	MX_DMA_Init();
-	Callback_flag = 1;
-	TimeOutCoiunt = 0;
+	AdcFlag = 0;
 	smp_ADS7946_init();
-		
+	adc7946FunctionProcessor = 0;
 	LibSwTimerOpen(currentSwTimerHandler, 0);
 }
 

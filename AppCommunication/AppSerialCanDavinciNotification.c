@@ -41,6 +41,9 @@
 #include "AppGauge.h"
 #include "AppBms.h"
 
+void appSerialUartSendMessage(uint8_t *str);
+#define	notiDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
+
 /* Private typedef -----------------------------------------------------------*/
 typedef void (* tNotificationRunTable)(void);
 
@@ -149,27 +152,30 @@ static void notifyBaseRmQmax(void)
 static void notifyBaseCurrent(void)
 {
 	smp_can_package_t	CanPkg;
-	tLbyte	Lbyte;
+	tLbyte	Curr1,Curr2;
+	char	str[100];
 	
 	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, notifyScuId(),
 									SMP_BASE_CURRENT_OBJ_INDEX,
 									0);
 	CanPkg.dlc = 8;
 								
-	Lbyte.l = appGaugeGetCurrentValue();
-	CanPkg.dat[0] = Lbyte.b[0];
-	CanPkg.dat[1] = Lbyte.b[1];
-	CanPkg.dat[2] = Lbyte.b[2];
-	CanPkg.dat[3] = Lbyte.b[3];
+	Curr1.l = appGaugeGetCurrentValue();
+	CanPkg.dat[0] = Curr1.b[0];
+	CanPkg.dat[1] = Curr1.b[1];
+	CanPkg.dat[2] = Curr1.b[2];
+	CanPkg.dat[3] = Curr1.b[3];
 	
-	Lbyte.l = halAfeGetCurrentValue(1);
-	CanPkg.dat[4] = Lbyte.b[0];
-	CanPkg.dat[5] = Lbyte.b[1];
-	CanPkg.dat[6] = Lbyte.b[2];
-	CanPkg.dat[7] = Lbyte.b[3];
+	Curr2.l = halAfeGetCurrentValue(1);
+	CanPkg.dat[4] = Curr2.b[0];
+	CanPkg.dat[5] = Curr2.b[1];
+	CanPkg.dat[6] = Curr2.b[2];
+	CanPkg.dat[7] = Curr2.b[3];
 
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
-
+	
+//	sprintf(str,"I1 = %d I2 = %d",Curr1.l, Curr2.l);
+//	notiDebugMsg(str);
 }
 
 static void notifyBaseFCC(void)

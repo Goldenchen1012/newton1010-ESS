@@ -54,7 +54,10 @@ void HalBspInit(void)
 	BSP_K2_OPEN();
 	BSP_K3_OPEN();
 	BSP_K4_OPEN();
+	
+	BSP_RELAY_PS_LO();
 	BSP_RELAY_PS_OPEN();
+	
 	BSP_TOWER_LIGHT_RED_OPEN();
 	BSP_TOWER_LIGHT_ORANGE_OPEN();
 	BSP_TOWER_LIGHT_GREEN_OPEN();
@@ -70,6 +73,7 @@ void HalBspInit(void)
 	BSP_PS3_OK_OPEN();
 	BSP_BUTTON_OPEN();
 	BSP_NFAULT_OPEN();
+	BSP_TERMLR_OPEN();
 	
 //	BSP_K1_FB_OPEN();
 //	BSP_K1_FB_READ();
@@ -81,7 +85,7 @@ void HalBspInit(void)
 	BSP_COCP_LATCH_OPEN();
 	BSP_OD_IN_OPEN();
 	
-//	HalBspRelayPsCtrl(1);
+	HalBspRelayPsCtrl(0);
 }
 
 void HalBspDO1Ctrl(uint8_t hi)

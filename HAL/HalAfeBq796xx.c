@@ -713,7 +713,7 @@ uint8_t app_afe_cb(bq796xx_data_t *bq_data, bq796xx_event_cb_type bq_event){
 //	uint8_t		temp_ch;
 
 //	halAfeBq796xxDebugMsg("Bq796xx CB");
-	GPIOD->ODR ^= GPIO_PIN_14;
+//	GPIOD->ODR ^= GPIO_PIN_14;
  	switch(bq_event)
  	{
  	case BQ_EVENT_VCELL:
@@ -934,7 +934,7 @@ static void changeBmuDirForDataReadProcessor(void)
 					BridgeDirection,
 					StackCountForIni[BridgeDirection]);
 		halAfeBq796xxDebugMsg(str);
-		GPIOD->ODR |= GPIO_PIN_14;
+//		GPIOD->ODR |= GPIO_PIN_14;
 		ChangeDirCount++;
 		if(ChangeDirCount >= 10)
 		{
@@ -974,7 +974,7 @@ static void changeBmuDirForDataReadProcessor(void)
 		}
 		res &= 0x7f;
 				
-		GPIOD->ODR &= ~GPIO_PIN_14;
+//		GPIOD->ODR &= ~GPIO_PIN_14;
 		StackCountForIni[BridgeDirection] = res;
 
 #ifdef AFE_DEBUG_MODE
@@ -1124,13 +1124,17 @@ static void AfeBq796xxIniHandler(uint16_t evt)
 {
 	char	str[100];
 	uint8_t res;
-	//wake_sw
-	//WAKE_TONE_DISABLE
-	if(appProjectIsInEngMode() && afe_steps == AFE_INIT_IDLE)
+
+	if((appProjectIsInSimuMode() || appProjectIsInEngMode()) &&
+	   afe_steps == AFE_INIT_IDLE)
+	{
 		return;
+	}
+	HalBspRelayPsCtrl(0);
+	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{  
-		GPIOD->ODR ^= GPIO_PIN_14;
+//		GPIOD->ODR ^= GPIO_PIN_14;
 		
 		if(cnt_delay <= 1)
 		{

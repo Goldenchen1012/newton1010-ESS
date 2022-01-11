@@ -140,11 +140,11 @@ void drv_bq796xx_uart_puts(uint8_t *d_bytes,int16_t d_size){
 void drv_bq796xx_clear_fifobuffer(void){
 	uint8_t rx_data = 0;
 	
-	  GPIOD->ODR |= GPIO_PIN_14;
+//	  GPIOD->ODR |= GPIO_PIN_14;
     while(smp_uart_get(&bq796xx_uart, &rx_data)==SMP_SUCCESS){
         bq796xx_res_buf_c--;
     }
-		GPIOD->ODR &= ~GPIO_PIN_14;
+//		GPIOD->ODR &= ~GPIO_PIN_14;
 }
 
 void drv_bq796xx_rx_pin_wakeup(void){
