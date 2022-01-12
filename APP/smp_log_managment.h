@@ -64,7 +64,7 @@
 		uint16_t reflash_total_log_cnt;
 		uint16_t fix_memory_current_page;
 		uint16_t fix_total_log_cnt;
-		uint8_t dummy[2];
+		uint16_t sum;
 	}smp_sector_header_package;
 	
 	typedef struct{
