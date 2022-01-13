@@ -694,7 +694,9 @@ void appProjectOpen(void){
 	appGaugeOpen(gaugeEventHandler);
 	
 	//Golden 2021/12/16 disable
+	#if 0
 	//halafeOpen(afeEventHandler);
+	#endif
 	
 	halAfeCurrentOpen();
 	Hal_W5500_Open();

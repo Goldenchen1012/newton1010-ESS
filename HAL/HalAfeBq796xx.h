@@ -34,7 +34,6 @@ extern "C" {
 /* Public function prototypes -----------------------------------------------*/
 tErrCode HalAfeBq796xx_Init(void);
 
-
 #ifdef __cplusplus
 }
 #endif

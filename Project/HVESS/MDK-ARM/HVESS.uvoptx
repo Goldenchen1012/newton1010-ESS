@@ -203,7 +203,7 @@
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>bq796xx_data</ItemText>
+          <ItemText>bq796xx_data,0x10</ItemText>
         </Ww>
         <Ww>
           <count>9</count>
@@ -254,6 +254,16 @@
           <count>18</count>
           <WinNumber>1</WinNumber>
           <ItemText>uart1_tx_buffer</ItemText>
+        </Ww>
+        <Ww>
+          <count>19</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>irm_res_data,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>20</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>test_bmu_statistics_num</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -1071,7 +1081,7 @@
 
   <Group>
     <GroupName>BSP</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1527,7 +1537,7 @@
       <GroupNumber>13</GroupNumber>
       <FileNumber>77</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\..\Drivers\BSP\STM32L496V_Davinci\stm32l4xx_Davinci.c</PathWithFileName>

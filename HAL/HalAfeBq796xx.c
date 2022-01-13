@@ -44,7 +44,7 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 
 #define	PASER_COUNT_PER_ONE_TIMES		3
 
-#define	afeBmuNumber()					apiSysParGetBmuNumber()
+#define	afeBmuNumber()					11//apiSysParGetBmuNumber()
 
 #define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01,GPIOD->ODR ^= GPIO_PIN_13;}
 
@@ -803,7 +803,7 @@ static void finishAfeReadProcessor(void)
 			fail_count++;
 			if(run_count >= CHECK_AFE_TIMES && fail_count >= (CHECK_AFE_TIMES/2))
 			{
-#if	0				
+#if	1				
 				halAfeBq796xxDebugMsg("­«·s Ini AFE");
 
 				//AfeState = AFE_STATE_INI;
@@ -936,6 +936,11 @@ static void changeBmuDirForDataReadProcessor(void)
 	}
 	if(afe_steps > SETDIR_AFE_RUN_AUX_ADC)
 	{
+    if(AfeCommTimeOutCount >= 10) //over 10 sec not ready
+    {
+        changeToBq796xxIniHandler();
+        return;  
+    }
 		if(res & 0x80)
 		{
 			IsRingDaisyChain = 1;

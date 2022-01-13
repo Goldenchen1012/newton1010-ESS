@@ -337,7 +337,7 @@ typedef enum{
 }bq796xx_dir_set_steps_enum;
 
 /* Exported constants --------------------------------------------------------*/ 
-#define BMU_TOTAL_BOARDS															13
+#define BMU_TOTAL_BOARDS															11
 #define BMU_CELL_SERIES             									16
 
 #define BQ796XX_TX_BUFFER_SIZE												512

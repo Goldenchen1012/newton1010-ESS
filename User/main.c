@@ -40,16 +40,17 @@
 #define G_TEST_INT_ADC
 #endif
 
-#if 1
+#if 0
 #define G_TEST_MX25LXX_FLASH 
 #endif
 
-#if 1
+#if 0
 #define G_TEST_MAX7219_LCD_MARITEX
 #endif
 
 #if 1
 #define G_TEST_AD7946_ADC
+#define G_TEST_INT_ADC_TEST_CYCLE_NUM           50
 #endif
 
 #if 1
@@ -58,21 +59,30 @@
 
 #if 1
 #define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP
+#define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_TEST_CYCLE_NUM      10
+#define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_WAKE_CNT            10
 #endif
 
 #if 1
 #define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
+#define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP_TEST_CYCLE_NUM   100
 #endif
 
-#if 0
+#if 1
 #define G_TEST_BQ796XX_CELL_BALANCE_FUNC 
+#define G_TEST_BQ796XX_CELL_BALANCE_FUNC_TEST_CYCLE_NUM           100
+#endif
+
+#if 1
+#define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
+#define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM   100
 #endif
 
 #if 1
 #define G_TEST_IRM_FUNCTION
 #endif 
 
-#if 1
+#if 0
 #define G_TEST_EVENT_LOG_FUNC
 #endif
 
@@ -99,7 +109,8 @@ bq796xx_init_default_t afe_load_data = AFE_PARAM_LOAD_VALUE;
 #endif
 																
 extern bq796xx_init_default_t bq796xx_default;
-
+extern bq796xx_data_t bq796xx_data;
+																												
 uint8_t num=0;
 uint8_t d_payload[4] = {0};
 uint8_t null_payload[4] = {0};
@@ -132,11 +143,21 @@ uint8_t wake_cnt = 0;
 
 uint16_t app_adc_temp[5]={0};
 
-long int test_dir_ok[2] ={0};
-long int test_dir_fail[2] ={0};
+long int test_bmu_statistics_num[2][BMU_TOTAL_BOARDS+1] ={0};
+long int test_bmu_ring_total_count = 0;
+//long int test_dir_fail[2] ={0};
 long int irm_get_vstack_cont = 0;
-
 uint16_t  test_init_rec_bmu_num[2][40]={0};
+
+uint16_t test_get_vatck_cnt = 0;
+
+#ifdef G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
+uint16_t test_gpio_HL=0;
+uint8_t	test_ntcIoIndex =0;
+uint8_t	test_ntcChannelStartIndex = 0;
+uint8_t	test_ntcChannelOffset = 0;
+uint8_t	test_NtcChannelSelect = 0;
+#endif 
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -154,10 +175,17 @@ void SystemClock_Config_80MHz(void);
 void SystemClock_Config_HSE_80MHz(void);
 void SystemClock_Config_24MHz (void);
 /* Private functions ---------------------------------------------------------*/
+void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step(void);
+void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_MeasureData(void);
+void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_Statistics(long int k_cnt);
 
 //IRM GPIO Call Back Function---------------------------------------------------
 #define ADS7946_VREF                           4.096f
 #define ADS7946_RESOLUTION_B                   14
+#define VSTACK_CAL_P1                          696.64f
+#define VSTACK_CAL_P2                          -0.2192f
+#define VO_CAL_V_P1                            0.002f   //unit:V
+
 
 apiIRMonitoring_cb_t app_irm_event_cb;
 
@@ -185,7 +213,7 @@ uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonitoring_ev
   }
 	
 	#if 1
-	SEGGER_RTT_printf(0,"IRM EVENT=%d, Vstack=%d, Rn=%d, Rp=%d\r\n", irm_event, (int)(temp_irm_data.V_stack), temp_irm_data.Rn_kohm, temp_irm_data.Rp_kohm);
+	SEGGER_RTT_printf(0,"IRM EVENT=%d, Vstack=%d, Rn=%d, Rp=%d\r\n", irm_event, (uint16_t)(irm_res_data->V_stack), irm_res_data->Rn_kohm, irm_res_data->Rp_kohm);
 	#endif
 	
 	return 0;
@@ -246,13 +274,31 @@ static void app_imr_ads7946_callBack(uint8_t *pDat, uint8_t size)
 {
 	tIbyte	AdcValue;
 	static float volt_data;
+	static float volt_data2;
 	static float adc_bits;
   adc_bits = (float)(1<<ADS7946_RESOLUTION_B); 	
 	
 	AdcValue.b[1] = pDat[2];
 	AdcValue.b[0] = pDat[3];
-	AdcValue.i >>= 3;
+	AdcValue.i >>= 2;
 	volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
+	//volt_data = (volt_data - VO_CAL_V_P1);
+	volt_data = volt_data/2;
+	
+	if(volt_data< 0){
+	    volt_data = 0;
+	}
+	
+	if((BSP_IRM_SW1_PORT->ODR & BSP_IRM_SW1_PIN)== BSP_IRM_SW1_PIN){
+	    if((BSP_IRM_SW2_PORT->ODR & BSP_IRM_SW2_PIN)== 0x0000){
+			    if((BSP_IRM_SW3_PORT->ODR & BSP_IRM_SW3_PIN)== 0x0000){
+						  volt_data2 = ((volt_data-VO_CAL_V_P1)*VSTACK_CAL_P1) +VSTACK_CAL_P2;       //Compensate for actual voltage(unit: V) 
+	            LOG_GREEN("Vstack=%d mV\r\n",(uint16_t)(volt_data2*1000));
+	        }
+			}
+	}
+ 
+	LOG_GREEN("Vo=%d mV\r\n",(uint16_t)(volt_data*1000));
 	
 	if(irm_fun_ptr !=NULL){
 		  irm_fun_ptr(&volt_data);
@@ -267,6 +313,9 @@ void irm_data_ready_cb(IRM_Recv_CB_t rcv_ptr){
 IRMonitoring_event_read_cb_type app_irm_trigger_voltage_data_cb(void){
 	  static int8_t res;
 		
+	  //Test 2022.01.10
+		GPIOD->ODR ^= GPIO_PIN_15;
+	
     res = smp_ADS7946_get_data(channel_0,CS_0,app_imr_ads7946_callBack);
 	  
 	  if(res == SMP_SUCCESS){
@@ -650,15 +699,27 @@ int main(void)
 	#endif
 	//------------------------------------------
 	
-	
 	//Test IRM SW1 mesaure Vstack(Total Battreary Voltage)
 	#if 0
 	app_irm_sw_gpio_init_cb();
 	BSP_IRM_SW1_ON();
-	BSP_IRM_SW3_OFF();
-	BSP_IRM_SW3_OFF();
-	
+	HAL_Delay(500);
+	BSP_IRM_SW1_OFF();
+	HAL_Delay(500);
+	BSP_IRM_SW1_ON();
+	HAL_Delay(500);	
+	BSP_IRM_SW2_ON();
+	HAL_Delay(500);	
+	BSP_IRM_SW2_OFF();	
+	HAL_Delay(500);
+	BSP_IRM_SW3_ON();
+	HAL_Delay(500);	
+	BSP_IRM_SW3_OFF();	
+	HAL_Delay(500);	
 	while(1){
+		 BSP_IRM_SW1_OFF();
+     BSP_IRM_SW2_ON();
+     BSP_IRM_SW3_OFF();			
 	   app_irm_trigger_voltage_data_cb();
 	   HAL_Delay(500);
 	}
@@ -684,7 +745,7 @@ int main(void)
 		HAL_Delay(50);
 		
 		test_cont++;
-		if(test_cont>=50) break;
+		if(test_cont>=G_TEST_INT_ADC_TEST_CYCLE_NUM) break;
 	}
   #endif 
   //------------------------------------------
@@ -717,7 +778,7 @@ int main(void)
 	
 	#ifdef G_TEST_BQ796XX_SETTING_INIT_WITH_STEP
   //----------------------------------------------------------------------------------
-	for(int k = 0; k<10 ; k++){
+	for(int k = 0; k < G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_TEST_CYCLE_NUM; k++){
 	    afe_steps = 0;
 	    cnt_delay = 0;
 		  res = 0;
@@ -731,7 +792,7 @@ int main(void)
 			}	
 			
 			++wake_cnt;
-			if(wake_cnt>=3){
+			if(wake_cnt >= G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_WAKE_CNT){
 			   wake_sw = WAKE_TONE_DISABLE;
 			}else{
 			   wake_sw = WAKE_TONE_ENABLE;
@@ -826,125 +887,86 @@ int main(void)
 	  drv_bq796xx_Stack_CellBalanceStarting(CB_MANUAL, 1);
 		drv_bq796xx_delay_ms(10);
 		test_cont++;
-		if(test_cont>100) break;
+		if(test_cont > G_TEST_BQ796XX_CELL_BALANCE_FUNC_TEST_CYCLE_NUM) break;
 	}
 	#endif
 	//----------------------------------------------------------------------------------
-  
+
+	// BQ796XX GPIO select read ADC function Test
+	//----------------------------------------------------------------------------------	
+  #ifdef G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
+	test_cont = 0;
+	while(1){
+			test_NtcChannelSelect = test_ntcChannelStartIndex + test_ntcChannelOffset;
+	    if(test_NtcChannelSelect >= 16){	
+		     test_NtcChannelSelect = 0;
+				 test_ntcChannelOffset =0;
+			}
+			
+			LOG_GREEN("Stack set BMU GPIO select Ch=%02d\r\n", test_NtcChannelSelect);
+			
+			//Set BMU GPIO 
+			//------------------------------
+	    for(int i = 0 ;i<4 ; i++){   
+	        if(test_ntcIoIndex == 0)
+	        {
+	           test_gpio_HL = 5- (test_NtcChannelSelect & 0x01);	
+		         drv_bq796xx_Set_AFE_GPIO_type(STACK, 0x00, test_gpio_HL, AFE_GPIO4,0);//BQ796XX_CMD_DELAY_MS);
+	        }
+	        else if(test_ntcIoIndex == 1)
+	        {
+		         test_gpio_HL = 5-((test_NtcChannelSelect & 0x02)>>1);
+	 	         drv_bq796xx_Set_AFE_GPIO_type(STACK, 0x00, test_gpio_HL, AFE_GPIO5,0);//BQ796XX_CMD_DELAY_MS);	
+	       }
+	       else if(test_ntcIoIndex == 2)
+	      {	
+		         test_gpio_HL = 5-((test_NtcChannelSelect & 0x04)>>2);
+		         drv_bq796xx_Set_AFE_GPIO_type(STACK, 0x00, test_gpio_HL, AFE_GPIO6,0);//BQ796XX_CMD_DELAY_MS);
+	      }
+	      else if(test_ntcIoIndex == 3)
+	      {
+		         test_gpio_HL = 5-((test_NtcChannelSelect & 0x08)>>3);
+		         drv_bq796xx_Set_AFE_GPIO_type(STACK, 0x00, test_gpio_HL, AFE_GPIO7,0);//BQ796XX_CMD_DELAY_MS);
+	      }
+
+    	  test_ntcIoIndex++;
+	      if(test_ntcIoIndex >= 4)
+	      {
+		       test_ntcIoIndex = 0;
+	      } 				
+	      HAL_Delay(2);
+		 }
+		 	
+		 test_ntcChannelOffset++;
+     //------------------------------
+		 
+	  drv_bq796xx_clean_fifo();
+	  drv_bq796xx_Read_AFE_ALL_ADC(STACK, 0, 0);    //Stack(BMU #1,#2) Read all AUX ADC   (GPIO1~8).
+			
+    HAL_Delay(10);		
+		 
+		for(int ki =0; ki<10*BMU_TOTAL_BOARDS; ki++){
+          res = drv_bq796xx_data_frame_parser();
+		}
+			
+		HAL_Delay(10);
+		LOG_GREEN("Stack Read GPIO1=");
+		
+		for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){ 
+        LOG_GREEN("%d,", bq796xx_data.gpio_data[ki][0]); 
+		}
+		LOG_GREEN("\r\n");
+		
+		test_cont++;
+		if(test_cont>G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM) break;
+  }
+	#endif
+	//----------------------------------------------------------------------------------
+
 	// BQ796XX  Direction check North/South BMU number Test with step.
 	//----------------------------------------------------------------------------------
 	#ifdef G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
-	north_res = 0;
-	south_res = 0;
-	bmu_is_ring = 0;
-
-  for(long int k = 0; k<100; k++){
-	    dir_afe_steps = 0;
-	    dir_cnt_delay = 0;
-		  dir_res = 0;
-		
-		  drv_bq796xx_clear_fifobuffer();
-		  smp_time_count_set(0);
-		  
-		  if((k%2)==0){			
-          dir_state = DIR_NORTH;
-			}else{
-			    dir_state = DIR_SOUTH;
-			}		
-	    
-      //Check these condition, if it is true then skip auto addressing.
-      //-------------------------------------------------------------			
-			if( (north_res ==bq796xx_default.bmu_total_num) || (south_res ==bq796xx_default.bmu_total_num) || ((north_res+ south_res)==bq796xx_default.bmu_total_num)){
-		      if((k%2)==0){			
-              ns_bmu_cnt = north_res;    //Skip autoaddressing	
-			    }else{
-			        ns_bmu_cnt = south_res;    //Skip autoaddressing	
-			    }
-					
-					++ns_recheck_cnt;
-					
-					if(ns_recheck_cnt>=50){
-						  ns_bmu_cnt = 0;   //Re autoaddressing	
-						 if(ns_recheck_cnt>=51) ns_recheck_cnt = 0;
-					}
-			}else{
-					ns_bmu_cnt = 0;   //Re autoaddressing	
-			}	
-			//-------------------------------------------------------------
-	    while(1){	
-		      GPIOD->ODR ^= GPIO_PIN_13;
-		 
-		      if(dir_cnt_delay==0){
-						
-						  ns_bmu_cnt = 0;  //Re autoaddressing
-						
-              dir_res = drv_bq796xx_direction_set_steps(ns_bmu_cnt, &dir_afe_steps, bq796xx_default.bmu_total_num , dir_state, &dir_step_com_f , &dir_before_d_ms);							
-						  dir_cnt_delay=dir_before_d_ms;
-					    if(dir_step_com_f == 1){
-		              ++dir_afe_steps;
-			        }
-			    }
-  		    GPIOD->ODR ^= GPIO_PIN_13;
- 			
-          if(dir_bq_count_temp !=smp_time_count_get()){	   
-				     dir_bq_count_temp = smp_time_count_get();
-				     if(dir_cnt_delay>0){
-					     --dir_cnt_delay;
-				     }
-			    }
-		
-		      if((dir_res>=0) && (dir_afe_steps > SETDIR_AFE_RUN_AUX_ADC)){
-				    break;
-		      }
-	    }
-			
-			if(dir_state == DIR_NORTH){
-			    north_res = dir_res & 0x7F;
-			}else{
-			    south_res = dir_res & 0x7F;
-			}
-			
-			bmu_is_ring = ((dir_res & 0x80)>> 7);                                       //Results MSB is  0 = Non Ring, 1= Ring. 
-			
-			LOG_GREEN("BMU CHK#%04d N=%d,S=%d,Ring=%d\r\n", k, north_res, south_res , bmu_is_ring);
-			
-			if(dir_res>=2){
-			   test_dir_ok[dir_state]++;
-			}else{
-			   test_dir_fail[dir_state]++;
-			}
-			
-			drv_bq796xx_delay_ms(dir_state+1);
-			
-			dir_step_com_f = 0;
-			dir_before_d_ms = 0;
-			
-			test_cont = 0;
-	    while(1){
-				 drv_bq796xx_clear_fifobuffer();
-				
-	       drv_bq796xx_Read_AFE_ALL_VCELL(STACK, 0, 0);                               //Stack(BMU #1,#2) Read all VCell 1~16(Main ADC).
-				 drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
-				
-				 drv_bq796xx_Read_AFE_ALL_ADC(STACK, 0, 0);                                 //Stack(BMU #1,#2) Read all AUX ADC   (GPIO1~8).
-		     drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
-				
-				 drv_bq796xx_Read_Stack_FaultSummary(0);                                    //Stack read Fault summary status.
-				 drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
-				
-				 for(int ki =0; ki<10*BMU_TOTAL_BOARDS; ki++){
-				     res = drv_bq796xx_data_frame_parser();
-				 }					 
-		     
-				 if(test_cont >=2) break;
-		     test_cont++;
-	    }
-			
-			dir_step_com_f = 0;
-			dir_before_d_ms = 0;
-  }
-  //------------------------------------------------------------------------------------------		
-
+  G_Test_BQ796XX_Direction_Chechk_BMU_with_Step();
 	#endif
   //------------------------------------------------------------------------------------------
 
@@ -957,7 +979,7 @@ int main(void)
 
 	drv_bq796xx_clear_fifobuffer();
 	 
-	//IRM Test(2021/12/21)
+	//IRM Test(2022/01/12)
 	//----------------------------------------------------------------------------------------- 
 	#ifdef G_TEST_IRM_FUNCTION
 	//Register All callbasck function for IRM
@@ -970,11 +992,19 @@ int main(void)
 	app_irm_event_cb.irm_outdata = app_irm_rxdata_cb;
 	app_irm_event_cb.DataReady_cb = irm_data_ready_cb;
 	
-	//Open IRM function, Setting 2s= IRM detection period, 100ms = IRM switch SW1~Sw3 waitting time. 
-	res = apiIRMonitoringOpen(2, 100, app_irm_event_cb);
+	//Open IRM function, Setting 5s= IRM detection period, 200ms = IRM switch SW1~Sw3 waitting time. 
+	res = apiIRMonitoringOpen(5, 200, app_irm_event_cb);
 	
 	//Get current Vstack, IRM use callback notification Vstack.
-	apiIRMonitoringGetVstack();
+	while(test_get_vatck_cnt <10){
+		  test_get_vatck_cnt++;
+		
+	    LOG_BLUE("IRM Get Vstack...\r\n");
+	    apiIRMonitoringGetVstack();
+		  LibSwTimerHandle();
+		
+		  HAL_Delay(100); 
+	}
 	#endif
 	//-------------------------------------------------------------------------------------- 
 	
@@ -1498,13 +1528,168 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif
 
-/**
-  * @}
-  */
 
-/**
-  * @}
-  */
+#ifdef G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
+// BQ796XX  Direction check North/South BMU number Test with step.
+void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step(void){
+	north_res = 0;
+	south_res = 0;
+	bmu_is_ring = 0;
+
+  for(long int k = 0; k < G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP_TEST_CYCLE_NUM; k++){
+	    dir_afe_steps = 0;
+	    dir_cnt_delay = 0;
+		  dir_res = 0;
+		
+		  drv_bq796xx_clear_fifobuffer();
+		  smp_time_count_set(0);
+		  
+		  if((k%2)==0){			
+          dir_state = DIR_NORTH;
+			}else{
+			    dir_state = DIR_SOUTH;
+			}		
+	    
+      //Check these condition, if it is true then skip auto addressing.
+      //-------------------------------------------------------------			
+			if( (north_res ==bq796xx_default.bmu_total_num) || (south_res ==bq796xx_default.bmu_total_num) || ((north_res+ south_res)==bq796xx_default.bmu_total_num)){
+		      if((k%2)==0){			
+              ns_bmu_cnt = north_res;    //Skip autoaddressing	
+			    }else{
+			        ns_bmu_cnt = south_res;    //Skip autoaddressing	
+			    }
+					
+					++ns_recheck_cnt;
+					
+					if(ns_recheck_cnt>=50){
+						  ns_bmu_cnt = 0;   //Re autoaddressing	
+						 if(ns_recheck_cnt>=51) ns_recheck_cnt = 0;
+					}
+			}else{
+					ns_bmu_cnt = 0;   //Re autoaddressing	
+			}	
+			//-------------------------------------------------------------
+	    while(1){	
+		      GPIOD->ODR ^= GPIO_PIN_13;
+		 
+		      if(dir_cnt_delay==0){
+						
+						  ns_bmu_cnt = 0;  //Re autoaddressing
+						
+              dir_res = drv_bq796xx_direction_set_steps(ns_bmu_cnt, &dir_afe_steps, bq796xx_default.bmu_total_num , dir_state, &dir_step_com_f , &dir_before_d_ms);							
+						  dir_cnt_delay=dir_before_d_ms;
+					    if(dir_step_com_f == 1){
+		              ++dir_afe_steps;
+			        }
+			    }
+  		    GPIOD->ODR ^= GPIO_PIN_13;
+ 			
+          if(dir_bq_count_temp !=smp_time_count_get()){	   
+				     dir_bq_count_temp = smp_time_count_get();
+				     if(dir_cnt_delay>0){
+					     --dir_cnt_delay;
+				     }
+			    }
+		
+		      if((dir_res>=0) && (dir_afe_steps > SETDIR_AFE_RUN_AUX_ADC)){
+				    break;
+		      }
+	    }
+			
+			if(dir_state == DIR_NORTH){
+			    north_res = dir_res & 0x7F;
+				  test_bmu_statistics_num[0][north_res]++;
+			}else{
+			    south_res = dir_res & 0x7F;
+				  test_bmu_statistics_num[1][south_res]++;
+			}
+			
+			bmu_is_ring = ((dir_res & 0x80)>> 7);                                       //Results MSB is  0 = Non Ring, 1= Ring. 
+			
+			test_bmu_ring_total_count += bmu_is_ring;
+			
+			LOG_GREEN("BMU CHK#%06d N=%d,S=%d,Ring=%d  ", k, north_res, south_res , bmu_is_ring);
+			
+			drv_bq796xx_delay_ms(dir_state+1);
+			dir_step_com_f = 0;
+			dir_before_d_ms = 0;
+			
+			test_cont = 0;
+	    while(1){
+				 drv_bq796xx_clear_fifobuffer();
+				
+	       drv_bq796xx_Read_AFE_ALL_VCELL(STACK, 0, 0);                               //Stack(BMU #1,#2) Read all VCell 1~16(Main ADC).
+				 drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
+				
+				 drv_bq796xx_Read_AFE_ALL_ADC(STACK, 0, 0);                                 //Stack(BMU #1,#2) Read all AUX ADC   (GPIO1~8).
+		     drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
+				
+				 drv_bq796xx_Read_Stack_FaultSummary(0);                                    //Stack read Fault summary status.
+				 drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
+				
+				 for(int ki =0; ki<10*BMU_TOTAL_BOARDS; ki++){
+				     res = drv_bq796xx_data_frame_parser();
+				 }					 
+		     
+				 if(test_cont >=2) break;
+		     test_cont++;
+	    }
+			
+		  G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_MeasureData();
+			
+			if((k%100)==0){
+				  HAL_Delay(100);
+			    G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_Statistics(k+1);
+				  HAL_Delay(100);
+			}
+			
+			dir_step_com_f = 0;
+			dir_before_d_ms = 0;
+  }
+	
+	HAL_Delay(100);
+	G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_Statistics(G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP_TEST_CYCLE_NUM);
+	HAL_Delay(100);
+}
+
+void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_MeasureData(void){
+			LOG_GREEN("VCell16=");
+			for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){
+			    LOG_GREEN("%04d,", ((int)((float)(bq796xx_data.vcell_data[ki][15])*BQ79656_RESOLUTION_CELL_MAIN)));
+			}
+      LOG_GREEN("mV  "); 
+			
+			LOG_GREEN("GPIO1 ADC=");
+		  for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){ 
+        LOG_GREEN("%05d,", bq796xx_data.gpio_data[ki][0]); 
+		  }
+			LOG_GREEN("  ");
+	
+			LOG_GREEN("Fault summary(hex)=");
+		  for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){ 
+        LOG_GREEN("%02x,", bq796xx_data.fault_summary[ki]); 
+		  }
+			LOG_GREEN("\r\n");	
+}
+
+void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_Statistics(long int k_cnt){
+	LOG_GREEN("BMU CHK statistics Read BMU Count:\r\n");
+	LOG_GREEN("Total Test = %06d, Current#%06d \r\n",G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP_TEST_CYCLE_NUM, k_cnt);
+	LOG_GREEN("North Direction BMU Count= ");
+	for(int ki =0; ki<(BMU_TOTAL_BOARDS+1); ki++){ 
+      LOG_GREEN("%05d,", test_bmu_statistics_num[0][ki]); 
+  }
+	LOG_GREEN("\r\n");
+	
+	LOG_GREEN("South Direction BMU Count= ");
+	for(int ki =0; ki<(BMU_TOTAL_BOARDS+1); ki++){ 
+      LOG_GREEN("%05d,", test_bmu_statistics_num[1][ki]); 
+  }
+	LOG_GREEN("\r\n");	
+	LOG_GREEN("BMU Ring Count= %d \r\n",test_bmu_ring_total_count);
+}
+
+#endif
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

@@ -95,7 +95,7 @@ static uint8_t IRMonitoring_Init(uint8_t exe_interval_s, uint16_t sw_delay_ms, a
 	      return(0);
 	  }else{
 		    irm_event_cb.GetVoltDeviceInit_cb = callbackfunc.GetVoltDeviceInit_cb;
-			   irm_event_cb.GetVoltDeviceInit_cb ();
+	      irm_event_cb.GetVoltDeviceInit_cb ();
 		}	
 			
     if(callbackfunc.irm_outdata==NULL){
@@ -218,7 +218,8 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 						
 				      irm_data.Vo_stack = irm_adc_data;
 			        irm_data.V_stack  = (irm_data.Vo_stack * IRM_K1);
-			
+			        irm_res_out.V_stack = irm_data.V_stack;
+						
               //If callback function exist then execution this.
 	            if((irm_event_cb.irm_outdata != NULL) && (irm_vstack_f==1)){	
 								
@@ -381,6 +382,9 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 						  sub_step_count = 0;
 					    irm_mes_step = IRM_DEVICE_WAITTING;   
 					}
+					
+					//Test 2022.01.10
+					GPIOD->ODR ^= GPIO_PIN_14;
 			    break;
 			case IRM_DEVICE_WAITTING:
           ++sub_step_count;
@@ -483,6 +487,7 @@ uint8_t apiIRMonitoringOpen(uint8_t exe_interval_s, uint16_t sw_delay_ms, apiIRM
 void apiIRMonitoringGetVstack(void){
     irm_vstack_f = 1;
 	  irm_flag = 1;
+	  irm_mes_step = IRM_S1; 
 }
 
 /************************ (C) COPYRIGHT ***END OF FILE****/
