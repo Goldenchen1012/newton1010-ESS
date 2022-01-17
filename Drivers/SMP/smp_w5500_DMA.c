@@ -2,8 +2,8 @@
 ******************************************************************************
 * @file    smp_W5500_DMA.c
 * @author  Steve Cheng
-* @version V0.0.2
-* @date    2022/01/07
+* @version V0.0.3
+* @date    2022/01/17
 * @brief   
 ******************************************************************************
 * @attention
@@ -134,8 +134,12 @@ static uint8_t gSocketNum = 0;
 wiz_PhyConf PHYconf, PHYconf_Verify;
 wiz_NetInfo TempNetInfo;
 
-volatile uint16_t W5500_INT_Cnt;
-volatile bool W5500_Read_SnIR_End;
+volatile bool Flag_W5500_INT_Trigger;
+
+static char str[100];
+void appSerialCanDavinciSendTextMessage(char *msg);
+
+#define	W5500Debug(str)	appSerialCanDavinciSendTextMessage(str)
 /**
   * @brief This function handles W5500 INT EXTI Pin interrupt.
   */
@@ -654,13 +658,18 @@ static void Read_INT_Summary(void){
 
 static void Verify_Which_Socket_INT(void){
 	static uint8_t i;
-	for(i=0;i<8;i++){
-		if((Readbyte_value>>1)== 0){
-			break;
+	if(Readbyte_value == 0){
+		Flag_W5500_INT_Trigger = false;
+		Sock_EvtHandle_Index = Read_INT_Summary_Index;
+	}else{
+		for(i=0;i<W5500_MAX_SOCKET_NUM;i++){
+			if(((Readbyte_value>>i)&0x01) == 1){
+				gSocketNum = i;
+				break;
+			}
 		}
+		Sock_EvtHandle_Next_Function();
 	}
-	gSocketNum = i;
-	Sock_EvtHandle_Next_Function();
 }
 
 static void Read_INT_Evt(void){
@@ -715,7 +724,6 @@ static void Socket_Con_CBFunction(void){
 static void Reset_Con_INT_Bit(void){
 	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), (Sn_IR_CON&SOCKET_NUM_BASE)); 
 	Sock_EvtHandle_Index = Read_INT_Summary_Index;
-	W5500_INT_Cnt--;
 }
 /* ---------- Receive INT ---------- */
 static void Read_Socket_RX_Buf_Data_Size_Highbyte(void){
@@ -851,7 +859,6 @@ static void Verify_Data_Send_Done(void){
 static void Clr_INT_RECV_and_SENDOK_Bits(void){
 	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), ((Sn_IR_RECV|Sn_IR_SENDOK)&SOCKET_NUM_BASE)); 
 	Sock_EvtHandle_Index = Read_INT_Summary_Index;
-	W5500_INT_Cnt--;
 }
 
 /* ---------- Disonnect INT ---------- */
@@ -879,7 +886,6 @@ static void Socket_Reopen(void){
 static void Clr_INT_Discon_Bit(void){
 	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), (Sn_CR_DISCON&SOCKET_NUM_BASE)); 
 	Sock_EvtHandle_Index = Read_INT_Summary_Index;
-	W5500_INT_Cnt--;
 }
 
 const W5500_Socket_Server_Table Sock_Evt_Handle_Function_Table[]={
@@ -928,12 +934,7 @@ const W5500_Socket_Server_Table Sock_Evt_Handle_Function_Table[]={
 static void W5500_Server(void){
 	static uint8_t Result;
 	if(gSPI_Status == SPI_Idle){
-		if((smpW5500Socket[gSocketNum].SocketStatus == Socket_Close)&&(W5500_INT_Cnt == 0)){
-			Sock_Reopen_Function_Table[Sock_Reopen_Index]();
-			if(smpW5500Socket[gSocketNum].SocketStatus == Socket_Open){
-				Increase_Socket_Num();
-			}
-		}else if(W5500_INT_Cnt){
+		if(Flag_W5500_INT_Trigger){
 			Sock_Evt_Handle_Function_Table[Sock_EvtHandle_Index]();
 		}
 	}
@@ -1070,6 +1071,16 @@ static void Config_Socket_Num_Int_Mask(void){
 	}
 }
 
+static void Config_Socket_INT_Wait_Time(void){
+	static uint8_t Result; 
+	Result = Config_and_Verify_Word_Regsiter(INTLEVEL,1000);
+	if( Result == Config_Done){	
+		W5500_Point_Next_Function();		
+	}else if (Result == Config_Fail){
+		W5500Function = W5500_Error;
+	}
+}
+
 static void Config_Socket_Int_Mask(void){
 	static uint8_t Result; 
 	Result = Config_and_Verify_Byte_Regsiter(Sn_IMR(gSocketNum), (Sn_IR_TIMEOUT|Sn_IR_RECV|Sn_IR_DISCON|Sn_IR_CON));
@@ -1082,9 +1093,17 @@ static void Config_Socket_Int_Mask(void){
 	}
 }
 
+
 static void Ini_End(void){
-	W5500_INIT_Index = 0;
-	W5500Function = W5500_Server;
+	if(smpW5500Socket[gSocketNum].SocketStatus == Socket_Close){
+		Sock_Reopen_Function_Table[Sock_Reopen_Index]();
+		if(smpW5500Socket[gSocketNum].SocketStatus == Socket_Open){
+			if(Increase_Socket_Num() == Sock_Num_Reset){
+				W5500_INIT_Index = 0;
+				W5500Function = W5500_Server;
+			}
+		}
+	}
 }
 
 const W5500_INIT_Table W5500init_Function_Table[]={
@@ -1100,6 +1119,7 @@ const W5500_INIT_Table W5500init_Function_Table[]={
 	Verify_NetInfo_Parm,
 	Cofig_Int_Mask_Reg,
 	Config_Socket_Num_Int_Mask,
+	Config_Socket_INT_Wait_Time,
 	Config_Socket_Int_Mask,
 	Ini_End,
 	
@@ -1112,12 +1132,9 @@ static void W5500_Init(void){
 }
 
 static void W5500SwTimerHandler_New(__far void *dest, uint16_t evt, void *vDataPtr){
-	static int8_t SocketNum = 0;
-	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS){
 		W5500Function();
 	}
-
 }
 
 void Hal_W5500_Open(void){

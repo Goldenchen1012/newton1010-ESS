@@ -19,6 +19,7 @@
 #define _SMP_W5500_DMA_HAL_  
 #include "Bsp.h"
 #include "wizchip_conf.h"
+#include "w5500.h"
 #include "socket.h"
 #include "stm32l4xx_hal.h"
 #include "smp_gpio.h"
@@ -77,7 +78,6 @@ typedef uint16_t (*smp_w5500_event_t)(W5500_cb_type p_W5500event, uint16_t DataL
 int8_t W5500_Socket_Register(W5500_Socket_parm *parm, smp_w5500_event_t w5500_event_Handler);
 void Hal_W5500_Open(void);
 
-extern volatile bool W5500_Read_SnIR_End;
-extern volatile uint16_t W5500_INT_Cnt;
+extern volatile bool Flag_W5500_INT_Trigger;
 
 #endif
