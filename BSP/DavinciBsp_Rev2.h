@@ -300,6 +300,16 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
                                                GPIO_SPEED_FREQ_HIGH);}
 #define BSP_TERMLR_HI()                        (BSP_TERMLR_GPIO->BSRR = BSP_TERMLR_PIN)
 #define BSP_TERMLR_LO()                        (BSP_TERMLR_GPIO->BRR = BSP_TERMLR_PIN)
+				
+				
+#define	BSP_WDI_GPIO                       	GPIOC
+#define	BSP_WDI_PIN                           GPIO_PIN_2
+#define BSP_WDI_OPEN()                      {HalBspSetGpio(	BSP_WDI_GPIO, BSP_WDI_PIN, \
+                                               GPIO_MODE_OUTPUT_PP, GPIO_PULLUP, \
+                                               GPIO_SPEED_FREQ_HIGH);}
+#define BSP_WDI_HI()                        (BSP_WDI_GPIO->BSRR = BSP_WDI_PIN)
+#define BSP_WDI_LO()                        (BSP_WDI_GPIO->BRR = BSP_WDI_PIN)
+				
 																							 
 /********************************* BSP_BQ79600 I/O Pin define(please use "smp_gpio.h") *************/
 #ifdef BSP_BQ7600																							 
@@ -457,6 +467,51 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 /* Definition for SMP UART NVIC */
 #define BSP_UART1_IRQn                   			 USART3_IRQn
 #define BSP_UART1_IRQHandler             			 USART3_IRQHandler																	 
+
+/********************************* BSP_UART2 I/O Pin define ***************************************/
+/* Definition for BSP_UART2 clock resources */
+#define BSP_UART2                              USART1
+#define BSP_UART2_CLK_ENABLE()           			 __HAL_RCC_USART1_CLK_ENABLE()
+#if 0 
+#define BSP_UART2_DMA_CLK_ENABLE()       			 __HAL_RCC_DMA1_CLK_ENABLE()
+#endif
+#define BSP_UART2_RX_GPIO_CLK_ENABLE()   			 __HAL_RCC_GPIOA_CLK_ENABLE()
+#define BSP_UART2_TX_GPIO_CLK_ENABLE()   			 __HAL_RCC_GPIOA_CLK_ENABLE()
+
+#define BSP_UART2_FORCE_RESET()          			 __HAL_RCC_USART1_FORCE_RESET()
+#define BSP_UART2_RELEASE_RESET()        			 __HAL_RCC_USART1_RELEASE_RESET()
+
+/* Definition for BSP_UART2 Pins */
+#define BSP_UART2_TX_PIN									 GPIO_PIN_9
+#define BSP_UART2_TX_GPIO_PORT								 GPIOA
+#define BSP_UART2_TX_AF										 GPIO_AF7_USART1
+#define BSP_UART2_RX_PIN									 GPIO_PIN_10
+#define BSP_UART2_RX_GPIO_PORT								 GPIOA
+#define BSP_UART2_RX_AF										 GPIO_AF7_USART1
+
+/* Definition for BSP_UART2 DMA */
+#if 0
+#define BSP_UART2_TX_DMA_CHANNEL           	   DMA1_Channel4
+#define BSP_UART2_RX_DMA_CHANNEL           	   DMA1_Channel5
+#endif
+
+/* Definition for BSP_UART2 DMA Request(MCU UART1~UART5 must be setting DMA_REQUEST_2, acorrding STM32L496 p.339) */
+#if 0
+#define BSP_UART2_TX_DMA_REQUEST           		 DMA_REQUEST_2
+#define BSP_UART2_RX_DMA_REQUEST           		 DMA_REQUEST_2
+#endif
+/* Definition for USARTx's NVIC */
+#if 0
+#define BSP_UART2_DMA_TX_IRQn              	   DMA1_Channel4_IRQn
+#define BSP_UART2_DMA_RX_IRQn              	   DMA1_Channel5_IRQn
+#define BSP_UART2_DMA_TX_IRQHandler            DMA1_Channel4_IRQHandler
+#define BSP_UART2_DMA_RX_IRQHandler            DMA1_Channel5_IRQHandler
+#endif 
+
+/* Definition for SMP UART NVIC */
+#define BSP_UART2_IRQn                   			 USART1_IRQn
+#define BSP_UART2_IRQHandler             			 USART1_IRQHandler	
+
 
 /********************************* BSP_SPI1 I/O Pin define ***************************************/
 /* Definition BSP_SPI1 TX/RX buffer size */
@@ -747,3 +802,6 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #endif /* _DAVINCI_BSP_REV2_H_ */
 
 /************************ (C) COPYRIGHT *****END OF FILE****/    
+
+
+

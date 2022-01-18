@@ -69,6 +69,7 @@ static uint16_t cvtMcuNtcTemp(uint16_t adc)
 	voltage = adc;
 	voltage *= 3300;
 	voltage /= 4096;
+	
 	voltage *= 5000;
 	voltage /= REAL_NTC_VOLTAGE;
 	
@@ -82,11 +83,11 @@ static void getScuTempValue(void)
 {
 	int32_t	temp;
 	char	str[100];
-	app_adc_temp[0] = hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[0]);
-	app_adc_temp[1] = hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[1]);
-	app_adc_temp[2] = hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[2]);
-	app_adc_temp[3] = hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[3]);
-	app_adc_temp[4] = hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[4]);
+	hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[0]);
+	hal_internal_adc_get(&app_adc_temp[1] ,adc1 , bsp_in_adc_ch[1]);
+	hal_internal_adc_get(&app_adc_temp[2] ,adc1 , bsp_in_adc_ch[2]);
+	hal_internal_adc_get(&app_adc_temp[3] ,adc1 , bsp_in_adc_ch[3]);
+	hal_internal_adc_get(&app_adc_temp[4] ,adc1 , bsp_in_adc_ch[4]);
 	
 #if	0
 	sprintf(str,"RLY1 ADC = %d %.2lfC", app_adc_temp[0],

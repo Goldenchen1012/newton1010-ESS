@@ -46,7 +46,7 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 static uint8_t RxBuf[SMP_TCPIP_DATA_BUF_MAX_SIZE];
 static uint8_t TxBuf[SMP_TCPIP_DATA_BUF_MAX_SIZE];
 
-#define SMP_TCPIO_SOCKET {														\
+#define SMP_TCPIP_SOCKET {														\
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 1384,						\
@@ -56,9 +56,9 @@ static uint8_t TxBuf[SMP_TCPIP_DATA_BUF_MAX_SIZE];
 					.Memory.tx_buf_Ptr          = TxBuf,					\
 					.Memory.tx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE 		\
 					}		
-W5500_Socket_parm SmpTcpipSocket = SMP_TCPIO_SOCKET;
+W5500_Socket_parm SmpTcpipSocket = SMP_TCPIP_SOCKET;
 
-#define SMP_TCPIO_SOCKET1 {														\
+#define SMP_TCPIP_SOCKET1 {														\
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 1234,						\
@@ -68,7 +68,7 @@ W5500_Socket_parm SmpTcpipSocket = SMP_TCPIO_SOCKET;
 					.Memory.tx_buf_Ptr          = TxBuf,					\
 					.Memory.tx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE 		\
 					}		
-W5500_Socket_parm SmpTcpipSocket1 = SMP_TCPIO_SOCKET1;
+W5500_Socket_parm SmpTcpipSocket1 = SMP_TCPIP_SOCKET1;
 
 
 /* Private macro -------------------------------------------------------------*/
@@ -376,8 +376,7 @@ void appTcpipSmpOpen(void)
 	
 	LibSwTimerOpen(smpTcpipSwTimerHandler, 0);
 	W5500_Socket_Register(&SmpTcpipSocket , SmpTcpip_CB); 
-
-//	W5500_Socket_Register(&SmpTcpipSocket1 , SmpTcpip_CB1); 
+//	W5500_Socket_Register(&SmpTcpipSocket1 , SmpTcpip_CB); 
 
 	appTcpipSmpDebugMsg("appTcpipSmpOpen");
 }

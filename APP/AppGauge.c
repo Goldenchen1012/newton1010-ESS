@@ -444,7 +444,7 @@ static void gaugeCalCellRValue(void)
 //	sprintf(str,"RA1= %d",(DWORD) newRa);
 //	scuDebugMsg(str);
 	
-	cur = abs(appGaugeGetCurrentValue());
+	cur = abs(appGaugeGetCurrentValue(P_CURRENT));
 //	sprintf(str,"curr= %d",(DWORD) cur);
 //	scuDebugMsg(str);
 	
@@ -553,7 +553,7 @@ static void gaugeCalAvgCurrent(void)
 	{
 		//scuDebugMsg("First");
 		mAppScuGauage.FirstReadCurrentFlag = 0;
-		avg = (double)abs(appGaugeGetCurrentValue());
+		avg = (double)abs(appGaugeGetCurrentValue(P_CURRENT));
 		//mAppScuGauage.AbsAvggCurrent= (double)abs(appGaugeGetCurrentValue());
 		//CellRAvgCurrent[area]=(double)curmA;
 	}
@@ -562,7 +562,7 @@ static void gaugeCalAvgCurrent(void)
 		d1 = avg;//mAppScuGauage.AbsAvggCurrent;
 		d1 *= 19.0;
 		d1 /= 20.0;
-		d2 = (double)abs(appGaugeGetCurrentValue());
+		d2 = (double)abs(appGaugeGetCurrentValue(P_CURRENT));
 		d2 /= (double)(20.0);
 		//sprintf(str, "Avg %f %f", d1, d2);
 		//scuDebugMsg(str);
@@ -586,7 +586,7 @@ static void gaugeCalCapacity(void)
 	if(mAppScuGauage.GaugeTickMs == 0)
 		return;
 	CalRmValue = mAppScuGauage.GaugeTickMs;
-	CalRmValue *= (uint64_t)abs(appGaugeGetCurrentValue());
+	CalRmValue *= (uint64_t)abs(appGaugeGetCurrentValue(P_CURRENT));
 	CalRmValue *= 1000u;	//uA
 	
 	mAppScuGauage.GaugeTickMs = 0;
@@ -715,15 +715,15 @@ void getSocTableUseAvgCellVoltage(void)
 	char	str[100];
 	
 	voltage = GetAverageCellVoltage();
-	sprintf(str,"Avg CV=%d", voltage);
-	scuDebugMsg(str);
+//	sprintf(str,"Avg CV=%d", voltage);
+//	scuDebugMsg(str);
 	//-----------------------------------------------
 	//	判斷是否在平坦區
 	if(voltage > apiSysParGetMinFlatVoltage() &&
 	   voltage < apiSysParGetMaxFlatVoltage())
 	{
-		mAppScuGauage.NowSocValid = 0;
-		scuDebugMsg("平坦區");
+//		mAppScuGauage.NowSocValid = 0;
+//		scuDebugMsg("平坦區");
 		return;
 	}
 	mAppScuGauage.NowSoc = getSocUseVoltage(voltage);
@@ -936,7 +936,7 @@ WORD CheckTerminateSocUseRa(void)
 			realRa *= (DWORD)mAppScuGauage.Cal_RaValue;
 			realRa /= (DWORD)mAppScuGauage.Table_RaValue;
 			//-------------------------------
-			vRa = abs(appGaugeGetCurrentValue());
+			vRa = abs(appGaugeGetCurrentValue(P_CURRENT));
 			vRa *= (DWORD)realRa;
 
 			vRa /= 100000L;			//???0.1mV ??
@@ -1003,7 +1003,7 @@ void appScuGaugeUpdateRm(WORD lastsoc,WORD nowsoc)
 			{
 				mAppScuGauage.Table_RaValue = GetRaFromSoc(nowsoc);
 //				cur = (double)mAppScuGauage.AvggCurrent.sl;
-				cur = abs(appGaugeGetCurrentValue());
+				cur = abs(appGaugeGetCurrentValue(P_CURRENT));
 				newRa =(double)(SocTabVoltage - RealVoltage);
 				newRa *= 100000.0;	//0.01mR
 				newRa /= cur;
@@ -1200,7 +1200,7 @@ static void scuGaugeUnReleasedMode(void)
 			WORD	v;
 			DWORD	current;
 			DDWORD	d;
-			current = abs(appGaugeGetCurrentValue());
+			current = abs(appGaugeGetCurrentValue(P_CURRENT));
 				
 			v = GetAverageCellVoltage();
 			
@@ -1396,7 +1396,7 @@ static void gaugeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 		//gaugeCalAvgCurrent();
 		
 		//sprintf(str,"I = %d AvgI = %d %d", 
-		//		abs(appGaugeGetCurrentValue()),
+		//		abs(appGaugeGetCurrentValue(P_CURRENT)),
 		//		mAppScuGauage.AbsAvggCurrent,
 		//		mAppScuGauage.FirstReadCurrentFlag
 		//		);
@@ -1537,13 +1537,16 @@ uint8_t	appGaugeGetCurrentMode(void)
 	return mAppScuGauage.ChargeMode;
 }
 
-tCurrent appGaugeGetCurrentValue(void)
+tCurrent appGaugeGetCurrentValue(uint8_t CurIndex)
 {
 	if(appGaugeGetCurrentMode() == APP_SCU_GAUGE_RELEASE_MODE)
 		return 0;
 	else 
-		return halAfeGetCurrentValue(0);
+		return halAfeGetCurrentValue(CurIndex);
 }
+
+
+
 
 uint16_t appGaugeGetRamSoc(void)
 {

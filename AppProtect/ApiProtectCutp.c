@@ -85,7 +85,7 @@ uint8_t apiProtectCutpHandler(uint8_t ProtectLevel)
 //			appProtectCutpDebugMsg(str);
 //		flag = 1;
 		
-		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.SetValue.l))
+		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.SetValue.l) && ProtectPar.STime.l)
 		{
 			if((mCutpProtect.Flag[CutpNtcIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -115,7 +115,7 @@ uint8_t apiProtectCutpHandler(uint8_t ProtectLevel)
 		}
 		//--------------------------------------------------------------------------
 		//	Level	Release
-		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.RelValue.l))
+		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
 		{
 			if((mCutpProtect.Flag[CutpNtcIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

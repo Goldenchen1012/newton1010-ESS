@@ -143,7 +143,7 @@ static void searchLastLogAddressSwTimerHandler(__far void *dest, uint16_t evt, v
 		{
 			if(isFinishWriteEventLogTempData())
 			{
-				LibSwTimerOpen(searchLastLogAddressSwTimerHandler, 0);
+				//LibSwTimerOpen(searchLastLogAddressSwTimerHandler, 0);
 				mEventLog.RecordAddressValid = LOG_ADDR_VALID;
 				sprintf(str,"Last Addressr 2= %.8lX",  mEventLog.LastAddress);
 				eventFlashRomDebugMsg(str);
@@ -244,6 +244,23 @@ void apiEventLogSaveLogData(uint8_t EventType, uint16_t Par)
 	mEventLog.LastAddress += 8;	
 	sprintf(str,"Save Event Log:%.8lX %d ", mHalEeProm.StartAddress, status);
 	eventFlashRomDebugMsg(str);
+}
+
+void apiEventLogClearLogData(void)
+{
+	uint32_t	addr;
+	tHalEeProm	mHalEeProm;
+
+	mEventLog.LastAddress = FLASHROM_EVENT_LOG_START_ADDR;
+	mEventLog.RecordAddressValid = LOG_ADDR_VALID;
+	
+	for(addr = FLASHROM_EVENT_LOG_START_ADDR; addr<=FLASHROM_EVENT_LOG_END_ADDR; addr += 2048)
+	{
+		mHalEeProm.StartAddress = addr;
+		mHalEeProm.Length = 8;
+		mHalEeProm.pDataBuffer = 0;
+		HalEePromErase(&mHalEeProm);
+	}
 }
 void apiEventLogOpen(void)
 {

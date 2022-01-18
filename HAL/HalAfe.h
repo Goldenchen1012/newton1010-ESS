@@ -37,11 +37,18 @@ enum{
 	AFE_EVT_END
 };
 
+enum{
+	AFE_VBAT_INDEX = 0,
+	AFE_VPACK_INDEX
+};
+
+
 #define	MAX_CELL_NUMBER		400
 #define	MAX_NTC_NUMBER		400
 
 /* Public define ------------------------------------------------------------*/
 #define tAfeEvtHandler tLibRegisterEvtHandler
+typedef void(*tAfeLineLossCallBack)(uint16_t channel, uint16_t *cellVoltage);
 
 #define	tCellVoltage		uint16_t
 #define	tNtcAdcData			uint16_t
@@ -72,12 +79,13 @@ tNtcAdcData HalAfeGetMaxNtcTempAdc(void);
 void halAfeUpdateMinMaxCellVoltage(void);
 void halAfeUpdateMinMaxNtcTempVoltage(void);
 
-void halafeOpen(tAfeEvtHandler evtHandler);
+void halafeOpen(tAfeEvtHandler evtHandler, tAfeLineLossCallBack lineLossCb);
 void halAfeSetPhysicalBalancePosition(uint8_t bmuindex, uint16_t position);
 void halAfeSetBalanceOnFlag(uint8_t onflag);
 uint8_t halAfeGetState(void);
 uint8_t halAfeIsL1Protect(void);
 uint8_t halAfeIsL2Protect(void);
+void halAfeCalVbatFromCellVoltage(void);
 
 
 #ifdef __cplusplus

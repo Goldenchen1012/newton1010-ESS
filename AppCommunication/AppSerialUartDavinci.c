@@ -245,7 +245,7 @@ static void appSerialUartSendCurrent(void)
 	buf[3] = SUB_CMD_RETURN_INFORMATION;
 	buf[4] = B0_INFO_CURRENT;
 	index = 5;
-	Lbyte.sl = appGaugeGetCurrentValue();
+	Lbyte.sl = appGaugeGetCurrentValue(P_CURRENT);
 	for(i=0; i<4; i++)	
 	{
 		buf[index++] = Lbyte.b[i];

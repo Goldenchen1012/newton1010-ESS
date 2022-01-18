@@ -68,18 +68,20 @@ static void updateInternalVbatVoltage(void)
 {
 	if(!appProjectIsInSimuMode())
 	{
-		halAfeSetVBatVoltage(0, doCalibration(&SysCalPar.RamPar.VBat[0], halAfeGetVBatAdcValue(0)));
-		//HalAfeSetCurrentValue(1, doCalibration(&SysCalPar.RamPar.Current[1], halAfeGetCurrentAdcValue(1)));		
+		;//halAfeSetVBatVoltage(0, doCalibration(&SysCalPar.RamPar.VBat[0], halAfeGetVBatAdcValue(0)));
 	}
 	
 }
 
 static void updateExternalVbatVoltage(void)
 {
+	int32_t		voltage;
 	if(!appProjectIsInSimuMode())
-	{
-		halAfeSetVBatVoltage(1, doCalibration(&SysCalPar.RamPar.VBat[1], halAfeGetVBatAdcValue(1)));
-		//HalAfeSetCurrentValue(1, doCalibration(&SysCalPar.RamPar.Current[1], halAfeGetCurrentAdcValue(1)));		
+	{		
+		voltage = doCalibration(&SysCalPar.RamPar.VBat[1], halAfeGetVBatAdcValue(1));
+		if(voltage <=  1000)
+			voltage = 0;
+		halAfeSetVBatVoltage(AFE_VPACK_INDEX, voltage);
 	}
 }
 static void getCurrentP(void);
@@ -99,7 +101,7 @@ static void getCurrentPWaitResponse(void)
 static void getCurrentP(void)
 {
 	int8_t	res;
-	GPIOD->ODR |= GPIO_PIN_14;	
+//	GPIOD->ODR |= GPIO_PIN_14;	
 	res = smp_ADS7946_get_data(channel_1, CS_0, ads7946_callBack);
 	if(res == SMP_SUCCESS)
 	{
@@ -118,7 +120,7 @@ static void getCurrentNWaitResponse(void)
 static void getCurrentN(void)
 {
 	int8_t	res;
-	GPIOD->ODR |= GPIO_PIN_14;	
+//	GPIOD->ODR |= GPIO_PIN_14;	
 	res = smp_ADS7946_get_data(channel_1, CS_1, ads7946_callBack);	
 	if(res == SMP_SUCCESS)
 	{
@@ -139,7 +141,7 @@ static void getVpackWaitResponse(void)
 static void getVpack(void)
 {
 	int8_t	res;
-	GPIOD->ODR |= GPIO_PIN_14;	
+//	GPIOD->ODR |= GPIO_PIN_14;	
 	//halAfeADS7946DebugMsg("get VPack-1");
 	res = smp_ADS7946_get_data(channel_0, CS_1, ads7946_callBack);
 	if(res == SMP_SUCCESS)
@@ -162,7 +164,7 @@ static void getVbatWaitResponse(void)
 static void getVbat(void)
 {
 	int8_t	res;
-	GPIOD->ODR |= GPIO_PIN_14;	
+//	GPIOD->ODR |= GPIO_PIN_14;	
 	//halAfeADS7946DebugMsg("get Vbat-1");
 	res = smp_ADS7946_get_data(channel_0, CS_0, ads7946_callBack);
 	if(res == SMP_SUCCESS)
@@ -184,7 +186,7 @@ static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 //				pDat[0], pDat[1], pDat[2], pDat[3], 
 //				AdcValue.i);
 //	halAfeADS7946DebugMsg(str);//"ads7946_cb");
-	GPIOD->ODR &= ~GPIO_PIN_14;	
+//	GPIOD->ODR &= ~GPIO_PIN_14;	
 
 	if(adc7946FunctionProcessor == getCurrentPWaitResponse)
 	{
@@ -219,8 +221,8 @@ static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 		AdcFlag &= ~VBAT_FLAG;
 		if(appProjectIsInSimuMode() == 0)
 		{
-			halAfeSetVBatAdcValue(0, AdcValue.i);
-			updateInternalVbatVoltage();
+//			halAfeSetVBatAdcValue(0, AdcValue.i);
+//			updateInternalVbatVoltage();
 		}
 	}
 	
@@ -287,6 +289,7 @@ static void currentSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr
 		if(count >= 50)
 		{
 			count = 0;
+			#if	0
 			if(appProjectIsInEngMode())
 			{
 				AdcFlag |= (VPACK_FLAG + VBAT_FLAG);
@@ -294,6 +297,7 @@ static void currentSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr
 				//halAfeADS7946DebugMsg("Read Int Ext");
 			}
 			else
+			#endif
 			{
 				AdcFlag |= (VPACK_FLAG);
 				//halAfeADS7946DebugMsg("Read Ext");

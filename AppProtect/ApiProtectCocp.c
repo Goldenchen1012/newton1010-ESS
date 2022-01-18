@@ -50,7 +50,7 @@ uint8_t apiProtectCocpHandler(uint8_t ProtectLevel)
 {
 	BYTE	str[200];
 
-	static 	uint8_t	flag = 0;
+//	static 	uint8_t	flag = 0;
 	uint16_t		value;
 	tCurrent		CurrentValue;
 	tProtectFlagValue	ProtectFlagValue;
@@ -59,13 +59,13 @@ uint8_t apiProtectCocpHandler(uint8_t ProtectLevel)
 	
 	apiSysParGetCocpPar(ProtectLevel, &ProtectPar);
 	appProtectGetLevelMask(ProtectLevel, &ProtectFlagValue);
-	CurrentValue = abs(appGaugeGetCurrentValue()) / 1000;
+	CurrentValue = abs(appGaugeGetCurrentValue(P_CURRENT)) / 1000;
 
 
 	if(appGaugeGetCurrentMode() != APP_SCU_GAUGE_CHARGE_MODE)
 		CurrentValue = 0;
 
-	if(CurrentValue > ProtectPar.SetValue.l)
+	if(CurrentValue > ProtectPar.SetValue.l && ProtectPar.STime.l)
 	{
 		if((mCocpProtect.Flag & ProtectFlagValue.Mask) == 0)
 		{
@@ -98,7 +98,7 @@ uint8_t apiProtectCocpHandler(uint8_t ProtectLevel)
 	//	Level1	Release
 //	if(level==2)
 //		continue;
-	if(CurrentValue < ProtectPar.RelValue.l)
+	if(CurrentValue < ProtectPar.RelValue.l && ProtectPar.RTime.l)
 	{
 		if((mCocpProtect.Flag & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)	//Seted!!
 		{

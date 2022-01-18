@@ -61,7 +61,7 @@ uint8_t apiProtectDocpHandler(uint8_t ProtectLevel)
 	apiSysParGetDocpPar(ProtectLevel, &ProtectPar);
 	appProtectGetLevelMask(ProtectLevel, &ProtectFlagValue);
 
-	CurrentValue = abs(appGaugeGetCurrentValue()) / 1000;
+	CurrentValue = abs(appGaugeGetCurrentValue(P_CURRENT)) / 1000;
 
 	if(appGaugeGetCurrentMode() != APP_SCU_GAUGE_DISCHARGE_MODE)
 		CurrentValue = 0;
@@ -81,7 +81,7 @@ uint8_t apiProtectDocpHandler(uint8_t ProtectLevel)
 		//else
 		//	Current=(SystemParameter.Current_uA[area*2].l/1000000L);
 		
-	if(CurrentValue > ProtectPar.SetValue.l)
+	if(CurrentValue > ProtectPar.SetValue.l && ProtectPar.STime.l)
 	{
 		if((mDocpProtect.Flag & ProtectFlagValue.Mask) == 0)
 		{
@@ -111,7 +111,7 @@ uint8_t apiProtectDocpHandler(uint8_t ProtectLevel)
 	}	
 	//-----------------------------------------
 	//	Level1	Release
-	if(CurrentValue < ProtectPar.RelValue.l)
+	if(CurrentValue < ProtectPar.RelValue.l && ProtectPar.RTime.l)
 	{
 		if((mDocpProtect.Flag & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 		{

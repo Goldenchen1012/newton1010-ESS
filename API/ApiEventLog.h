@@ -31,6 +31,8 @@ typedef void(*tApiEventLogCallbackFunction)(uint8_t num, uint8_t *pMsgBuf);
 /* Public macro -------------------------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
 
+void apiEventLogClearLogData(void);
+
 uint32_t apiEventLogGetLogNumber(void);
 
 void apiEventLogReadLogData(uint32_t EvetIdex, uint8_t ReadNumber, tApiEventLogCallbackFunction CbFunction);

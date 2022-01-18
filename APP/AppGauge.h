@@ -53,13 +53,18 @@ enum{
 	APP_GAUGE_EVT_END
 };
 
+enum{
+	P_CURRENT = 0,
+	N_CURRENT
+};
+
 void appGaugeCleanCycleCount(void);
 void appGaugeSetSoc0(uint16_t soc);
 void appGaugeUpdateSoc0(void);
 
 void appGaugeOpen(tAppGaugeEvtHandler evtHandler);
 uint8_t	appGaugeGetCurrentMode(void);
-tCurrent appGaugeGetCurrentValue(void);
+tCurrent appGaugeGetCurrentValue(uint8_t CurIndex);
 
 uint32_t appGaugeGetQmax(void);
 void appGaugeSetQmax(uint32_t qmax);

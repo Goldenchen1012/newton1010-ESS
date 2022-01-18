@@ -31,8 +31,9 @@ void appSerialCanDavinciSendTextMessage(char *str);
 #define	fuDebugMsg(str)		appSerialCanDavinciSendTextMessage(str);
 
 /* Private define ------------------------------------------------------------*/
-#define	FLASHROM_BASE_ADDR				0x08000000L
-#define	FLASHROM_FU_START_ADDR			(FLASHROM_BASE_ADDR + (256 * 1024L))
+#define		SYS_REV_AREA			0
+#define		FW_UPDATE_AREA			1
+
 
 #define	FW_UPDATE_STATUS_INITIAL		0x01
 #define	FW_UPDATE_STATUS_VERSION		0x02
@@ -107,22 +108,13 @@ static uint8_t isValidInfoStatus(void)
 	return 1;
 }
 
-//static void writeCodeDataToFlashRom(uint32_t addr, uint8_t *pDatBuf, uint16_t leng)
 static void writeCodeDataToSpiRom(uint32_t addr, uint8_t *pDatBuf, uint16_t leng)
 {
 	uint16_t	sector;
 	uint16_t	page;
-//	uint32_t		address;
-	//tHalEeProm		mHalEeProm;
 	char			str[100];
-//	uint32_t		d;
-	
-//	address = FLASHROM_FU_START_ADDR + addr;
-//	mHalEeProm.Length = leng;
-//	mHalEeProm.pDataBuffer = pDatBuf;
-	
-//	sprintf(str,"W Flash = %.8lX %d", mHalEeProm.StartAddress, leng);
-//	fuDebugMsg(str);
+
+	addr += FwUpdateInfo.BaseAddress;
 	
 	if((addr&0xfff) == 0)
 	{
@@ -130,17 +122,11 @@ static void writeCodeDataToSpiRom(uint32_t addr, uint8_t *pDatBuf, uint16_t leng
 		smp_mx25l_flash_sector_erase_sectornum(sector , spiromEventHandler);
 		sprintf(str,"Erase:%d", sector);
 		fuDebugMsg(str);
-//		addr
-//		smp_mx25l_flash_sector_erase_addr(uint8_t *flash_addr , smp_flash_event_t smp_flash_event_handle)
 	}
-	//smp_mx25l_flash_page_program(uint16_t page,pDatBuf,uint16_t write_byte_num,smp_flash_event_t smp_flash_event_handle);
 	page = addr / 256;
 	smp_mx25l_flash_page_program(page, pDatBuf, 256, spiromEventHandler);
 	sprintf(str,"Write:%d", page);
 	fuDebugMsg(str);
-	//fuDebugMsg("Write");
-	//for(d=0; d<10000;d++);
-//	HalEePromWrite(&mHalEeProm);
 }
 
 static uint8_t isCorrectFwCodeHead1(uint8_t *pHeadinfo)
@@ -216,7 +202,7 @@ static void verifyReadData(void)
 		}
 		VerifyFlagStep = FW_VERIFY_STEP_READ_DATA;
 	}
-	GPIOD->ODR &= ~GPIO_PIN_13;
+//	GPIOD->ODR &= ~GPIO_PIN_13;
 }
 
 static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
@@ -240,14 +226,16 @@ static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *
 	{
 		if(VerifyFlagStep == FW_VERIFY_STEP_READ_DATA)
 		{
-			GPIOD->ODR |= GPIO_PIN_13;
+//			GPIOD->ODR |= GPIO_PIN_13;
 	//		mHalEeProm.StartAddress = FwUpdateInfo.FwCheck.PackageNumCnt;
 	//		mHalEeProm.StartAddress *= 256;
 	//		mHalEeProm.StartAddress += FLASHROM_FU_START_ADDR;
 	//		mHalEeProm.Length = 256;
 	//		mHalEeProm.pDataBuffer = (uint8_t *)&buffer[0];
 			Lbyte.l = FwUpdateInfo.FwCheck.PackageNumCnt;
-			Lbyte.l *= 256L;		
+			Lbyte.l *= 256L;
+			Lbyte.l += FwUpdateInfo.BaseAddress;
+			
 			addr[0] = Lbyte.b[2];
 			addr[1] = Lbyte.b[1];
 			addr[2] = Lbyte.b[0];
@@ -352,8 +340,10 @@ void apiFuRcvSetVersion(uint32_t Version)
 
 void apiFuRcvSetBaseAddr(uint32_t BaseAddr)
 {
-//	fuDebugMsg("Base Addr");
-	//if(BaseAddr == EEPROM_FW_SECTOR_ADDR)
+	if(BaseAddr == SYS_REV_AREA)
+		BaseAddr = 0;
+	else
+		BaseAddr = 0x40000;
 	{
 		FwUpdateInfo.BaseAddress = BaseAddr;
 		FwUpdateInfo.InfoStatus |= FW_UPDATE_STATUS_BASEADDR;

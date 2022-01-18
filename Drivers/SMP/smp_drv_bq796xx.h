@@ -341,8 +341,8 @@ typedef enum{
 #define BMU_CELL_SERIES             									16
 
 #define BQ796XX_TX_BUFFER_SIZE												512
-#define BQ796XX_RX_BUFFER_SIZE												(512*1)
-#define BQ796XX_RESPONE_BUFFER_SIZE										(128+6)
+#define BQ796XX_RX_BUFFER_SIZE												(1024*1)
+#define BQ796XX_RESPONE_BUFFER_SIZE										(1024+6)
 
 #define BQ796XX_UART_BAUD_RATE												1000000
 

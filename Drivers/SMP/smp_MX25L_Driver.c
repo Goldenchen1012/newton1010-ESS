@@ -141,7 +141,7 @@ static void smp_mx25l_flash_SwTimerHandler(__far void *dest, uint16_t evt, void 
 	//GPIOD->ODR |= GPIO_PIN_14;
 	if(evt == LIB_SW_TIMER_EVT_SW_10MS_2)
 	{
-		GPIOD->ODR |= GPIO_PIN_15;
+//		GPIOD->ODR |= GPIO_PIN_15;
 		if(smp_mx25l_is_flash_spi_Ready())
 		{
 			smp_mx25l_flash_read_status(&mx251_status);
@@ -150,10 +150,7 @@ static void smp_mx25l_flash_SwTimerHandler(__far void *dest, uint16_t evt, void 
 				MX25L_SPI_send_command();
 			}
 		}
-		GPIOD->ODR &= ~GPIO_PIN_15;
-//		if((mx251_status.status1&STATUS_WRITE_IN_PROGRESS)==0){		
-//			 MX25L_SPI_send_command();
-//		}
+//		GPIOD->ODR &= ~GPIO_PIN_15;
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{

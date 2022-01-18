@@ -174,11 +174,11 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
  	{
  	case IRM_EVENT_BALANCE:
     	temp_irm_data = *irm_res_data;
-    	projectIrDbgMsg("IRM_EVENT_BALANCE");
+ //   	projectIrDbgMsg("IRM_EVENT_BALANCE");
 		break;
  	case IRM_EVENT_UNBALANCE:
     	temp_irm_data = *irm_res_data;
-    	projectIrDbgMsg("IRM_EVENT_UNBALANCE");
+//    	projectIrDbgMsg("IRM_EVENT_UNBALANCE");
 		break;
  	case IRM_EVENT_GET_VSTACK:
     	temp_irm_vstack = irm_res_data->V_stack;

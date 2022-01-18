@@ -211,7 +211,13 @@ static void checkWhichScuRelayOn(void)
 				continue;
 			if(isRelayOn(pBmsBuf))
 				continue;
-				
+				/// 
+#if 0			
+			!!!
+			sum all cell to VBat value
+			!!!
+#endif
+			
 			if(pBmsBuf->VbInt > MaxVbVoltage)
 			{
 				MaxVbVoltage = pBmsBuf->VbInt;

@@ -163,7 +163,7 @@ static void DavinciCanDebugNtcTSimu(smp_can_package_t *pCanPkg)
 			appSerialCanDavinciDebugMsg(str);
 		}
 		*/
-		GPIOD->ODR ^= 	GPIO_PIN_15;	
+//		GPIOD->ODR ^= 	GPIO_PIN_15;	
 		halAfeSetNtcAdcData(subindex++, voltage);
 	}
 	//appSerialCanDavinciDebugMsg("Decode NTC");
@@ -212,15 +212,15 @@ static void DavinciCanDebugGpio(smp_can_package_t *pCanPkg)
 		CanPkg.dlc = 8;
 		memcpy(CanPkg.dat, ptr, 8);
 		appSerialCanDavinciPutPkgToCanFifo(&CanPkg);	
-		sprintf(str,"Get Gpio Name %d %d", subindex&0x0f, (subindex&0x1f0)/0x10);
-		appSerialCanDavinciDebugMsg(str);
+		//sprintf(str,"Get Gpio Name %d %d", subindex&0x0f, (subindex&0x1f0)/0x10);
+		//appSerialCanDavinciDebugMsg(str);
 	}
 	else
 	{
 		mask = (uint32_t)GET_DWORD(&pCanPkg->dat[0]);
 		dat = (uint32_t)GET_DWORD(&pCanPkg->dat[4]);		
 		halBspGpioControl(subindex, mask, dat);	
-		appSerialCanDavinciDebugMsg("Gpio Debu");
+		//appSerialCanDavinciDebugMsg("Gpio Debug");
 	}
 }
 
@@ -235,11 +235,11 @@ static void DavinciCanDebugVBatSimu(smp_can_package_t *pCanPkg)
 
 	if(subindex == 0)
 	{
-		halAfeSetVBatVoltage(0, (uint32_t)GET_DWORD(&pCanPkg->dat[0]));
+		halAfeSetVBatVoltage(AFE_VBAT_INDEX, (uint32_t)GET_DWORD(&pCanPkg->dat[0]));
 	}
 	else if(subindex == 1)
 	{
-		halAfeSetVBatVoltage(1, (uint32_t)GET_DWORD(&pCanPkg->dat[0]));
+		halAfeSetVBatVoltage(AFE_VPACK_INDEX, (uint32_t)GET_DWORD(&pCanPkg->dat[0]));
 	}
 }
 static void DavinciCanDebugRelayControl(smp_can_package_t *pCanPkg)

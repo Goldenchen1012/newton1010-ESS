@@ -36,8 +36,8 @@
 				DCB		"SmpHvEssFirmware"	;0~15	檔頭識別碼1
 				DCD		0x00000001			;16~19	version
 				DCD		0					;20~23	length	固定為0,由更新程式填寫
-				DCD		0x20220107			;24~27	date
-				DCD		0x00174500			;28~31	time
+				DCD		0x20220118			;24~27	date
+				DCD		0x00112500			;28~31	time
 				DCD		0					;32~35	checksum,初始值固定為0
 				DCD		0					;36~39
 				DCD		0					;40~43

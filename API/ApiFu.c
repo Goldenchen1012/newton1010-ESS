@@ -207,6 +207,7 @@ void apiFuCheckMagicCode(void)
 void apiFuJumpToBootloader(void)
 {
 #if defined (USE_BOOTLOADER)
+	
 	appSerialCanDavinciClose();
 	
 	pFunction Jump_To_Application;
@@ -217,13 +218,13 @@ void apiFuJumpToBootloader(void)
 	NVIC->ICER[1]=0xffffffff;
 	NVIC->ICER[2]=0xffffffff;
 		
-	ApplicationAddress=0x8000000L;
+	ApplicationAddress = 0x8000000L;
 	JumpAddress = *(__IO uint32_t*) (ApplicationAddress + 4);
 	Jump_To_Application = (pFunction) JumpAddress;
 	/* Initialize user application's Stack Pointer */
-//	__set_MSP(*(__IO uint32_t*) ApplicationAddress);
-//	SCB->VTOR = FLASH_BASE | 0;//VECT_TAB_OFFSET;
-//	Jump_To_Application();
+	__set_MSP(*(__IO uint32_t*) ApplicationAddress);
+	SCB->VTOR = FLASH_BASE | 0;//VECT_TAB_OFFSET;
+	Jump_To_Application();
 	HAL_NVIC_SystemReset();
 	while(1);
 #endif	

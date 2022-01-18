@@ -190,6 +190,8 @@ typedef struct{
 		uint16_t		RlxDeltaSet;
 		uint16_t		RlxDeltaRelease;
 	}Balance;
+	uint32_t	RelayActiveFlag;
+	uint32_t	W5500_IpAddress;
 	uint8_t		NoteMessage[MAX_NOTE_MESSAGE_STRING_ITEM + 2];
 	uint32_t	Reserved;
 }tSysRomPar;
@@ -1077,6 +1079,8 @@ static void sysParSetDefaultRomValue(void)
 	SystemParemater.RomPar.ZeroCurrent = 200;
 	SystemParemater.RomPar.MinChargeDischargeCurrent = 300;
 	SystemParemater.RomPar.BmuNumber = 2;
+	SystemParemater.RomPar.RelayActiveFlag = 0;
+	
 	for(i=0; i<32; i++)
 	{
 		SystemParemater.RomPar.CellFlag[i] = 0xffff;

@@ -484,6 +484,18 @@ void app_flash_log_event_handler(smp_log_evt_type p_evt)
 	}
 }
 #endif
+void Gpio13Debug(uint16_t num)
+{
+	uint32_t	i,n;
+	for(i=0; i<num; i++)
+	{
+		GPIOD->ODR ^= GPIO_PIN_13;
+		for(n=0; n<200; n++);
+		GPIOD->ODR ^= GPIO_PIN_13;
+		for(n=0; n<200; n++);
+	}		
+	for(n=0; n<2000; n++);	
+}
 
 /**
   * @brief  Main program
@@ -516,8 +528,11 @@ int main(void)
 	NVIC->ICER[0]=0xFFFFFFFF;
 	NVIC->ICER[1]=0xFFFFFFFF;
 	NVIC->ICER[2]=0xFFFFFFFF;
-	
+	__enable_irq();
   HalBspInit();
+  
+	
+
 	#if 0
   HAL_Init();
   #endif
@@ -582,6 +597,7 @@ int main(void)
 	GPIO_InitStructure.Pull = GPIO_PULLUP;
 	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStructure); 
+	GPIOD->ODR &= ~(GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13);
   HAL_Delay(200);
 	
 	SEGGER_RTT_Init();
@@ -600,10 +616,12 @@ int main(void)
 	HAL_Delay(1000);
 	#endif
   //-------------------------------------------
+	Gpio13Debug(1);
   
 	appProjectOpen();
+//	Gpio13Debug(3);
 	LibSwTimerClearCount();
-	
+	Gpio13Debug(10);
 	// MCU UART3 Test
 	//-------------------------------------------
 //  appSerialUartSendMessage("12345678");
@@ -1415,8 +1433,9 @@ void SysTick_Handler(void)
   */
 void HAL_SYSTICK_Callback(void)
 {
-  HAL_IncTick();
 
+  HAL_IncTick();
+#if	0
   if (TimingDelay != 0)
   {
     TimingDelay--;
@@ -1427,6 +1446,7 @@ void HAL_SYSTICK_Callback(void)
     BSP_LED_Toggle(LED1);
     TimingDelay = LED_TOGGLE_DELAY;
   }
+#endif
 }
 
 #ifdef  USE_FULL_ASSERT

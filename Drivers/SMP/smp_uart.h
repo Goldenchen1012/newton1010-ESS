@@ -28,7 +28,8 @@ typedef void(*smp_uart_event_t)(uart_evt_type p_evt);
 
 typedef enum{
 	UART0 = 0,										/* UART module 0 */
-	UART1													/* UART module 1 */
+	UART1,													/* UART module 1 */
+	UART2
 }uart_module_number;
 
 typedef enum{
@@ -64,6 +65,9 @@ typedef struct{
 
 #define UART1_TX_BUFFER_SIZE                    256
 #define UART1_RX_BUFFER_SIZE                    1
+
+#define UART2_TX_BUFFER_SIZE                    256
+#define UART2_RX_BUFFER_SIZE                    1
 
 /* Exported defines --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

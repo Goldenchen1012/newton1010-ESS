@@ -162,7 +162,7 @@ void apiProtectUvpPfHandler(void)
 	if(mUvpProtect.PfFlag)
 		return;
 	apiSysParGetUvpPfPar(&ProtectPar);
-	if(halAfeGetMinCellVoltage() < ProtectPar.SetValue.l)
+	if(halAfeGetMinCellVoltage() < ProtectPar.SetValue.l && ProtectPar.STime.l)
 	{
 		mUvpProtect.PfSetCount++;
 		if(mUvpProtect.PfSetCount >= ProtectPar.STime.l)

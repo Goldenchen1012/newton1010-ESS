@@ -66,6 +66,10 @@ uint8_t HalBspGetOdInStatus(void);
 uint8_t halBspGetNfaultStatus(void);
 char *halBspGetGpioControlMsg(uint8_t group, uint32_t mask);
 void halBspGpioControl(uint8_t group, uint32_t mask, uint32_t dat);
+void halBspRs485RxEnable(void);
+void halBspRs485TxEnable(void);
+void halBspWatchDogEnable(void);
+void halBspWatchDogReset(void);
 
 
 #ifdef __cplusplus

@@ -53,13 +53,14 @@
 #include "AppTcpipSmp.h"
 #include "HalSpirom.h"
 #include "AppProjectHvEss_IR.h"
+#include "AppProjectTest.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	saveEventLog(type, par)		apiEventLogSaveLogData(type, par)
-
+#define	NFAULT_IDLE_COUNT	10
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
@@ -69,15 +70,50 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 tHalTimer	mHalTimer3={3, 1000};
 static uint8_t	RtcValid;
 static uint8_t	ModeFlag = 0;
-static uint8_t	ScuId = 1;
 static uint8_t	SystemReadyFlag = 0;
 static uint8_t	RelayOnFlag = 0;
+static uint8_t	NFaultIdleCount = NFAULT_IDLE_COUNT;
 
 /* Private function prototypes -----------------------------------------------*/
 static void releaseOCP(void);
 
+static void afeLineLossCallBack(uint16_t channel, uint16_t *CellVoltage)
+{
+	
+	/*
+	if(index==7)	//校正第8串電壓
+				{
+					Current=(SystemParameter.Current_uA.l/1000L);	//mA
+					if(ChargeMode==CHARGE_MODE)
+						AddFlag=0;
+					else if(ChargeMode==DISCHARGE_MODE)	//放電模式
+						AddFlag=1;
+					else
+						Current=0;
+					if(Current)
+					{
+						VR=INTERNAL_R_VALUE*Current;
+						VR/=100000L;			//換算成 0.1mV
+						if(AddFlag)
+						{
+							d2+=(double)VR;
+							if(d2>65535.0)
+								d2=65535.0;
+						}
+						else
+						{
+							if(d2>=(double)VR)
+								d2-=(double)VR;	
+						}
+					}
+				}		
+	
+	*/
+	//tAfeLineLossCallBack
+}
 static void relayOff(void)
 {	
+	appSerialCanDavinciSendTextMessage("Relat Off");
 	apiRelayControlMainRelayOff();
 	RelayOnFlag = 0;
 }
@@ -336,104 +372,125 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 	switch(evt)
 	{
 	case APP_SIGNAL_FB_EVT_DI1_HI:
-	//	appProjectDebugMsg("DI1 Hi");
+		appProjectDebugMsg("DI1 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_DI1_LO:
-	//	appProjectDebugMsg("DI1 Low");
+		appProjectDebugMsg("DI1 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_DI2_HI:
-	//	appProjectDebugMsg("DI2 Hi");
+		appProjectDebugMsg("DI2 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_DI2_LO:
-	//	appProjectDebugMsg("DI2 Low");
+		appProjectDebugMsg("DI2 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_EPO_HI:
-		//appProjectDebugMsg("..............EPO Hi");
+		appProjectDebugMsg("..............EPO Hi");
+		saveEventLog(EVENT_TYPE_EPO_DISABLE, 0);
 		break;
 	case APP_SIGNAL_FB_EVT_EPO_LO:
-		//appProjectDebugMsg("..............EOP Low");
+		appProjectDebugMsg("..............EOP Low");
+		saveEventLog(EVENT_TYPE_EPO_ENABLE, 0);
 		relayOff();
 		break;
 	case APP_SIGNAL_FB_EVT_SP_HI:
-		//appProjectDebugMsg("SP Hi");
+		appProjectDebugMsg("SP Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_SP_LO:
-		//appProjectDebugMsg("SP Low");
+		appProjectDebugMsg("SP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_HI:
-		//appProjectDebugMsg("PS1 Hi");
+		appProjectDebugMsg("PS1 Hi");
+		relayOff();
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_LO:
-		//appProjectDebugMsg("PS1 Low");
+		appProjectDebugMsg("PS1 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS2_HI:
-	//	appProjectDebugMsg("PS2 Hi");
+		appProjectDebugMsg("PS2 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_PS2_LO:
-	//	appProjectDebugMsg("PS2 Low");
+		appProjectDebugMsg("PS2 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS3_HI:
-	//	appProjectDebugMsg("PS3 Hi");
+		appProjectDebugMsg("PS3 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_PS3_LO:
-	//	appProjectDebugMsg("PS3 Low");
+		appProjectDebugMsg("PS3 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_BUTTON_HI:
-		//appProjectDebugMsg("Button Hi");
+		appProjectDebugMsg("Button Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_BUTTON_LO:
-		//appProjectDebugMsg("Button Low");
+		appProjectDebugMsg("Button Low");
 		break;
 
 	case APP_SIGNAL_FB_EVT_K1_HI:
-	//	appProjectDebugMsg("K1 Hi");
+		appProjectDebugMsg("K1 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_K1_LO:
-	//	appProjectDebugMsg("K1 Low");
+		appProjectDebugMsg("K1 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_K2_HI:
-	//	appProjectDebugMsg("K2 Hi");
+		appProjectDebugMsg("K2 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_K2_LO:
-	//	appProjectDebugMsg("K2 Low");
+		appProjectDebugMsg("K2 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_K3_HI:
-	//	appProjectDebugMsg("K3 Hi");
+		appProjectDebugMsg("K3 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_K3_LO:
-	//	appProjectDebugMsg("K3 Low");
+		appProjectDebugMsg("K3 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_K4_HI:
-	//	appProjectDebugMsg("K4 Hi");
+		appProjectDebugMsg("K4 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_K4_LO:
-	//	appProjectDebugMsg("K4 Low");
+		appProjectDebugMsg("K4 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_HI:
-		//appProjectDebugMsg("DOCP Hi");
+		relayOff();
+		appProjectDebugMsg("DOCP Hi");
+		saveEventLog(EVENT_TYPE_DOCP_L4_SET, 0);
+
 		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_LO:
 		//appProjectDebugMsg("DOCP Lo");
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_HI:
-		//appProjectDebugMsg("COCP Hi");
+		relayOff();
+		appProjectDebugMsg("COCP Hi");
+		saveEventLog(EVENT_TYPE_COCP_L4_SET, 0);
 		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_LO:
 		//appProjectDebugMsg("COCP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_HI:
-		//appProjectDebugMsg("OD IN Hi");
+		appProjectDebugMsg("OD IN Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_LO:
-		//appProjectDebugMsg("OD IN Low");
+		appProjectDebugMsg("OD IN Low");
 		break;
 	case APP_SIGNAL_FB_EVT_NFAULT_HI:
-		//appProjectDebugMsg("Nfault Hi");
+		appProjectDebugMsg("Nfault Hi");
+		if(NFaultIdleCount == NFAULT_IDLE_COUNT)
+		{
+			NFaultIdleCount++;
+			saveEventLog(EVENT_TYPE_NFAULT_DISABLE, 0);
+			appProjectDebugMsg("Nfault Hi...Save");
+		}
 		break;
 	case APP_SIGNAL_FB_EVT_NFAULT_LO:
-		//appProjectDebugMsg("Nfault Lo");
+		relayOff();
+		appProjectDebugMsg("Nfault Lo");
+		if(NFaultIdleCount >= NFAULT_IDLE_COUNT)
+		{
+			saveEventLog(EVENT_TYPE_NFAULT_ENABLE, 0);		
+			appProjectDebugMsg("Nfault Lo..Save");
+		}		
+		NFaultIdleCount = 0;
 		break;
 	}
 }
@@ -489,13 +546,10 @@ static void releaseOCP(void);
 static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
 	static	uint8_t		SystemReadyCount = 10;
-//	tHalRtcDateTime	mHalRtcDateTime;
 	char	str[100];
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
-//		GPIOD->ODR ^= GPIO_PIN_14;
-			;
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{
@@ -506,9 +560,8 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 				SystemReadyFlag = 1;
 		}
 		apiRamSaveRtcDateTime();
-		
-		//sprintf(str,"EPO Status ......%d",	HalBspGetEpoStatus());
-		//appProjectDebugMsg(str);
+		if(NFaultIdleCount < 200)
+			NFaultIdleCount++;
 	}
 }
 
@@ -699,22 +752,27 @@ void appProjectOpen(void){
 	char	str[100];
 	uint32_t	len;
 	 
+	Gpio13Debug(2);
 	HalRtcOpen();
+	Gpio13Debug(3);
 	apiRamOpen();
+	Gpio13Debug(4);
 	HalTimerOpen(&mHalTimer3, appProjectHwTimerHandler);
+	Gpio13Debug(5);
 	appSerialUartDavinciOpen();
+	Gpio13Debug(6);
 	appSerialCanDavinciOpen();
-	appTcpipSmpOpen();
+	Gpio13Debug(7);
   	//------------------------------------------
-	appProjectDebugMsg("--------- Start Run -----------...9");
+	appProjectDebugMsg("--------- Start Run -----2022.1.18...9");
 	len = apiSysParOpen();
 	
 	appProtectOpen(protectEventHandler);
 	appGaugeOpen(gaugeEventHandler);
-	halafeOpen(afeEventHandler);
+	halafeOpen(afeEventHandler, afeLineLossCallBack);
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
-
+Gpio13Debug(4);
 	halSpiromOpen();
 	
   	//------------------------------------------
@@ -736,7 +794,7 @@ void appProjectOpen(void){
   	apiSystemFlagOpen();
   	apiEventLogOpen();
 	appButtonOpen(buttonEventHandler);
-	
+	Gpio13Debug(5);
 	appTcpipSmpOpen();
 	IrFunctionOpen();
 	
@@ -789,6 +847,8 @@ void appProjectOpen(void){
 		RtcValid = 1;
 	}
 
+	appTestProjectOpen();
+	
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

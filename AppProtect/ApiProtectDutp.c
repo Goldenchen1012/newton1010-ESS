@@ -83,9 +83,8 @@ uint8_t apiProtectDutpHandler(uint8_t ProtectLevel)
 
 //		sprintf(str,"%d %d",DutpNtcIndex, NtcAdcValue);
 //		appProtectDutpDebugMsg(str);
-
 		
-		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.SetValue.l))
+		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.SetValue.l) && ProtectPar.STime.l)
 		{
 			if((mDutpProtect.Flag[DutpNtcIndex] & ProtectFlagValue.Mask) == 0)
 			{

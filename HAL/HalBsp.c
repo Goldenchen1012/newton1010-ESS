@@ -75,15 +75,22 @@ void HalBspInit(void)
 	BSP_NFAULT_OPEN();
 	BSP_TERMLR_OPEN();
 	
-//	BSP_K1_FB_OPEN();
-//	BSP_K1_FB_READ();
-//	BSP_K2_FB_OPEN();
-//	BSP_K3_FB_OPEN();
-//	BSP_K4_FB_OPEN();
+#if	0	
+	BSP_K1_FB_OPEN();
+	BSP_K2_FB_OPEN();
+	BSP_K3_FB_OPEN();
+	BSP_K4_FB_OPEN();
+#endif
 
 	BSP_DOCP_LATCH_OPEN();
 	BSP_COCP_LATCH_OPEN();
 	BSP_OD_IN_OPEN();
+	
+	BSP_RS485_DERE_OPEN();
+	BSP_RS485_DERE_LO();
+	
+	//BSP_WDI_HI();
+	//BSP_WDI_OPEN();
 	
 	HalBspRelayPsCtrl(0);
 }
@@ -564,6 +571,29 @@ void halBspGpioControl(uint8_t group, uint32_t mask, uint32_t dat)
 			break;
 		}		   
 	}
+}
+
+void halBspRs485RxEnable(void)
+{
+	BSP_RS485_DERE_LO();
+}
+void halBspRs485TxEnable(void)
+{
+	BSP_RS485_DERE_HI();
+}	
+
+void halBspWatchDogEnable(void)
+{
+	BSP_WDI_LO();
+}
+void halBspWatchDogReset(void)
+{
+	static uint8_t u8 = 0;
+	u8 ^= 0x01;
+	if(u8)
+		BSP_WDI_HI();
+	else
+		BSP_WDI_LO();
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

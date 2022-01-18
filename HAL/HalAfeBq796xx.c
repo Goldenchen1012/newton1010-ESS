@@ -27,13 +27,15 @@
 #include "ApiSysPar.h"
 #include "AppProject.h"
 
+#define	AFE_COMM_TEST
+
 //#define	BALANCE_DEBUG		
 //#define	AFE_DEBUG_MODE
 #define	AFE_DEBUG_N_NUM		2
 #define	AFE_DEBUG_S_NUM		2
 
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	halAfeBq796xxDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
+#define	halAfeBq796xxDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	afeCommL1Time()					5
@@ -53,8 +55,8 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 #define	AFE_COMM_FLAG_L2		0x02
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
-tAfeEvtHandler afeEvtHandler;
-
+static tAfeEvtHandler afeEvtHandler;
+static tAfeLineLossCallBack afeLineLossCb;
 
 typedef void (* tAfeFunctionTable)(void);
 
@@ -76,8 +78,8 @@ extern bq796xx_data_t bq796xx_data;
 	                                  .uv_threshold         =UV_2800MV,                      \
 	                                  .ot_threshold         =OT_10_PCT,                      \
 	                                  .ut_threshold         =UT_80_PCT,                      \
-	                                  .ov_enable            =BQ_ENABLE,                      \
-	                                  .uv_enable            =BQ_ENABLE,                      \
+	                                  .ov_enable            =BQ_DISABLE,                      \
+	                                  .uv_enable            =BQ_DISABLE,                      \
 		                                .ot_enable            =BQ_DISABLE,                      \
 	                                  .ut_enable            =BQ_DISABLE,                      \
 		                                .cb_cycle_time        =CB_CYC_T_10S,                   \
@@ -116,10 +118,18 @@ static uint8_t	IsRingDaisyChain;
 bq796xx_wake_tone_switch wake_sw = WAKE_TONE_ENABLE;
 
 //static uint
-static uint32_t	ReadCount = 0;
-static uint32_t	NortnResponseCount = 0;
-static uint32_t	SouthResponseCount = 0;
 static uint32_t	AfeIniCount = 0;
+
+#ifdef AFE_COMM_TEST
+static uint32_t	ReadCount = 0;
+
+static uint32_t	NtcResponseCount[2] = {0};
+static uint32_t	CellResponseCount[2] = {0};
+static uint32_t	OtUtResponseCount[2] = {0};
+static uint32_t	OvUvResponseCount[2] = {0};
+static uint32_t	SummaryResponseCount[2] = {0};
+
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 uint8_t drv_bq796xx_clean_fifo(void);
@@ -166,16 +176,10 @@ const tAfeFunctionTable	stopBalanceFunctionTable[]={
 
 static void mainFunStopBalance(void)
 {
-	ReadCount++;
-
-	/*
-	if(IsBalanceEnable == 0)
-	{
-		halAfeBq796xxDebugMsg("mainFunStopBalance");
-		getNextMainFunctionPointer();
-	}
-	*/
-	//halAfeBq796xxDebugMsg("mainFunStopBalance");
+#ifdef AFE_COMM_TEST
+	ReadCount++;	
+#endif	
+	halAfeBq796xxDebugMsg("main-0");
 	subFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -197,7 +201,8 @@ static void setNtcChannel(void)
 	{
 		//sprintf(str,"Dir = %d NTC Channel = %d",BridgeDirection, NtcChannelSelect);
 		//halAfeBq796xxDebugMsg(str);
-		
+//		uint8_t drv_bq796xx_Set_AFE_GPIO_type(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,bq796xx_AFE_GPIO_Type GPIO_type,bq796xx_AFE_GPIO GPIO_Num,uint32_t delays);
+
 	    test_gpio_HL = 5- (NtcChannelSelect & 0x01);	
 		drv_bq796xx_Set_AFE_GPIO_type(STACK, 0x00, test_gpio_HL, AFE_GPIO4,0);//BQ796XX_CMD_DELAY_MS);
 	}
@@ -236,8 +241,6 @@ static void delayFunction(void)
 
 static void sendOutReadGpioCommand(void)
 {
-	//halAfeBq796xxDebugMsg("sendOutReadGpioCommand");
-	
 	drv_bq796xx_clean_fifo();
 	drv_bq796xx_Read_AFE_ALL_ADC(STACK, 0, 0);//BQ796XX_CMD_DELAY_MS);         //Stack(BMU #1,#2) Read all AUX ADC   (GPIO1~8).
 	
@@ -260,13 +263,17 @@ static void paserAfeResponse(void)
 	for(i=0; i<PaserCountPerOneTimes; i++)
 	{
 //		GPIOD->ODR |= GPIO_PIN_15;
-		//GPIOD->ODR ^= GPIO_PIN_14;
+		GPIOD->ODR ^= GPIO_PIN_14;
 		res = drv_bq796xx_data_frame_parser();
 //		GPIOD->ODR &= ~GPIO_PIN_15;
 
 		if(res == BQ796XX_RES_OK)
 		{
 			RealPaserCount[BridgeDirection]++;
+		}
+		else
+		{
+			GPIOD->ODR ^= GPIO_PIN_15;
 		}
 		//	break;
 		PaserIndex++;
@@ -282,11 +289,13 @@ static void paserAfeResponse(void)
 
 static void mainFunStartGetNtc(void)
 {
+//	halAfeBq796xxDebugMsg("main-1");
 	ntcChannelOffset = 0;
 	getNextMainFunctionPointer();
 }
 static void mainFunChangeChannel(void)
 {
+//	halAfeBq796xxDebugMsg("main-3");
 	if(StackCountForIni[BridgeDirection] < afeBmuNumber())
 	{
 		if(BridgeDirection == DIR_NORTH)
@@ -306,6 +315,17 @@ static void mainFunChangeChannel(void)
 	}			
 	getNextMainFunctionPointer();
 }
+#ifdef AFE_COMM_TEST
+
+static void recordNtcParserCount(void)
+{
+	if(RealPaserCount[BridgeDirection] == StackCountForIni[BridgeDirection])
+	{
+		NtcResponseCount[BridgeDirection]++;
+	}
+	getNextSubFunctionPointer();
+}
+#endif
 
 const tAfeFunctionTable	getNtcFunctionTable[]={
 	setNtcChannel,
@@ -316,12 +336,14 @@ const tAfeFunctionTable	getNtcFunctionTable[]={
 	sendOutReadGpioCommand,
 	delayFunction,
 	paserAfeResponse,
+#ifdef AFE_COMM_TEST
+	recordNtcParserCount,
+#endif	
 	getNextMainFunctionPointer
 };
 static void mainFunGetNtc(void)
 {
 	ntcIoIndex = 0;
-	//halAfeBq796xxDebugMsg("mainFunGetNtc");
 	subFunctionPointer = (tAfeFunctionTable )getNtcFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -338,18 +360,35 @@ static void sendOutReadCellVoltageCommand(void)
 	RealPaserCount[BridgeDirection] = 0;
 	getNextSubFunctionPointer();
 }
-
-
+static void sumCellVoltageForVbat(void)
+{	
+	halAfeCalVbatFromCellVoltage();
+	getNextSubFunctionPointer();
+}
+#ifdef AFE_COMM_TEST
+static void recordCellParserCount(void)
+{
+	if(RealPaserCount[BridgeDirection] == StackCountForIni[BridgeDirection])
+	{
+		CellResponseCount[BridgeDirection]++;
+	}
+	getNextSubFunctionPointer();
+}
+#endif
 const tAfeFunctionTable	getCellVoltageFunctionTable[]={
 	sendOutReadCellVoltageCommand,
 	delayFunction,
 	paserAfeResponse,
+	sumCellVoltageForVbat,
+#ifdef AFE_COMM_TEST
+	recordCellParserCount,
+#endif	
 	getNextMainFunctionPointer
 };
 
 static void mainFunGetCellVoltage(void)
 {
-	//halAfeBq796xxDebugMsg("mainFunGetCellVoltage");
+//	halAfeBq796xxDebugMsg("main-5");
 	subFunctionPointer = (tAfeFunctionTable )getCellVoltageFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -367,17 +406,31 @@ static void sendOutReadSummaryCommand(void)
 	getNextSubFunctionPointer();
 }
 
+#ifdef AFE_COMM_TEST
+static void recordSummaryParserCount(void)
+{
+	if(RealPaserCount[BridgeDirection] == StackCountForIni[BridgeDirection])
+	{
+		SummaryResponseCount[BridgeDirection]++;
+	}
+	getNextSubFunctionPointer();
+}
+#endif
 
 const tAfeFunctionTable	getSummaryFunctionTable[]={
 	sendOutReadSummaryCommand,
 	delayFunction,
 	paserAfeResponse,
+#ifdef AFE_COMM_TEST
+	recordSummaryParserCount,
+#endif	
+
 	getNextMainFunctionPointer
 };
 
 static void mainFunGetSummary(void)
 {
-	//halAfeBq796xxDebugMsg("mainFunGetSummary");
+//	halAfeBq796xxDebugMsg("main-7");
 	subFunctionPointer = (tAfeFunctionTable )getSummaryFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -386,7 +439,7 @@ static void mainFunGetSummary(void)
 static void sendOutReadOvUvFlagCommand(void)
 {	
 	drv_bq796xx_clean_fifo();
-	drv_bq796xx_Read_Stack_FaultOVUV(0);//BQ796XX_CMD_DELAY_MS);               //Stack Reaf fault OV, UV Cell Detection.
+	drv_bq796xx_Read_Stack_FaultOVUV(0);
 
 	delayCount = 1 + (StackCountForIni[BridgeDirection] / 8);
 	PaserCount = StackCountForIni[BridgeDirection];
@@ -396,16 +449,29 @@ static void sendOutReadOvUvFlagCommand(void)
 	getNextSubFunctionPointer();
 }
 
+#ifdef AFE_COMM_TEST
+static void recordOvUvParserCount(void)
+{
+	if(RealPaserCount[BridgeDirection] == StackCountForIni[BridgeDirection])
+	{
+		OvUvResponseCount[BridgeDirection]++;
+	}
+	getNextSubFunctionPointer();
+}
+#endif
+
 const tAfeFunctionTable	getOvUvFlagFunctionTable[]={
 	sendOutReadOvUvFlagCommand,
 	delayFunction,
 	paserAfeResponse,
+#ifdef AFE_COMM_TEST
+	recordOvUvParserCount,
+#endif	
 	getNextMainFunctionPointer
 };
 
 static void mainFunGetOvUvFlag(void)
 {
-	//halAfeBq796xxDebugMsg("mainFunGetOvUvFlag");
 	subFunctionPointer = (tAfeFunctionTable )getOvUvFlagFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -423,17 +489,31 @@ static void sendOutReadOtUtFlagCommand(void)
 	getNextSubFunctionPointer();
 }
 
+#ifdef AFE_COMM_TEST
+static void recordOtUuParserCount(void)
+{
+	if(RealPaserCount[BridgeDirection] == StackCountForIni[BridgeDirection])
+	{
+		OtUtResponseCount[BridgeDirection]++;
+	}
+	getNextSubFunctionPointer();
+}
+#endif
+
 
 const tAfeFunctionTable	getOtUtFlagFunctionTable[]={
 	sendOutReadOtUtFlagCommand,
 	delayFunction,
 	paserAfeResponse,
+#ifdef AFE_COMM_TEST
+	recordOtUuParserCount,
+#endif	
 	getNextMainFunctionPointer
 };
 
 static void mainFunGetOtUtFlag(void)
 {
-	//halAfeBq796xxDebugMsg("mainFunGetOtUtFlag");
+//	halAfeBq796xxDebugMsg("main-9");
 	subFunctionPointer = (tAfeFunctionTable )getOtUtFlagFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -448,7 +528,7 @@ const tAfeFunctionTable	changeDirectionFunctionTable[]={
 
 static void mainFunFinishAfeRead(void)
 {
-	//halAfeBq796xxDebugMsg("mainFunFinishAfeRead");
+	halAfeBq796xxDebugMsg("main-10");
 	subFunctionPointer = (tAfeFunctionTable )changeDirectionFunctionTable;	
 	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
@@ -652,6 +732,8 @@ static void DecodeCellVoltageByCellFlag(bq796xx_data_t *bq_data)
 				{
 					adc = bq_data->vcell_data[BmuIndex][CellChannel];
 					voltage = CvtCellAdcToMv(adc);
+					if(afeLineLossCb)
+						afeLineLossCb(CellChannel, &voltage);
 					halAfeSetCellVoltage(LogicCellIndex, voltage);
 				}
 				LogicCellIndex++;
@@ -826,17 +908,7 @@ static void finishAfeReadProcessor(void)
 			}
 		}
 		else
-		{
-			if(BridgeDirection == DIR_NORTH)
-			{
-				if(RealPaserCount[DIR_NORTH] == StackCountForIni[DIR_NORTH])
-					NortnResponseCount++;					
-			}
-			else
-			{
-				if(RealPaserCount[DIR_SOUTH] == StackCountForIni[DIR_SOUTH])
-					SouthResponseCount++;
-			}				
+		{					
 			AfeCommTimeOutCount = 0;
 			fail_count = 0;
 			run_count = 0;
@@ -858,8 +930,13 @@ static void finishAfeReadProcessor(void)
 	else
 	{		
 		ReaAfeCycleCount10Ms = AFE_READ_CYCLE_COUNT_10MS;
-		sprintf(str,"Paser Count %d = %d",BridgeDirection, RealPaserCount[BridgeDirection]);
+#if 1 		
+		sprintf(str,"Paser Count %d = %d/%d",
+				BridgeDirection, 
+				RealPaserCount[BridgeDirection],
+				StackCountForIni[BridgeDirection]);
 		halAfeBq796xxDebugMsg(str);
+#endif		
 		if(RealPaserCount[BridgeDirection] != StackCountForIni[BridgeDirection])
 		{
 			PaserCountFailCount[BridgeDirection]++;
@@ -871,39 +948,11 @@ static void finishAfeReadProcessor(void)
 				changeDirIni();
 				getNextSubFunctionPointer();
 			}
-#if	0			
-			fail_count++;
-			if(run_count >= CHECK_AFE_TIMES && fail_count >= (CHECK_AFE_TIMES/2))
-			{
-				halAfeBq796xxDebugMsg("穝 Ini ");
-				//afe_steps = AFE_INIT_IDLE;
-				//BridgeDirection = DIR_SOUTH;//DIR_SOUTH;//DIR_NORTH;
-				//BridgeSwitchCount =0;
-				//NorthAndSouthIniFlag = 0;
-				//AfeState = AFE_STATE_INI;
-				//cnt_delay = 0;
-				changeToBq796xxIniHandler();
-				//AfeTimerHandlerProcessor = AfeBq796xxIniHandler;
-				AfeFailTimerCount = 0;
-				fail_count = 0;
-				run_count = 0;
-//				GPIOD->ODR |= GPIO_PIN_14;
-				return;
-			}
 			else
-			{
-				CHANGE_BRIDGE_DIRECTION();
-				changeDirIni();
-				AfeFunctionProcessor = changeBmuDirForDataReadProcessor;
-			}
-#endif			
+				getNextMainFunctionPointer();
 		}
 		else
 		{
-			if(BridgeDirection == DIR_NORTH)
-				NortnResponseCount++;
-			else
-				SouthResponseCount++;
 			AfeCommTimeOutCount = 0;
 			getNextMainFunctionPointer();
 			
@@ -913,9 +962,9 @@ static void finishAfeReadProcessor(void)
 		}		
 	}
 }
-
 static void changeBmuDirForDataReadProcessor(void)
 {
+#define	SHOW_CHGDIR_DEBUG_MSG
 	static uint8_t	ChangeDirCount = 0;	
 	uint8_t	res;
 	char	str[100];
@@ -929,11 +978,12 @@ static void changeBmuDirForDataReadProcessor(void)
 	if(afe_steps == 0)
 	{
 		drv_bq796xx_clean_fifo();
-		
+#ifdef SHOW_CHGDIR_DEBUG_MSG		
 		sprintf(str,"Dir = %d,﹍て计秖= %d", 
 					BridgeDirection,
 					StackCountForIni[BridgeDirection]);
 		halAfeBq796xxDebugMsg(str);
+#endif		
 //		GPIOD->ODR |= GPIO_PIN_14;
 		ChangeDirCount++;
 		if(ChangeDirCount >= 10)
@@ -958,6 +1008,9 @@ static void changeBmuDirForDataReadProcessor(void)
 	{
 		if(AfeCommTimeOutCount >= 10)	//over 10 sec not ready
 		{
+#ifdef SHOW_CHGDIR_DEBUG_MSG			
+			halAfeBq796xxDebugMsg("ddddd Re Ini dddddd");
+#endif			
 			changeToBq796xxIniHandler();
 			return;		
 		}	
@@ -965,11 +1018,15 @@ static void changeBmuDirForDataReadProcessor(void)
 		if(res & 0x80)
 		{
 			IsRingDaisyChain = 1;
+#ifdef SHOW_CHGDIR_DEBUG_MSG			
 			halAfeBq796xxDebugMsg("................Ring");
+#endif			
 		}
 		else
 		{
+#ifdef SHOW_CHGDIR_DEBUG_MSG			
 			halAfeBq796xxDebugMsg("..........Not...Ring");
+#endif			
 			IsRingDaisyChain = 0;
 		}
 		res &= 0x7f;
@@ -985,12 +1042,13 @@ static void changeBmuDirForDataReadProcessor(void)
 		else
 			res = AFE_DEBUG_S_NUM;
 #endif
-
+#ifdef SHOW_CHGDIR_DEBUG_MSG
 		if(BridgeDirection == DIR_NORTH)
 			sprintf(str,"Get North BMU# = %d", res);
 		else
 			sprintf(str,"Get South BMU# = %d", res);
 		halAfeBq796xxDebugMsg(str);
+#endif		
 		if((IsRingDaisyChain && res == afeBmuNumber()) ||
 		   (!IsRingDaisyChain && res))
 		{
@@ -998,7 +1056,9 @@ static void changeBmuDirForDataReadProcessor(void)
 		}
 		else
 		{
+#ifdef SHOW_CHGDIR_DEBUG_MSG			
 			halAfeBq796xxDebugMsg("穝ちよ");
+#endif			
 			cnt_delay = 100;
 			afe_steps = 0;
 			CHANGE_BRIDGE_DIRECTION();
@@ -1039,7 +1099,6 @@ static void startBalance(void)
 
 static void mainFunEnd(void)
 {
-	//halAfeBq796xxDebugMsg("afeFunEnd");
 	AfeFunctionProcessor = 0;
 }
 
@@ -1057,7 +1116,7 @@ const tAfeFunctionTable	afeMainFunctionTable[]={
 	mainFunFinishAfeRead,
 	mainFunEnd
 };
-
+ 
 
 static void AfeBq796xxNormalHandler(uint16_t evt)
 {
@@ -1112,6 +1171,7 @@ static void changeToBq796xxIniHandler(void)
 	BridgeSwitchCount =0;
 	NorthAndSouthIniFlag = 0;
 	AfeState = AFE_STATE_INI;
+	afe_steps = AFE_INIT_IDLE;
 	cnt_delay = 0;
 	wake_sw = WAKE_TONE_ENABLE;
 	AfeTimerHandlerProcessor = AfeBq796xxIniHandler;
@@ -1134,7 +1194,7 @@ static void AfeBq796xxIniHandler(uint16_t evt)
 	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{  
-//		GPIOD->ODR ^= GPIO_PIN_14;
+		GPIOD->ODR ^= GPIO_PIN_14;
 		
 		if(cnt_delay <= 1)
 		{
@@ -1368,16 +1428,36 @@ static void afeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 		}
 		sprintf(str,"Afe IDLE TIME : %d", AfeCommTimeOutCount);
 		halAfeBq796xxDebugMsg(str);
-	
-		sprintf(str, "N=%d S=%d Read=%d AFEIni=%d",	
-				NortnResponseCount, SouthResponseCount,
-				ReadCount,
-				AfeIniCount
-				);
+#ifdef AFE_COMM_TEST
+		halAfeBq796xxDebugMsg("\n\n========= 代刚参璸 =========");
+		sprintf(str, "羆弄Ω计=%d    AFE IinΩ计=%d",	
+					ReadCount, AfeIniCount);
 		halAfeBq796xxDebugMsg(str);
+	
+		sprintf(str, "NTC N = %d S = %d",	
+					NtcResponseCount[0], NtcResponseCount[1]);
+		halAfeBq796xxDebugMsg(str);
+	
+		sprintf(str, "Cell N = %d S = %d",	
+					CellResponseCount[0], CellResponseCount[1]);
+		halAfeBq796xxDebugMsg(str);
+	
+		sprintf(str, "OtUt N = %d S = %d",	
+					OtUtResponseCount[0], OtUtResponseCount[1]);
+		halAfeBq796xxDebugMsg(str);
+
+		sprintf(str, "OvUv N = %d S = %d",	
+					OvUvResponseCount[0], OvUvResponseCount[1]);
+		halAfeBq796xxDebugMsg(str);
+
+		sprintf(str, "Summary N = %d S = %d",	
+					SummaryResponseCount[0], SummaryResponseCount[1]);
+		halAfeBq796xxDebugMsg(str);
+		halAfeBq796xxDebugMsg("==========================\n\n");
+#endif		
 	}
 	
-//	GPIOD->ODR |= GPIO_PIN_15;	//over 1ms per 15ms 
+	GPIOD->ODR ^= GPIO_PIN_13;
 	AfeTimerHandlerProcessor(evt);
 //	GPIOD->ODR &= ~GPIO_PIN_15;
 }
@@ -1527,15 +1607,26 @@ uint8_t halAfeGetState(void)
 
 void halAfeClearTestCount(void)
 {
+#ifdef AFE_COMM_TEST
+	int		i;
 	ReadCount = 0;
-	NortnResponseCount = 0;
-	SouthResponseCount = 0;
+
+	for(i=0; i<2; i++)
+	{
+		NtcResponseCount[i] = 0;
+		CellResponseCount[i] = 0;
+		OtUtResponseCount[i] = 0;
+		OvUvResponseCount[i] = 0;
+		SummaryResponseCount[i] = 0;
+	}
+#endif	
 	AfeIniCount = 0;
 }
 
-void halafeOpen(tAfeEvtHandler evtHandler)
+void halafeOpen(tAfeEvtHandler evtHandler, tAfeLineLossCallBack lineLossCb)
 {
 	afeEvtHandler = evtHandler;
+	afeLineLossCb = lineLossCb;
 	AfeState = AFE_STATE_INI;
 	AfeFailTimerCount  = 0;
 	afe_load_data.bmu_total_num = afeBmuNumber();
@@ -1583,5 +1674,3 @@ void halafeOpen(tAfeEvtHandler evtHandler)
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
-
-

@@ -129,7 +129,7 @@ static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *
 		;
 	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_7)
 	{
-		GPIOD->ODR |= GPIO_PIN_13;
+//		GPIOD->ODR |= GPIO_PIN_13;
 		mHalEeProm.StartAddress = FwUpdateInfo.FwCheck.PackageNumCnt;
 		mHalEeProm.StartAddress *= 256;
 		mHalEeProm.StartAddress += FLASHROM_FU_START_ADDR;
@@ -181,7 +181,7 @@ static void checkFuCodeDataSwTimerHandler(__far void *dest, uint16_t evt, void *
 			//MsgBuf[0] = 1;
 			//FwUpdateInfo.CbFunction(API_FU_EVT_CHECK_RESULT, MsgBuf);
 		}
-		GPIOD->ODR &= ~GPIO_PIN_13;
+//		GPIOD->ODR &= ~GPIO_PIN_13;
 	}	
 }
 

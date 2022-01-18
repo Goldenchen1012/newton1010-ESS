@@ -84,7 +84,7 @@ uint8_t apiProtectDotpHandler(uint8_t ProtectLevel)
 //			appProtectDotpDebugMsg(str);
 //		flag = 1;
 
-		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.SetValue.l))
+		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.SetValue.l) && ProtectPar.STime.l)
 		{
 			if((mDotpProtect.Flag[DotpNtcIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -114,7 +114,7 @@ uint8_t apiProtectDotpHandler(uint8_t ProtectLevel)
 		}
 		//--------------------------------------------------------------------------
 		//	Level	Release
-		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.RelValue.l))
+		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
 		{
 			if((mDotpProtect.Flag[DotpNtcIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

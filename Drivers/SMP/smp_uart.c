@@ -45,6 +45,14 @@ smp_fifo_t 								uart1_tx_fifo = {0};
 uint8_t 									uart1_tx_buffer[UART1_TX_BUFFER_SIZE] = {0};
 uint8_t 									uart1_rx_buffer[UART1_RX_BUFFER_SIZE] = {0};
 
+// smp uart 2
+UART_HandleTypeDef 				smp_uart2_handle = {0};
+smp_uart_event_t 					uart2_evt_cb = 0;
+smp_fifo_t 								uart2_rx_fifo = {0};
+smp_fifo_t 								uart2_tx_fifo = {0};
+uint8_t 									uart2_tx_buffer[UART2_TX_BUFFER_SIZE] = {0};
+uint8_t 									uart2_rx_buffer[UART2_RX_BUFFER_SIZE] = {0};
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -157,6 +165,51 @@ int8_t smp_uart_init(smp_uart_t *p_uart, smp_uart_event_t smp_uart_event_handler
 				return SMP_ERROR_NOT_FOUND;
 		}
 		#endif
+	}else	if(p_uart->num == UART2){
+		smp_uart2_handle.Instance        = BSP_UART2;
+		smp_uart2_handle.Init.BaudRate   = p_uart->baud_rate;
+
+		smp_uart2_handle.Init.WordLength = UART_WORDLENGTH_8B;
+		smp_uart2_handle.Init.StopBits   = UART_STOPBITS_1;
+		
+		if(p_uart->use_parity == PARITY_NONE){
+			smp_uart2_handle.Init.Parity     = UART_PARITY_NONE;
+		}else if(p_uart->use_parity == PARITY_EVEN){
+			smp_uart2_handle.Init.Parity     = UART_PARITY_EVEN;
+		}else if(p_uart->use_parity == PARITY_ODD){
+			smp_uart2_handle.Init.Parity     = UART_PARITY_ODD;
+		}else{
+			return SMP_ERROR_INVALID_PARAM;
+		}
+		if(p_uart->flow_ctrl == UART_FLOW_CTRL_DISABLE){
+			smp_uart2_handle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+		}else if(p_uart->flow_ctrl == UART_FLOW_CTRL_ENABLE){
+			smp_uart2_handle.Init.HwFlowCtl  = UART_HWCONTROL_RTS_CTS;
+		}else{
+			return SMP_ERROR_INVALID_PARAM;
+		}
+			
+		smp_uart2_handle.Init.Mode       = UART_MODE_TX_RX;
+		if(HAL_UART_DeInit(&smp_uart2_handle) != HAL_OK){
+			return SMP_ERROR_NOT_FOUND;
+		}  
+		if(HAL_UART_Init(&smp_uart2_handle) != HAL_OK){
+			return SMP_ERROR_NOT_FOUND;
+		}
+		uart2_evt_cb = smp_uart_event_handler;
+		
+		// Configure buffer RX buffer.
+		uart_fifo_init(&uart2_rx_fifo, p_uart->buffers.rx_buf, p_uart->buffers.rx_buf_size);
+		// Configure buffer TX buffer.
+		uart_fifo_init(&uart2_tx_fifo, p_uart->buffers.tx_buf, p_uart->buffers.tx_buf_size);
+		
+		HAL_UART_Receive_IT(&smp_uart2_handle, uart2_rx_buffer, UART2_RX_BUFFER_SIZE);
+
+		#if 0
+		if(HAL_UART_Receive_DMA(&smp_uart2_handle, uart2_rx_buffer, UART2_RX_BUFFER_SIZE) != HAL_OK){
+				return SMP_ERROR_NOT_FOUND;
+		}
+		#endif		
 	 }else{
 		return SMP_ERROR_NOT_SUPPORTED;
 	 }		
@@ -176,8 +229,14 @@ int8_t smp_uart_deinit(smp_uart_t *p_uart)
 			if(HAL_UART_DeInit(&smp_uart1_handle) != HAL_OK)
 				return SMP_ERROR_NOT_FOUND;
 			smp_uart1_handle.Instance = 0;
+		}	
+	}else if(p_uart->num == UART2){
+		if(smp_uart2_handle.Instance != 0){
+			if(HAL_UART_DeInit(&smp_uart2_handle) != HAL_OK)
+				return SMP_ERROR_NOT_FOUND;
+			smp_uart2_handle.Instance = 0;
 		}
-	}		
+	}	
 	return SMP_SUCCESS;
 }
 
@@ -231,6 +290,31 @@ int8_t smp_uart_put(smp_uart_t *p_uart, uint8_t byte)
 			           }
             }	
 	       }
+	}else if(p_uart->num == UART2){
+        if (smp_fifo_push(&uart2_tx_fifo, byte) == SMP_SUCCESS){
+        // The new byte has been added to FIFO. It will be picked up from there
+        // (in 'uart_event_handler') when all preceding bytes are transmitted.
+        // But if UART is not transmitting anything at the moment, we must start
+        // a new transmission here.
+			      if((smp_uart2_handle.gState == HAL_UART_STATE_READY)||(smp_uart2_handle.gState == HAL_UART_STATE_BUSY_RX)){
+				        if(smp_fifo_get_size(&uart2_tx_fifo,&size)==SMP_SUCCESS){
+					          if(size>UART2_TX_BUFFER_SIZE) size = UART2_TX_BUFFER_SIZE;
+						        // This operation should be almost always successful, since we've
+						        // just added a byte to FIFO, but if some bigger delay occurred
+						        // (some heavy interrupt handler routine has been executed) since
+						        // that time, FIFO might be empty already.
+								if(uart2_evt_cb)
+				                uart2_evt_cb(UART_TX_READY_TO_SEND);
+										
+						        for(i=0;i<size;i++){	
+							          smp_fifo_pop(&uart2_tx_fifo, (char *)&uart2_tx_buffer[i]);
+						        }
+						        //HAL_UART_Transmit_DMA(&smp_uart2_handle, &uart2_tx_buffer[0], size);
+								HAL_UART_Transmit_IT(&smp_uart2_handle, &uart2_tx_buffer[0], size);
+			           }
+            }	
+	       }		       
+	       
 	}else{
 		return SMP_ERROR_FULL;
 	}
@@ -245,6 +329,8 @@ int8_t smp_uart_get(smp_uart_t *p_uart, uint8_t *p_byte)
 	    bdata = smp_fifo_pop(&uart0_rx_fifo, (char *)p_byte);
 	}else if(p_uart->num == UART1){
 	    bdata = smp_fifo_pop(&uart1_rx_fifo, (char *)p_byte);
+	}else if(p_uart->num == UART2){
+	    bdata = smp_fifo_pop(&uart2_rx_fifo, (char *)p_byte);
 	}
 	
 	return(bdata);
@@ -284,6 +370,22 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 		}else{
 			if(uart1_evt_cb)
 				uart1_evt_cb(UART_TX_EMPTY);
+		}	
+	}else if(huart->Instance == BSP_UART2){
+		if(smp_fifo_get_size(&uart2_tx_fifo,&size)==SMP_SUCCESS){
+			if(size>UART2_TX_BUFFER_SIZE)
+				size = UART2_TX_BUFFER_SIZE;
+			// This operation should be almost always successful, since we've
+			// just added a byte to FIFO, but if some bigger delay occurred
+			// (some heavy interrupt handler routine has been executed) since
+			// that time, FIFO might be empty already.
+			for(i=0;i<size;i++){
+				smp_fifo_pop(&uart2_tx_fifo, (char *)&uart2_tx_buffer[i]);
+			}
+			HAL_UART_Transmit_IT(&smp_uart2_handle, &uart2_tx_buffer[0], size);
+		}else{
+			if(uart2_evt_cb)
+				uart2_evt_cb(UART_TX_EMPTY);
 		}
 	}
 }
@@ -346,8 +448,30 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     gpio_test_p_state = GPIO_ACTIVE_TOGGLE;
     smp_gpio_set_state(&gpio_test_p, gpio_test_p_state);		
 		*/	
-	}		
-
+	}else if(huart->Instance == BSP_UART2){
+		if(smp_fifo_push(&uart2_rx_fifo, (char)uart2_rx_buffer[0]) == SMP_SUCCESS){
+			flag = 1;
+		}else{
+			flag = 0;
+		}		
+			
+		if(HAL_UART_Receive_IT(huart, uart2_rx_buffer, UART2_RX_BUFFER_SIZE) != HAL_OK){
+			return;
+		}
+		
+		if(flag == 1){
+        if(uart2_evt_cb)
+		        uart2_evt_cb(UART_DATA_READY);
+		}else{
+			  if(uart2_evt_cb)
+				    uart2_evt_cb(UART_BUFFER_FULL);
+		}			
+		
+		/* Test debug, but may demage the uart function.
+    gpio_test_p_state = GPIO_ACTIVE_TOGGLE;
+    smp_gpio_set_state(&gpio_test_p, gpio_test_p_state);		
+		*/	
+	}	
 }
 
 
@@ -536,39 +660,83 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		#endif
 		/* NVIC for BSP_UART1, to catch the TX complete */
 		HAL_NVIC_SetPriority(BSP_UART1_IRQn, 0, 1);
-		HAL_NVIC_EnableIRQ(BSP_UART1_IRQn);
-	}else if(huart->Instance==USART2){
-  /* USER CODE BEGIN USART2_MspInit 0 */
+		HAL_NVIC_EnableIRQ(BSP_UART1_IRQn);	
+  }else if(huart->Instance==BSP_UART2){
+		static DMA_HandleTypeDef uart2_dma_tx;
+		static DMA_HandleTypeDef uart2_dma_rx;
+  
+		GPIO_InitTypeDef  GPIO_InitStruct;
 
-  /* USER CODE END USART2_MspInit 0 */
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
-    PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    {
-      
-    }
+		/*##-1- Enable peripherals and GPIO Clocks #################################*/
+		/* Enable SMP UART GPIO TX/RX clock */
+		BSP_UART2_TX_GPIO_CLK_ENABLE();
+		BSP_UART2_RX_GPIO_CLK_ENABLE();
 
-    /* Peripheral clock enable */
-    __HAL_RCC_USART2_CLK_ENABLE();
+		/* Enable SMP UART clock */
+		BSP_UART2_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**USART2 GPIO Configuration
-    PA2     ------> USART2_TX
-    PA3     ------> USART2_RX
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		/* Enable SMP UART DMA clock */
+		//BSP_UART2_DMA_CLK_ENABLE();
 
-  /* USER CODE BEGIN USART2_MspInit 1 */
+		/*##-2- Configure peripheral GPIO ##########################################*/  
+		/* SMP UART TX GPIO pin configuration  */
+		GPIO_InitStruct.Pin       = BSP_UART2_TX_PIN | BSP_UART2_RX_PIN;
+		GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+		GPIO_InitStruct.Pull      = GPIO_PULLUP;
+		GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.Alternate = BSP_UART2_TX_AF | BSP_UART2_RX_AF;
 
-  /* USER CODE END USART2_MspInit 1 */
-  }
+		HAL_GPIO_Init(BSP_UART2_TX_GPIO_PORT, &GPIO_InitStruct);
+
+		/*##-3- Configure SMP UART2 DMA ##################################################*/
+		/* Configure SMP UART DMA handler for Transmission process */
+		#if	0
+		uart2_dma_tx.Instance                 = SMP_UART2_TX_DMA_CHANNEL;
+		uart2_dma_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+		uart2_dma_tx.Init.PeriphInc           = DMA_PINC_DISABLE;
+		uart2_dma_tx.Init.MemInc              = DMA_MINC_ENABLE;
+		uart2_dma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+		uart2_dma_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
+		uart2_dma_tx.Init.Mode                = DMA_NORMAL;
+		uart2_dma_tx.Init.Priority            = DMA_PRIORITY_LOW;
+		uart2_dma_tx.Init.Request             = SMP_UART2_TX_DMA_REQUEST;
+
+		HAL_DMA_Init(&uart2_dma_tx);
+	
+		/* Associate the initialized DMA handle to the SMP UART handle */
+		__HAL_LINKDMA(huart, hdmatx, uart1_dma_tx);
+		#endif
+		
+		/* Configure the DMA handler for reception process */
+		#if	0
+		uart2_dma_rx.Instance                 = SMP_UART2_RX_DMA_CHANNEL;
+		uart2_dma_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+		uart2_dma_rx.Init.PeriphInc           = DMA_PINC_DISABLE;
+		uart2_dma_rx.Init.MemInc              = DMA_MINC_ENABLE;
+		uart2_dma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+		uart2_dma_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
+		uart2_dma_rx.Init.Mode                = DMA_NORMAL;
+		uart2_dma_rx.Init.Priority            = DMA_PRIORITY_HIGH;
+		uart2_dma_rx.Init.Request             = SMP_UART2_RX_DMA_REQUEST;
+
+		HAL_DMA_Init(&uart2_dma_rx);
+
+		/* Associate the initialized DMA handle to SMP UART handle */
+		__HAL_LINKDMA(huart, hdmarx, uart2_dma_rx);
+		
+		/*##-4- Configure the NVIC for DMA #########################################*/
+		/* NVIC configuration for DMA transfer complete interrupt (SMP UART) */
+		HAL_NVIC_SetPriority(SMP_UART2_DMA_TX_IRQn, 0, 1);
+		HAL_NVIC_EnableIRQ(SMP_UART2_DMA_TX_IRQn);
+
+		/* NVIC configuration for DMA transfer complete interrupt (SMP UART) */
+		HAL_NVIC_SetPriority(SMP_UART2_DMA_RX_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(SMP_UART2_DMA_RX_IRQn);
+		#endif
+		/* NVIC for BSP_UART1, to catch the TX complete */
+		HAL_NVIC_SetPriority(BSP_UART2_IRQn, 0, 1);
+		HAL_NVIC_EnableIRQ(BSP_UART2_IRQn);
+	}
 }
 
 /**
@@ -630,6 +798,31 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
       #if 0
 			HAL_NVIC_DisableIRQ(BSP_UART1_DMA_TX_IRQn);
       HAL_NVIC_DisableIRQ(BSP_UART1_DMA_RX_IRQn);
+      #endif
+	}else if(huart->Instance == BSP_UART2){
+		  /*##-1- Reset peripherals ##################################################*/
+		  BSP_UART2_FORCE_RESET();
+		  BSP_UART2_RELEASE_RESET();
+
+		  /*##-2- Disable peripherals and GPIO Clocks #################################*/
+		  /* Configure BSP_UART1 Tx as alternate function  */
+		  HAL_GPIO_DeInit(BSP_UART2_TX_GPIO_PORT, BSP_UART2_TX_PIN);
+		  /* Configure BSP_UART1 Rx as alternate function  */
+		  HAL_GPIO_DeInit(BSP_UART2_RX_GPIO_PORT, BSP_UART2_RX_PIN);
+
+		  /*##-3- Disable BSP_UART DMA #####################################################*/
+		  /* De-Initialize BSP_UART DMA channel associated to reception process */
+		  if(huart->hdmarx != 0){
+			    HAL_DMA_DeInit(huart->hdmarx);
+		  }
+		  /* De-Initialize BSP_UART DMA channel associated to transmission process */
+		  if(huart->hdmatx != 0){
+			    HAL_DMA_DeInit(huart->hdmatx);
+		  }  
+		  /*##-4- Disable the NVIC for BSP_UART1 DMA ###########################################*/
+      #if 0
+			HAL_NVIC_DisableIRQ(BSP_UART2_DMA_TX_IRQn);
+      HAL_NVIC_DisableIRQ(BSP_UART2_DMA_RX_IRQn);
       #endif
 	}
 }
@@ -693,4 +886,8 @@ void BSP_UART1_IRQHandler(void)
     HAL_UART_IRQHandler(&smp_uart1_handle);
 }
 
+void BSP_UART2_IRQHandler(void)
+{
+    HAL_UART_IRQHandler(&smp_uart2_handle);
+}
 /************************ (C) COPYRIGHT *****END OF FILE****/

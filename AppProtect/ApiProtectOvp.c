@@ -161,7 +161,7 @@ void apiProtectOvpPfHandler(void)
 	if(mOvpProtect.PfFlag)
 		return;
 	apiSysParGetOvpPfPar(&ProtectPar);
-	if(halAfeGetMaxCellVoltage() > ProtectPar.SetValue.l)
+	if(halAfeGetMaxCellVoltage() > ProtectPar.SetValue.l && ProtectPar.STime.l)
 	{
 		mOvpProtect.PfSetCount++;
 		if(mOvpProtect.PfSetCount >= ProtectPar.STime.l)

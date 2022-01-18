@@ -34,7 +34,7 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appRelayControlDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
-#define	PreRelayOnTime10Ms()	apiSysParGetPreDischargeTime()
+#define	PreRelayOnTime10Ms()	(apiSysParGetPreDischargeTime() * 10)
 #ifdef DEBUG_MODE1
 	#define	RELAY_POWER_ON()	//HalBspRelayPsCtrl(1)
 	#define	RELAY_POWER_OFF()	//HalBspRelayPsCtrl(0)
@@ -59,6 +59,7 @@ enum{
 /* Private variables ---------------------------------------------------------*/
 void (*apiRelayControlFunctionProcessor)(void) = {0};
 static uint8_t MasterTurnOnRelayFlag = 0;
+//static uint8_t Relay
 static uint8_t RelayOnStep = RELAY_CTRL_INI;
 static uint16_t DelayCount;	
 /* Private function prototypes -----------------------------------------------*/
@@ -192,6 +193,7 @@ void apiRelayControlMainRelayOff(void)
 
 void apiRelayControlOpen(void)
 {
+	MasterTurnOnRelayFlag = 0;
 	LibSwTimerOpen(relayControlSwTimerHandler, 0);
 }
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

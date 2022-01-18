@@ -256,6 +256,7 @@ static void davinciCanCleanData(smp_can_package_t *pCanPkg)
 	}
 	else if(subindex == SMP_CLEAN_FAULT_LOG1_SUB_INDEX)
 	{
+		apiEventLogClearLogData();
 		canCmdDebugMsg("Clear fault log1");
 	}
 	else if(subindex == SMP_CLEAN_FAULT_LOG2_SUB_INDEX)

@@ -17,7 +17,7 @@
 #ifndef _DEFINE_H_
 #define _DEFINE_H_
 
-#define	DEBUG_MODE				//don't check HW Protect 
+//#define	DEBUG_MODE				//don't check HW Protect 
 
 //-------------------------------------------------
 typedef unsigned char			BYTE;

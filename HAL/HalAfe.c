@@ -120,6 +120,19 @@ static void logicalNtcPositionToPhysicalPosition(uint16_t posi,uint8_t *retbmu, 
 	
 	
 /* Public function prototypes -----------------------------------------------*/
+void halAfeCalVbatFromCellVoltage(void)
+{
+	uint16_t	cell;
+	uint32_t	vbat = 0;
+	if(appProjectIsInSimuMode())
+		return;
+		
+	for(cell = 0; cell<afeCellNumber(); cell++)
+	{
+		vbat += halAfeGetCellVoltage(cell);
+	}
+	halAfeSetVBatVoltage(AFE_VBAT_INDEX, vbat);
+}
 int32_t	halAfeGetCurrentAdcValue(uint8_t CurrentIndex)
 {
 	if(CurrentIndex >= 2)

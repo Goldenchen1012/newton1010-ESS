@@ -90,6 +90,8 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		smp_can0_handle.Init.TimeSeg1 = CAN_BS1_4TQ;
   		smp_can0_handle.Init.TimeSeg2 = CAN_BS2_5TQ;
   		smp_can0_handle.Init.Prescaler = 16;
+		HAL_CAN_DeInit(&smp_can0_handle);
+		
 
   		if (HAL_CAN_Init(&smp_can0_handle) != HAL_OK)
   		{

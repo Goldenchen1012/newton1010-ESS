@@ -160,13 +160,13 @@ static void notifyBaseCurrent(void)
 									0);
 	CanPkg.dlc = 8;
 								
-	Curr1.l = appGaugeGetCurrentValue();
+	Curr1.l = appGaugeGetCurrentValue(P_CURRENT);
 	CanPkg.dat[0] = Curr1.b[0];
 	CanPkg.dat[1] = Curr1.b[1];
 	CanPkg.dat[2] = Curr1.b[2];
 	CanPkg.dat[3] = Curr1.b[3];
 	
-	Curr2.l = halAfeGetCurrentValue(1);
+	Curr2.l = appGaugeGetCurrentValue(N_CURRENT);
 	CanPkg.dat[4] = Curr2.b[0];
 	CanPkg.dat[5] = Curr2.b[1];
 	CanPkg.dat[6] = Curr2.b[2];
