@@ -304,7 +304,7 @@ void test_uart_rx_process(void)
 {
 	static uint8_t rx_data[256];
 	static int8_t fifo_res;
-	uint8_t temp[4];
+
 	if(Davinci_uart_rx_cnt>0){
 		fifo_res = smp_uart_get_string(&mDavinci_uart, rx_data);
 		--Davinci_uart_rx_cnt;
@@ -353,10 +353,15 @@ void test_uart_rx_process(void)
 					LOG_YELLOW("EVENT_LOG Force Save Fix\r\n");
 					app_flash_page_data_save(SMP_FIX_MEMORY);
 				} 
+				if(!strcmp((char *)rx_data, "check head\r\n")){  
+					LOG_YELLOW("EVENT_LOG Check Head\r\n");
+					app_flash_check_head();
+				} 
 				
-				uint8_t temp[18];
-				uint8_t temp1[4];
-				uint8_t temp2[4];
+				
+				static uint8_t temp[18];
+				static uint8_t temp1[4];
+				static uint8_t temp2[4];
 				uint16_t start_package;
 				uint16_t length_data;
 				memcpy(temp,&rx_data[0],18);
@@ -386,7 +391,7 @@ void test_uart_rx_process(void)
 						app_flash_page_data_push(log_package,SMP_REFLASH_MEMORY);
 					}
 				} 
-				uint8_t temp3[14];
+				static uint8_t temp3[14];
 				memcpy(temp3,&rx_data[0],14);
 				if(!strcmp((char *)temp3, "data load fix ")){ 	//data load fix xxxx xxxx
 					memcpy(temp1,&rx_data[14],4);
@@ -401,7 +406,7 @@ void test_uart_rx_process(void)
 					smp_log_package log_package;
 					memcpy(temp1,&rx_data[14],4);
 					length_data =  a2i((char *)temp1);
-					LOG_YELLOW("EVENT_LOG Push Fix %d\r\n",length_data);LOG_YELLOW("EVENT_LOG Push Reflash %d\r\n",length_data);
+					LOG_YELLOW("EVENT_LOG Push Fix %d\r\n",length_data);
 					for(int i = 0; i < length_data;i++){
 						log_package.ID = 0xaa;
 						log_package.SMP_RTC[0] = i;
@@ -441,7 +446,7 @@ void app_flash_log_event_handler(smp_log_evt_type p_evt)
 				LOG_CYAN("header %x\r\n",header_package.header[2]);
 				LOG_CYAN("header %x\r\n",header_package.header[3]);
 				LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
-				LOG_CYAN("reflash cnt%x\r\n",header_package.reflash_memory_current_page);
+				LOG_CYAN("reflash current page%x\r\n",header_package.reflash_memory_current_page);
 				LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
 				LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
 				LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);

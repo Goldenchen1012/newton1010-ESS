@@ -78,6 +78,7 @@ int8_t smp_spi_get_status(smp_spi_t *spi)
 
 int8_t smp_spi_master_init(smp_spi_t *p_spi, smp_spi_event_t smp_spi_event_handler, const bool lsb)
 {
+	uSPIFlag[p_spi->num] = SPI_Done;
 	switch(p_spi->num){
 		case SPI_module1:
 			__SPI1_CLK_ENABLE();
@@ -316,10 +317,11 @@ int8_t smp_spi_master_send_recv(smp_spi_t *spi, uint8_t *tx_data,uint16_t tx_siz
 {
 	HAL_StatusTypeDef status;
 	SPI_HandleTypeDef temp_spi_handle;
-	smp_spi_master_cs_set(p_cs,GPIO_ACTIVE_LOW);
+	
 	if(uSPIFlag[spi->num] != SPI_Done){
 		return SMP_ERROR_BUSY;
 	}
+	smp_spi_master_cs_set(p_cs,GPIO_ACTIVE_LOW);
 	CS[spi->num] = *p_cs;
 	
 	if( spi->num == SPI_module1){
@@ -366,7 +368,7 @@ int8_t smp_spi_master_send_recv_blocking(smp_spi_t *spi, uint8_t *tx_data,uint16
 {
 	HAL_StatusTypeDef status;
 	SPI_HandleTypeDef temp_spi_handle;
-	uint8_t temp_spi_cnt = 0;
+	//uint8_t temp_spi_cnt = 0;
 	smp_spi_master_cs_set(p_cs,GPIO_ACTIVE_LOW);
 	#if	0
 	while (uSPIFlag[spi->num] != SPI_Done) {

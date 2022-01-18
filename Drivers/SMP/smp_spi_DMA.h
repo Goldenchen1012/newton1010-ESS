@@ -44,8 +44,6 @@ typedef struct{
 	smp_gpio_t					cs_handler;
 }smp_spi_cs_t;
 
-
-
 typedef enum{
 	SMP_SPI_EVENT_DONE = 0,		/* Transfer done. */
 	SMP_SPI_EVENT_TRANSFER_BUSY,
