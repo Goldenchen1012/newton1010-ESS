@@ -118,9 +118,7 @@ uint8_t WordToByte(uint16_t xu16Data, uint8_t xu8Type){
 
 void Modbus_TCPIP_Socket_Open(void){
 	/* Register socket and caall back function */
-	W5500_Socket_Register(&Socket_ModbusTCPIP, ModbusTCPIP_cb);   
-	W5500_Socket_Register(&Socket_Test1 , ModbusTest1); 
-	W5500_Socket_Register(&Socket_Test2 , ModbusTest2);   	
+	//W5500_Socket_Register(&Socket_ModbusTCPIP, ModbusTCPIP_cb);   
 }
 
 

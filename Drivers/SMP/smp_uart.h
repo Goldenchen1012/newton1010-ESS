@@ -76,7 +76,7 @@ int8_t smp_uart_init(smp_uart_t *p_uart, smp_uart_event_t smp_uart_event_handler
 int8_t smp_uart_deinit(smp_uart_t *p_uart);
 int8_t smp_uart_put(smp_uart_t *p_uart, uint8_t byte);
 int8_t smp_uart_get(smp_uart_t *p_uart, uint8_t *p_byte);
-
+int8_t smp_uart_get_string(smp_uart_t *p_uart, uint8_t *p_byte);
 #endif /* __SMP_UART_H */
 
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

@@ -309,7 +309,7 @@ int8_t smp_mx25l_flash_write_status(smp_mx25l_status *mx251_status,smp_mx25l_con
 }
 
 
-int8_t smp_mx25l_flash_read_data_bytes(uint8_t *flash_addr,uint8_t *buffer,uint16_t read_byte_num,smp_flash_event_t smp_flash_event_handle)
+int8_t smp_mx25l_flash_read_data_bytes(uint8_t *flash_addr, uint8_t *buffer, uint16_t read_byte_num, smp_flash_event_t smp_flash_event_handle)
 {
   /* Send "read data bytes (READ)" command */
 	smp_flash_package	FlashPkg;
@@ -493,7 +493,7 @@ void MX25L_SPI_send_command(void)
 		UseDMAFlag = true;
 		str[0] = 0;
 		if(FlashPkg.command == MX25L_READ){
-			smp_spi_master_send_recv(&MX25L_SPI_1, (uint8_t* )&FlashPkg , 4 , MX25L_rx_data, FlashPkg.R_W_bytes, &MX25L_CS0);
+			smp_spi_master_send_recv(&MX25L_SPI_1, (uint8_t* )&FlashPkg , 4 , FlashPkg.read_buffer, FlashPkg.R_W_bytes, &MX25L_CS0);
 			sprintf(str,"SPI Read:%.2X %.2X %.2X",
 						FlashPkg.addr[0],
 						FlashPkg.addr[1],

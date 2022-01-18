@@ -110,9 +110,12 @@ int8_t smp_ADS7946_deinit(void)
 	#endif
 	smp_gpio_deinit(&ADS7956_PDEN_handler);
 	smp_gpio_deinit(&ADS7956_CH_SEL_handler);
-	
+
 	smp_spi_master_cs_deinit(&ADS7946_CS0);
 	smp_spi_master_cs_deinit(&ADS7946_CS1);
+	if(Flag_ADS7946_HW_Init_Done){
+		Flag_ADS7946_HW_Init_Done = false;
+	}
 	if(smp_spi_master_deinit(&ADS7946_SPI_0) != SMP_SUCCESS){
 		return SMP_ERROR_NOT_FOUND;
 	}

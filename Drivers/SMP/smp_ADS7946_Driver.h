@@ -31,7 +31,6 @@ typedef struct{
 	
 typedef void(*ads7946_CB_Fun_t)(uint8_t *pDatBuf,uint8_t bufsize);
 
-//int8_t smp_ADS7946_init(void);
 int8_t smp_ADS7946_init(void);
 int8_t smp_ADS7946_deinit(void);
 int8_t smp_ADS7946_get_data(smp_ADS7946_channel_num channel_sel,smp_ADS7946_CS_num CS,ads7946_CB_Fun_t evt_callback);

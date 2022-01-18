@@ -53,9 +53,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == SMP_GPIO_PIN(BSP_W5500_INT_PIN))
   {
-    //Flag_W5500_INT = true;
-	W5500_INT_Cnt++;
-	W5500_Read_SnIR_End = false;  
+	Flag_W5500_INT_Trigger = true;
   }
 }
 

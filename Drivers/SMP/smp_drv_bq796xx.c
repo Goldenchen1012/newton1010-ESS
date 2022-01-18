@@ -121,7 +121,7 @@ void drv_bq796xx_switch_rx_pin_type_setting(bq796xx_io_type type){
     case BQ_UART:
         // BQ796XX to MCU UART init      
         if(smp_uart_init(&bq796xx_uart, drv_bq796xx_uart_event_handler)==SMP_SUCCESS){
-            LOG_MAGENTA("BMU UART initial success!\r\n");
+            //LOG_MAGENTA("BMU UART initial success!\r\n");
         }else{
             LOG_MAGENTA("BMU UART initial fail!\r\n");
         }  
