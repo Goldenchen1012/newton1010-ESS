@@ -72,7 +72,7 @@
 #define G_TEST_IRM_FUNCTION
 #endif 
 
-#if 1
+#if 0
 #define G_TEST_EVENT_LOG_FUNC
 #endif
 
@@ -974,7 +974,9 @@ int main(void)
 		#endif
 		
 		LibSwTimerHandle();
+#ifdef G_TEST_EVENT_LOG_FUNC
 		test_uart_rx_process();
+#endif		
 		#if 0
 		GPIOD->ODR &= ~GPIO_PIN_13;
 		GPIOD->ODR ^= GPIO_PIN_14;

@@ -404,12 +404,24 @@ void app_sector_header_event_handler(smp_flash_evt_type p_evt)
 	}
 
 }
+static uint8_t	isValidLogData(uint8_t *pBuf)
+{
+	uint8_t	i,sum;
+	sum = 0xA5;
+	for(i=0; i<8; i++)
+		sum ^= 	pBuf[i];
+	if(sum == 0)
+		return 1;
+	else
+		return 0;
+}
 
 void app_flash_check_reflash_head_event_handler(smp_flash_evt_type p_evt)
 {
 	int i;
 	switch(p_evt){
 		case SMP_FLASH_EVENT_READ_DONE:
+#if 1		
 			for(i = LOG_PACKAGE_SIZE - 1; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
 				if(check_head_buffer[i] ==  0xff){
 					smp_mx25l_flash_fast_read_data_bytes_page(g_sector_header_package_check.fix_memory_current_page, check_head_buffer, PAGE_SIZE, app_flash_check_fix_head_event_handler);
@@ -418,6 +430,18 @@ void app_flash_check_reflash_head_event_handler(smp_flash_evt_type p_evt)
 					g_sector_header_package_check.reflash_total_log_cnt++;
 				}
 			}
+#else
+			for(i = 0; i < (PAGE_SIZE - LOG_PACKAGE_SIZE);i = i + LOG_PACKAGE_SIZE){
+				if(isValidLogData(&check_head_buffer[i]) ==  0){
+					smp_mx25l_flash_fast_read_data_bytes_page(g_sector_header_package_check.fix_memory_current_page, check_head_buffer, PAGE_SIZE, app_flash_check_fix_head_event_handler);
+					return;///done
+				}
+				else //if(check_head_buffer[i] ==  0xa5){
+				{
+					g_sector_header_package_check.reflash_total_log_cnt++;
+				}
+			}			
+#endif			
 			g_sector_header_package_check.reflash_memory_current_page++;
 			if(g_sector_header_package_check.reflash_memory_current_page >= ((REFLASH_MEMORY_END_SECTOR + 1) * PAGE_NUM_IN_SECTOR)){
 					g_sector_header_package_check.reflash_memory_current_page = REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;

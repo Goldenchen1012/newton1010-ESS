@@ -90,11 +90,13 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		smp_can0_handle.Init.TimeSeg1 = CAN_BS1_4TQ;
   		smp_can0_handle.Init.TimeSeg2 = CAN_BS2_5TQ;
   		smp_can0_handle.Init.Prescaler = 16;
-		HAL_CAN_DeInit(&smp_can0_handle);
-		
+		Gpio13Debug(1);
+	//	HAL_CAN_DeInit(&smp_can0_handle);
+		Gpio13Debug(2);
 
   		if (HAL_CAN_Init(&smp_can0_handle) != HAL_OK)
   		{
+			Gpio13Debug(3);
     		/* Initialization Error */
     		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
@@ -110,20 +112,23 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
   		sFilterConfig.FilterActivation = ENABLE;
   		sFilterConfig.SlaveStartFilterBank = 0;
-
+		Gpio13Debug(4);
   		if (HAL_CAN_ConfigFilter(&smp_can0_handle, &sFilterConfig) != HAL_OK)
   		{
+			Gpio13Debug(5);
     		/* Filter configuration Error */
     		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
-
+		Gpio13Debug(6);
   		/*##-3- Start the CAN peripheral ###########################################*/
   		if (HAL_CAN_Start(&smp_can0_handle) != HAL_OK)
   		{
+			Gpio13Debug(7);
     		/* Start Error */
     		//Error_Handler();
     		return SMP_ERROR_NOT_FOUND;
   		}	
+		Gpio13Debug(8);
 		/*##-4- Activate CAN RX notification #######################################*/
 		if (HAL_CAN_ActivateNotification(&smp_can0_handle,
 				(CAN_IT_RX_FIFO0_MSG_PENDING |
@@ -134,6 +139,7 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
 			//Error_Handler();
 			return SMP_ERROR_NOT_FOUND;
 		}  
+		Gpio13Debug(9);
 		can0_evt_cb = smp_can_event_handler;
 		// Configure buffer RX buffer.
 		can_fifo_init(&can0_rx_fifo, p_can->buffers.rx_buf, p_can->buffers.rx_buf_size);
@@ -208,19 +214,11 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
 	 return SMP_SUCCESS;
 }
 
-int8_t smp_can_deinit(smp_can_t *p_uart)
+int8_t smp_can_deinit(smp_can_t *p_can)
 {
-	if(p_uart->num == __CAN0){
-		#if	0
-		if(smp_can0_handle.Instance != 0){
-			  		if ((&smp_can1_handle) != HAL_OK)
-
-			if(HAL_CAN_DeInit(&smp_uart0_handle) != HAL_OK)
-				return SMP_ERROR_NOT_FOUND;
-			smp_can0_handle.Instance = 0;
-		}
-		#endif
-	}else if(p_uart->num == __CAN1){
+	if(p_can->num == __CAN0){
+		HAL_CAN_DeInit(&smp_can0_handle);		
+	}else if(p_can->num == __CAN1){
 		#if	0
 		if(smp_uart1_handle.Instance != 0){
 			if(HAL_UART_DeInit(&smp_uart1_handle) != HAL_OK)
@@ -577,6 +575,85 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef *hcan)
 	
 }
 
+void HAL_CAN_MspDeInit(CAN_HandleTypeDef *hcan)
+{
+	GPIO_InitTypeDef   GPIO_InitStruct;
+	
+	if(hcan->Instance == BSP_CAN0)
+	{
+#if 1 
+		/*##-1- Enable peripherals and GPIO Clocks #################################*/
+		/* BSP_CAN1 Periph clock enable */
+		__HAL_RCC_CAN1_CLK_DISABLE();
+		/* Enable GPIO clock ****************************************/
+		BSP_CAN0_RX_GPIO_CLK_ENABLE();
+		BSP_CAN0_TX_GPIO_CLK_ENABLE();
+		
+		/*##-2- Configure peripheral GPIO ##########################################*/
+		/* BSP_CAN0 TX GPIO pin configuration */
+		GPIO_InitStruct.Pin = BSP_CAN0_TX_PIN;
+		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.Pull = GPIO_PULLUP;
+		GPIO_InitStruct.Alternate =  0;
+		HAL_GPIO_Init(BSP_CAN0_TX_GPIO_PORT, &GPIO_InitStruct);
+
+		/* BSP_CAN0 RX GPIO pin configuration */
+		GPIO_InitStruct.Pin = BSP_CAN0_RX_PIN;
+		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.Pull = GPIO_PULLUP;
+		GPIO_InitStruct.Alternate =  0;
+
+		HAL_GPIO_Init(BSP_CAN0_RX_GPIO_PORT, &GPIO_InitStruct);
+
+		/*##-3- Configure the NVIC #################################################*/
+		/* NVIC configuration for BSP_CAN1 Reception complete interrupt */
+		HAL_NVIC_SetPriority(BSP_CAN0_RX_IRQn, 1, 0);
+		HAL_NVIC_DisableIRQ(BSP_CAN0_RX_IRQn); 	
+
+		HAL_NVIC_SetPriority(BSP_CAN0_TX_IRQn, 1, 0);
+		HAL_NVIC_DisableIRQ(BSP_CAN0_TX_IRQn); 	
+#endif			
+	}
+	else if(hcan->Instance == BSP_CAN1)
+	{
+#if 1		
+		/*##-1- Enable peripherals and GPIO Clocks #################################*/
+		/* BSP_CAN1 Periph clock enable */
+		__HAL_RCC_CAN2_CLK_DISABLE();
+		/* Enable GPIO clock ****************************************/
+		BSP_CAN1_RX_GPIO_CLK_ENABLE();
+		BSP_CAN1_TX_GPIO_CLK_ENABLE();
+		
+		/*##-2- Configure peripheral GPIO ##########################################*/
+		/* BSP_CAN1 TX GPIO pin configuration */
+		GPIO_InitStruct.Pin = BSP_CAN1_TX_PIN;
+		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.Pull = GPIO_PULLUP;
+		GPIO_InitStruct.Alternate =  BSP_CAN1_TX_AF;
+		HAL_GPIO_Init(BSP_CAN1_TX_GPIO_PORT, &GPIO_InitStruct);
+
+		/* BSP_CAN1 RX GPIO pin configuration */
+		GPIO_InitStruct.Pin = BSP_CAN1_RX_PIN;
+		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.Pull = GPIO_PULLUP;
+		GPIO_InitStruct.Alternate =  BSP_CAN1_RX_AF;
+
+		HAL_GPIO_Init(BSP_CAN1_RX_GPIO_PORT, &GPIO_InitStruct);
+
+		/*##-3- Configure the NVIC #################################################*/
+		/* NVIC configuration for BSP_CAN1 Reception complete interrupt */
+		HAL_NVIC_SetPriority(BSP_CAN1_RX_IRQn, 1, 0);
+		HAL_NVIC_DisableIRQ(BSP_CAN1_RX_IRQn); 	
+
+		HAL_NVIC_SetPriority(BSP_CAN1_TX_IRQn, 1, 0);
+		HAL_NVIC_DisableIRQ(BSP_CAN1_TX_IRQn); 	
+#endif
+	}	
+}
 
 void BSP_CAN0_TX_IRQHandler(void)
 {

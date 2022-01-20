@@ -279,6 +279,8 @@ void appSerialCanDavinciTimerHandler(__far void *dest, uint16_t evt, void *vData
 	}
 }
 
+//void Gpio13Debug(uint16_t num)
+
 void appSerialCanDavinciOpen(void)
 {
 	char	str[100];
@@ -286,8 +288,10 @@ void appSerialCanDavinciOpen(void)
 	int	res;
 	
 	res = smp_can_init(&mDavinci_can0, DavinciCan_cb);//
+	Gpio13Debug(10);
 	sprintf(str,"Can0 ini %d", res);
 	appSerialCanDavinciDebugMsg(str);
+	Gpio13Debug(2);
 
 #ifdef BOARD_REV1	
 	

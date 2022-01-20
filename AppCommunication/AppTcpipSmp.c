@@ -36,13 +36,13 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 /* Private define ------------------------------------------------------------*/
 #define	appTcpipScuId()		appProjectGetScuId()
 
-#define	SMP_TCPIP_PKG_IDLE_COUNT	50
+#define	SMP_TCPIP_PKG_IDLE_COUNT	100
 
 #define SMP_TCPIP_PKG_START_CODE    0x5A
 #define SMP_TCPIP_PKG_END_CODE      0x69
 #define	SMP_TCPIP_PKG_TYPE_FU		'C'
 
-#define	SMP_TCPIP_DATA_BUF_MAX_SIZE					2100
+#define	SMP_TCPIP_DATA_BUF_MAX_SIZE					2000
 static uint8_t RxBuf[SMP_TCPIP_DATA_BUF_MAX_SIZE];
 static uint8_t TxBuf[SMP_TCPIP_DATA_BUF_MAX_SIZE];
 
@@ -443,7 +443,7 @@ void appTcpipSmpOpen(void)
 	LibSwTimerOpen(smpTcpipSwTimerHandler, 0);
 
 	W5500_Socket_Register(&SmpTcpipSocket , SmpTcpip_CB); 
-
+#if	0
 	W5500_Socket_Register(&SmpTcpipSocket1 , SmpTcpip_CB); 
 	W5500_Socket_Register(&SmpTcpipSocket2 , SmpTcpip_CB); 
 	W5500_Socket_Register(&SmpTcpipSocket3 , SmpTcpip_CB); 
@@ -451,7 +451,7 @@ void appTcpipSmpOpen(void)
 	W5500_Socket_Register(&SmpTcpipSocket5 , SmpTcpip_CB); 
 	W5500_Socket_Register(&SmpTcpipSocket6 , SmpTcpip_CB); 
 	W5500_Socket_Register(&SmpTcpipSocket7 , SmpTcpip_CB); 
-
+#endif
 	appTcpipSmpDebugMsg("appTcpipSmpOpen");
 }
 

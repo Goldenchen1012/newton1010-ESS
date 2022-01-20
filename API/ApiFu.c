@@ -57,6 +57,7 @@ const uint8_t	SmpFwHeadInfo2[]="SMPhvessFirmWare";
 
 /* Private variables ---------------------------------------------------------*/
 static __IO uint8_t	MagicCodeBuf[24]  __attribute__((at(0x20000000)));
+static __IO uint32_t	TestCount  __attribute__((at(0x2000001C)));
 
 static uint8_t		updatFwSwTimerRunCount10ms = 0;
 static	uint8_t		WaitFwCheckTime = 0;
@@ -125,7 +126,7 @@ static void resetAppSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPt
 	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_8)
 	{
 		count++;
-		if(count >= 200)
+		if(count >= 100)
 		{
 			apiFuSetMagicCode(MAGIC_CODE_FROM_APP_RESET);
 			apiFuJumpToBootloader();
@@ -206,14 +207,16 @@ void apiFuCheckMagicCode(void)
 //----------------------------------------------------------------
 void apiFuJumpToBootloader(void)
 {
-#if defined (USE_BOOTLOADER)
+//#if defined (USE_BOOTLOADER)
+#if 1
 	
-	appSerialCanDavinciClose();
-	
+
 	pFunction Jump_To_Application;
 	DWORD	JumpAddress;
 	DWORD	ApplicationAddress;
-		
+	
+	__disable_irq();
+	
 	NVIC->ICER[0]=0xffffffff;
 	NVIC->ICER[1]=0xffffffff;
 	NVIC->ICER[2]=0xffffffff;
@@ -222,10 +225,12 @@ void apiFuJumpToBootloader(void)
 	JumpAddress = *(__IO uint32_t*) (ApplicationAddress + 4);
 	Jump_To_Application = (pFunction) JumpAddress;
 	/* Initialize user application's Stack Pointer */
-	__set_MSP(*(__IO uint32_t*) ApplicationAddress);
-	SCB->VTOR = FLASH_BASE | 0;//VECT_TAB_OFFSET;
-	Jump_To_Application();
-	HAL_NVIC_SystemReset();
+#if 0	//use sw reset !!	
+	//__set_MSP(*(__IO uint32_t*) ApplicationAddress);
+	//SCB->VTOR = FLASH_BASE | 0;//VECT_TAB_OFFSET;
+	//Jump_To_Application();
+#endif	
+	HAL_NVIC_SystemReset();	
 	while(1);
 #endif	
 }
@@ -251,7 +256,14 @@ void apiFuResetAndUpdate(void)
 }
 void apiFuResetApp(void)
 {
-	LibSwTimerOpen(resetAppSwTimerHandler, 0);
+	
+	if( LibSwTimerOpen(resetAppSwTimerHandler, 0) == RES_SUCCESS)
+	{
+		char	str[100];
+		TestCount++;
+		sprintf(str,"Reset Count = %d",TestCount);
+		fuDebugMsg(str);
+	}
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

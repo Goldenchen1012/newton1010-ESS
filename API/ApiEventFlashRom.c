@@ -27,7 +27,7 @@ void appSerialCanDavinciSendTextMessage(char *str);
 #define	eventFlashRomDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
-#define	EVENT_LOG_INI_CHECKSUM			0xA5
+//#define	EVENT_LOG_INI_CHECKSUM			0xA5
 #define	FLASHROM_BASE_ADDR				0x08000000L
 #define	FLASHROM_EVENT_LOG_START_ADDR	(FLASHROM_BASE_ADDR + (400 * 1024L))		//0x64000
 #define	FLASHROM_EVENT_LOG_END_ADDR		(FLASHROM_BASE_ADDR + (500 * 1024L))		//0x7D000

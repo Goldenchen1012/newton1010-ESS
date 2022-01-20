@@ -86,16 +86,16 @@ static void spiromEventHandler(smp_flash_evt_type p_evt)
 	switch(p_evt)
 	{
 	case SMP_FLASH_EVENT_READ_DONE:
-		fuDebugMsg("Spi Read Done");
+		//fuDebugMsg("Spi Read Done");
 		VerifyFlagStep = FW_VERIFY_STEP_READ_DATA_DONE;
 		;//log_evt_cb(SMP_LOG_EVENT_PAGE_LOAD_DONE);
 		break;
 	case SMP_FLASH_EVENT_WRITE_DONE:
-		fuDebugMsg("Spi Write Done");
+		//fuDebugMsg("Spi Write Done");
 		;//log_evt_cb(SMP_LOG_EVENT_PAGE_SAVE_DONE);
 		break;
 	case SMP_FLASH_EVENT_ERASE_DONE:
-		fuDebugMsg("Spi Erase Done");
+		//fuDebugMsg("Spi Erase Done");
 		break;
 	default:
 		break;

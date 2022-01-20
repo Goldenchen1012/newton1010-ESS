@@ -54,9 +54,10 @@
 #include "HalSpirom.h"
 #include "AppProjectHvEss_IR.h"
 #include "AppProjectTest.h"
+#include "smp_log_managment.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	appProjectDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
+#define	appProjectDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	saveEventLog(type, par)		apiEventLogSaveLogData(type, par)
@@ -113,7 +114,7 @@ static void afeLineLossCallBack(uint16_t channel, uint16_t *CellVoltage)
 }
 static void relayOff(void)
 {	
-	appSerialCanDavinciSendTextMessage("Relat Off");
+	//appSerialCanDavinciSendTextMessage("Relay Off");
 	apiRelayControlMainRelayOff();
 	RelayOnFlag = 0;
 }
@@ -450,7 +451,7 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_HI:
 		relayOff();
-		appProjectDebugMsg("DOCP Hi");
+//		appProjectDebugMsg("DOCP Hi");
 		saveEventLog(EVENT_TYPE_DOCP_L4_SET, 0);
 
 		//releaseOCP();
@@ -460,7 +461,7 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_HI:
 		relayOff();
-		appProjectDebugMsg("COCP Hi");
+//		appProjectDebugMsg("COCP Hi");
 		saveEventLog(EVENT_TYPE_COCP_L4_SET, 0);
 		//releaseOCP();
 		break;
@@ -468,27 +469,27 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		//appProjectDebugMsg("COCP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_HI:
-		appProjectDebugMsg("OD IN Hi");
+//		appProjectDebugMsg("OD IN Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_LO:
-		appProjectDebugMsg("OD IN Low");
+//		appProjectDebugMsg("OD IN Low");
 		break;
 	case APP_SIGNAL_FB_EVT_NFAULT_HI:
-		appProjectDebugMsg("Nfault Hi");
+//		appProjectDebugMsg("Nfault Hi");
 		if(NFaultIdleCount == NFAULT_IDLE_COUNT)
 		{
 			NFaultIdleCount++;
 			saveEventLog(EVENT_TYPE_NFAULT_DISABLE, 0);
-			appProjectDebugMsg("Nfault Hi...Save");
+//			appProjectDebugMsg("Nfault Hi...Save");
 		}
 		break;
 	case APP_SIGNAL_FB_EVT_NFAULT_LO:
 		relayOff();
-		appProjectDebugMsg("Nfault Lo");
+//		appProjectDebugMsg("Nfault Lo");
 		if(NFaultIdleCount >= NFAULT_IDLE_COUNT)
 		{
 			saveEventLog(EVENT_TYPE_NFAULT_ENABLE, 0);		
-			appProjectDebugMsg("Nfault Lo..Save");
+//			appProjectDebugMsg("Nfault Lo..Save");
 		}		
 		NFaultIdleCount = 0;
 		break;
@@ -540,17 +541,32 @@ static void buttonEventHandler(void *pDest, uint16_t evt, void *pData)
 	}
 }
 
-
 static void releaseOCP(void);
 
 static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
+//#define	APP_RESET_TEST
+
+#ifdef APP_RESET_TEST
+	static	uint8_t		resetcount = 1350;
+#endif
 	static	uint8_t		SystemReadyCount = 10;
 	char	str[100];
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
 	}
+#ifdef APP_RESET_TEST
+	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_2)
+	{
+		if(resetcount)
+		{
+			resetcount--;
+			if(resetcount == 0)			
+				apiFuResetApp();
+		}
+	}
+#endif	
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{
 		if(SystemReadyCount)
@@ -749,6 +765,8 @@ uint16_t appProjectGetTimerCount(void)
 }
 
 void appProjectOpen(void){
+	
+	
 	char	str[100];
 	uint32_t	len;
 	 
@@ -764,7 +782,6 @@ void appProjectOpen(void){
 	appSerialCanDavinciOpen();
 	Gpio13Debug(7);
   	//------------------------------------------
-	appProjectDebugMsg("--------- Start Run -----2022.1.18...9");
 	len = apiSysParOpen();
 	
 	appProtectOpen(protectEventHandler);
@@ -772,7 +789,7 @@ void appProjectOpen(void){
 	halafeOpen(afeEventHandler, afeLineLossCallBack);
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
-Gpio13Debug(4);
+	Gpio13Debug(4);
 	halSpiromOpen();
 	
   	//------------------------------------------
@@ -797,7 +814,8 @@ Gpio13Debug(4);
 	Gpio13Debug(5);
 	appTcpipSmpOpen();
 	IrFunctionOpen();
-	
+
+
 //HalBspReleaseCtrl
 //	NtcTest();
 	{
@@ -848,7 +866,8 @@ Gpio13Debug(4);
 	}
 
 	appTestProjectOpen();
-	
+	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.19...10");
+
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

@@ -46,6 +46,7 @@ void halSpiromOpen(void)
 	smp_mx25l_flash_read_ID(&mx25l_ID);
 	sprintf(str,"SPIID = %.2X %.4X",mx25l_ID.Manufacture_ID, mx25l_ID.Device_ID);
 	halSpiromDebugMsg(str);
+
 }
 
 /************************ (C) COPYRIGHT SMP *****END OF FILE****/    

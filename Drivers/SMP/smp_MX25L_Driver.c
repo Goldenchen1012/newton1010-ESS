@@ -480,10 +480,12 @@ int8_t smp_mx25l_flash_release_deep_power_down(void)
 
 void MX25L_SPI_send_command(void)
 {
+//#define	SPI_SEND_CMD_DEBUG	
 	smp_flash_package	FlashPkg;
 	uint16_t size = 0;
+#ifdef SPI_SEND_CMD_DEBUG	
 	char	str[100];
-	
+#endif	
 	smp_fifo_flash_get_size(&flash_read_fifo,&size);
 	if(size > 0){
 		smp_mx25l_flash_write_enable();
@@ -491,42 +493,54 @@ void MX25L_SPI_send_command(void)
 		MX25L_tx_data[0] = FlashPkg.command;
 		memcpy(&MX25L_tx_data[1], FlashPkg.addr, 3);
 		UseDMAFlag = true;
+#ifdef SPI_SEND_CMD_DEBUG		
 		str[0] = 0;
+#endif		
 		if(FlashPkg.command == MX25L_READ){
 			smp_spi_master_send_recv(&MX25L_SPI_1, (uint8_t* )&FlashPkg , 4 , FlashPkg.read_buffer, FlashPkg.R_W_bytes, &MX25L_CS0);
+#ifdef SPI_SEND_CMD_DEBUG			
 			sprintf(str,"SPI Read:%.2X %.2X %.2X",
 						FlashPkg.addr[0],
 						FlashPkg.addr[1],
 						FlashPkg.addr[2]);
-				
+#endif
 		}else if(FlashPkg.command == MX25L_FAST_READ){
 			smp_spi_master_send_recv(&MX25L_SPI_1, (uint8_t* )&FlashPkg , 5 , FlashPkg.read_buffer, FlashPkg.R_W_bytes, &MX25L_CS0);
+#ifdef SPI_SEND_CMD_DEBUG			
 			sprintf(str,"SPI Fast Read:%.2X %.2X %.2X",
 						FlashPkg.addr[0],
 						FlashPkg.addr[1],
 						FlashPkg.addr[2]);
+#endif			
 		}else if(FlashPkg.command == MX25L_PP){
 			memcpy(&MX25L_tx_data[4], FlashPkg.page_buffer, 256);
 			smp_spi_master_send_recv(&MX25L_SPI_1, MX25L_tx_data , FlashPkg.R_W_bytes + 4 , 0, 0, &MX25L_CS0);
+#ifdef SPI_SEND_CMD_DEBUG			
 			sprintf(str,"SPI Write:%.2X %.2X %.2X",
 						FlashPkg.addr[0],
 						FlashPkg.addr[1],
 						FlashPkg.addr[2]);
+#endif			
 		}else if(FlashPkg.command == MX25L_SE){
 			smp_spi_master_send_recv(&MX25L_SPI_1, (uint8_t *)&FlashPkg , 4 , 0, 0, &MX25L_CS0);
+#ifdef SPI_SEND_CMD_DEBUG			
 			sprintf(str,"SPI Erase:%.2X %.2X %.2X",
 						FlashPkg.addr[0],
 						FlashPkg.addr[1],
 						FlashPkg.addr[2]);
+#endif			
 		
 		}
+#ifdef SPI_SEND_CMD_DEBUG		
 		mx25DbgMsg(str);
+#endif		
 	}	
 
 }
 
 void MX25L_SPI_1_event_handler(smp_spi_evt_type p_evt)
 {
+//#define	SPI_EVENT_DEBUG	
 	smp_flash_package	FlashPkg;
 	
 	switch(p_evt){
@@ -537,16 +551,24 @@ void MX25L_SPI_1_event_handler(smp_spi_evt_type p_evt)
 			smp_fifo_flash_pop(&flash_read_fifo, &FlashPkg);
 			
 			if(FlashPkg.command == MX25L_READ){
+#ifdef SPI_EVENT_DEBUG				
 				mx25DbgMsg("SPI READ DONE");
+#endif				
 				FlashPkg.flash_callback(SMP_FLASH_EVENT_READ_DONE);
 			}else if(FlashPkg.command == MX25L_FAST_READ){
+#ifdef SPI_EVENT_DEBUG				
 				mx25DbgMsg("SPI F_READ DONE");	
+#endif				
 				FlashPkg.flash_callback(SMP_FLASH_EVENT_READ_DONE);
 			}else if(FlashPkg.command == MX25L_PP){
+#ifdef SPI_EVENT_DEBUG				
 				mx25DbgMsg("SPI WRITE DONE");	
+#endif				
 				FlashPkg.flash_callback(SMP_FLASH_EVENT_WRITE_DONE);
 			}else if(FlashPkg.command == (MX25L_SE|MX25L_BE64|MX25L_CE)){
+#ifdef SPI_EVENT_DEBUG				
 				mx25DbgMsg("SPI ERASE DONE");	
+#endif				
 				FlashPkg.flash_callback(SMP_FLASH_EVENT_ERASE_DONE);
 			}
 

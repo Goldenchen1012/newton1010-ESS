@@ -26,6 +26,8 @@ extern "C" {
 typedef void(*tApiEventLogCallbackFunction)(uint8_t num, uint8_t *pMsgBuf);
 
 /* Public define ------------------------------------------------------------*/
+#define	EVENT_LOG_INI_CHECKSUM			0xA5
+
 
 /* Public variables ---------------------------------------------------------*/
 /* Public macro -------------------------------------------------------------*/
