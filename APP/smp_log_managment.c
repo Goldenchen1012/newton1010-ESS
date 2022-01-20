@@ -148,6 +148,18 @@ void app_flash_sector_header_load(smp_sector_header_package * sector_header){
 	smp_mx25l_flash_fast_read_data_bytes_page(HEADER_SECTOR_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR,(uint8_t*)sector_header,sizeof(smp_sector_header_package),app_sector_header_event_handler);
 }
 
+void app_flash_sector_header_get(smp_sector_header_package * sector_header){
+	memcpy(sector_header,&g_sector_header_package,sizeof(smp_sector_header_package));
+	sector_header->reflash_total_log_cnt += g_reflash_page_header_package.package_num;
+	sector_header->fix_total_log_cnt += g_fix_page_header_package.package_num;
+	if(sector_header->reflash_total_log_cnt > LOG_NUM_IN_PAGE*PAGE_NUM_IN_SECTOR*REFLASH_MEMORY_SECTOR_SIZE){
+		g_sector_header_package.reflash_total_log_cnt -= LOG_NUM_IN_PAGE * PAGE_NUM_IN_SECTOR;
+	}
+	if(sector_header->fix_total_log_cnt > LOG_NUM_IN_PAGE*PAGE_NUM_IN_SECTOR*FIX_MEMORY_SECTOR_SIZE){
+		g_sector_header_package.fix_total_log_cnt -= LOG_NUM_IN_PAGE * PAGE_NUM_IN_SECTOR;
+	}
+}
+
 void app_flash_check_head(void){
 	memset(check_head_buffer, 0, 256);
 	g_sector_header_package_check.header[0] = 'S';
@@ -242,16 +254,25 @@ void app_flash_page_data_save(smp_flash_type flash_type){
 					g_sector_header_package.reflash_memory_head_page = REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;
 				}
 			}
-			g_sector_header_package.reflash_memory_current_page += 1;
-			g_sector_header_package.reflash_total_log_cnt += g_reflash_page_header_package.package_num;
-			app_flash_sector_header_save(&g_sector_header_package);
-			
-			smp_mx25l_flash_page_program(g_sector_header_package.reflash_memory_current_page - 1,(uint8_t*)log_reflash_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
-			LOG_YELLOW("page program %x\r\n",g_sector_header_package.reflash_memory_current_page);
+			if(g_reflash_page_header_package.package_num < LOG_NUM_IN_PAGE){
+				g_sector_header_package.reflash_total_log_cnt += g_reflash_page_header_package.package_num;
+				app_flash_sector_header_save(&g_sector_header_package);
+				smp_mx25l_flash_page_program(g_sector_header_package.reflash_memory_current_page,(uint8_t*)log_reflash_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
+				LOG_YELLOW("page program %x\r\n",g_sector_header_package.reflash_memory_current_page);
+				memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
+				g_reflash_page_header_package.package_num = 0;	
+			}else{
+				g_sector_header_package.reflash_memory_current_page += 1;
+				g_sector_header_package.reflash_total_log_cnt += g_reflash_page_header_package.package_num;
+				app_flash_sector_header_save(&g_sector_header_package);
 				
-			memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
-			g_reflash_page_header_package.page_usage_size = 0;
-			g_reflash_page_header_package.package_num = 0;	
+				smp_mx25l_flash_page_program(g_sector_header_package.reflash_memory_current_page - 1,(uint8_t*)log_reflash_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
+				LOG_YELLOW("page program %x\r\n",g_sector_header_package.reflash_memory_current_page);
+					
+				memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
+				g_reflash_page_header_package.page_usage_size = 0;
+				g_reflash_page_header_package.package_num = 0;	
+			}
 		break;
 		case SMP_FIX_MEMORY:
 			if(g_sector_header_package.fix_memory_current_page % PAGE_NUM_IN_SECTOR == 0){
@@ -260,16 +281,25 @@ void app_flash_page_data_save(smp_flash_type flash_type){
 					return;
 				}			
 			}
-			g_sector_header_package.fix_memory_current_page += 1;
-			g_sector_header_package.fix_total_log_cnt += g_fix_page_header_package.package_num;
-			app_flash_sector_header_save(&g_sector_header_package);
-			
-			smp_mx25l_flash_page_program(g_sector_header_package.fix_memory_current_page - 1,(uint8_t*)log_fix_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
-			LOG_YELLOW("page program %d\r\n",g_sector_header_package.fix_memory_current_page);
-						
-			memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
-			g_fix_page_header_package.page_usage_size = 0;
-			g_fix_page_header_package.package_num = 0;				
+			if(g_fix_page_header_package.package_num < LOG_NUM_IN_PAGE){
+				g_sector_header_package.fix_total_log_cnt += g_fix_page_header_package.package_num;
+				app_flash_sector_header_save(&g_sector_header_package);		
+				smp_mx25l_flash_page_program(g_sector_header_package.fix_memory_current_page - 1,(uint8_t*)log_fix_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
+				LOG_YELLOW("page program %d\r\n",g_sector_header_package.fix_memory_current_page);						
+				memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
+				g_fix_page_header_package.package_num = 0;			
+			}else{
+				g_sector_header_package.fix_memory_current_page += 1;
+				g_sector_header_package.fix_total_log_cnt += g_fix_page_header_package.package_num;
+				app_flash_sector_header_save(&g_sector_header_package);
+				
+				smp_mx25l_flash_page_program(g_sector_header_package.fix_memory_current_page - 1,(uint8_t*)log_fix_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
+				LOG_YELLOW("page program %d\r\n",g_sector_header_package.fix_memory_current_page);
+							
+				memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
+				g_fix_page_header_package.page_usage_size = 0;
+				g_fix_page_header_package.package_num = 0;			
+			}				
 		break;
 
 		default:
@@ -290,9 +320,12 @@ void app_flash_page_data_load(uint8_t * RX_buffer , uint16_t log_start_position,
 	data_load_type.read_package_byte = 0;
 	switch(flash_type){
 		case SMP_REFLASH_MEMORY:
-			if(log_start_position + log_length > g_sector_header_package.reflash_total_log_cnt){
+			if(log_start_position + log_length > (g_sector_header_package.reflash_total_log_cnt + g_reflash_page_header_package.package_num)){
 				log_evt_cb(SMP_LOG_EVENT_ERROR);
 				return;
+			}
+			if(g_reflash_page_header_package.package_num > 0){
+				app_flash_page_data_save(SMP_REFLASH_MEMORY);
 			}
 			temp_addr =  (g_sector_header_package.reflash_memory_head_page << MX25L_MX25L6433F_PAGE_SHIFT) + log_start_position * LOG_PACKAGE_SIZE;
 			if(temp_addr >= ((REFLASH_MEMORY_END_SECTOR  + 1) * PAGE_NUM_IN_SECTOR) << MX25L_MX25L6433F_PAGE_SHIFT){
@@ -306,9 +339,12 @@ void app_flash_page_data_load(uint8_t * RX_buffer , uint16_t log_start_position,
 			smp_mx25l_flash_fast_read_data_bytes_addr(addr,(uint8_t*)RX_buffer,data_load_type.log_length_byte,app_log_event_handler);
 		break;
 		case SMP_FIX_MEMORY:
-			if(log_start_position + log_length > g_sector_header_package.fix_total_log_cnt){
+			if(log_start_position + log_length > (g_sector_header_package.fix_total_log_cnt + g_fix_page_header_package.package_num)){
 				log_evt_cb(SMP_LOG_EVENT_ERROR);
 				return;
+			}
+			if(g_fix_page_header_package.package_num > 0){
+				app_flash_page_data_save(SMP_FIX_MEMORY);
 			}
 			temp_addr =  ((FIX_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR) << MX25L_MX25L6433F_PAGE_SHIFT) + log_start_position * LOG_PACKAGE_SIZE;
 			if(temp_addr >= ((FIX_MEMORY_END_SECTOR  + 1) * PAGE_NUM_IN_SECTOR) << MX25L_MX25L6433F_PAGE_SHIFT){

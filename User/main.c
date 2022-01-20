@@ -284,7 +284,7 @@ void app_irm_get_device_init_cb(void){
 #ifdef G_TEST_EVENT_LOG_FUNC
 extern uint16_t Davinci_uart_rx_cnt;
 extern smp_uart_t mDavinci_uart;
-smp_sector_header_package	header_package;
+static smp_sector_header_package	header_package;
 uint8_t page_data_buffer[256];
 uint16_t kk = 0;
 
@@ -345,10 +345,25 @@ void test_uart_rx_process(void)
 					LOG_YELLOW("EVENT_LOG Load Header\r\n");
 					app_flash_sector_header_load(&header_package);		
 				} 
+				if(!strcmp((char *)rx_data, "head get\r\n")){  
+					LOG_YELLOW("EVENT_LOG Load Header\r\n");
+					app_flash_sector_header_get(&header_package);	
+					LOG_CYAN("header %x\r\n",header_package.header[0]);
+					LOG_CYAN("header %x\r\n",header_package.header[1]);
+					LOG_CYAN("header %x\r\n",header_package.header[2]);
+					LOG_CYAN("header %x\r\n",header_package.header[3]);
+					LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
+					LOG_CYAN("reflash current page%x\r\n",header_package.reflash_memory_current_page);
+					LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
+					LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
+					LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);
+				} 
 				if(!strcmp((char *)rx_data, "data save reflash\r\n")){  
 					LOG_YELLOW("EVENT_LOG Force Save reflash\r\n");
 					app_flash_page_data_save(SMP_REFLASH_MEMORY);
 				} 
+
+
 				if(!strcmp((char *)rx_data, "data save fix\r\n")){  
 					LOG_YELLOW("EVENT_LOG Force Save Fix\r\n");
 					app_flash_page_data_save(SMP_FIX_MEMORY);
@@ -359,7 +374,7 @@ void test_uart_rx_process(void)
 				} 
 				
 				
-				static uint8_t temp[18];
+				uint8_t temp[18];
 				static uint8_t temp1[4];
 				static uint8_t temp2[4];
 				uint16_t start_package;
@@ -391,7 +406,7 @@ void test_uart_rx_process(void)
 						app_flash_page_data_push(log_package,SMP_REFLASH_MEMORY);
 					}
 				} 
-				static uint8_t temp3[14];
+				uint8_t temp3[14];
 				memcpy(temp3,&rx_data[0],14);
 				if(!strcmp((char *)temp3, "data load fix ")){ 	//data load fix xxxx xxxx
 					memcpy(temp1,&rx_data[14],4);
