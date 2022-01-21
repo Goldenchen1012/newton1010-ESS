@@ -458,6 +458,9 @@ enum{
 	Send_Socket_Open_Command_Index,
 	Read_Socket_Protocol_Index,
 	Verify_Socket_Protocol_Index,
+	Config_RTR_Reg_Index,
+	Config_RCR_Reg_Index,
+	Config_Keep_alive_Reg_Index,
 	Send_Socket_Listen_Command_Index,
 	
 };
@@ -572,6 +575,38 @@ static void Verify_Socket_Protocol(void){
 		Sock_Reopen_Next_Function();
 }
 
+static void Config_RTR_Reg(void){
+	static uint8_t Result; 
+	Result = Config_and_Verify_Word_Regsiter(_RTR_,0x0FA0);
+	if( Result == Config_Done){
+		Sock_Reopen_Next_Function();
+	}else if (Result == Config_Fail){
+		W5500Function = W5500_Error;
+	}
+}
+
+static void Config_RCR_Reg(void){
+	static uint8_t Result; 
+	Result = Config_and_Verify_Byte_Regsiter(_RCR_,1);
+	if( Result == Config_Done){
+		Sock_Reopen_Next_Function();
+	}else if (Result == Config_Fail){
+		W5500Function = W5500_Error;
+	}
+
+}
+
+static void Config_Keep_alive_Reg(void){
+	static uint8_t Result; 
+	Result = Config_and_Verify_Byte_Regsiter(Sn_KPALVTR(gSocketNum),1);
+	if( Result == Config_Done){
+		Sock_Reopen_Next_Function();
+	}else if (Result == Config_Fail){
+		W5500Function = W5500_Error;
+	}
+
+}
+
 static void Send_Socket_Listen_Command(void){
 	static uint8_t Result; 
 	Result = W5500_Send_Socket_Command(gSocketNum,Sn_CR_LISTEN);
@@ -599,6 +634,9 @@ const W5500_Socket_Server_Table Sock_Reopen_Function_Table[] = {
 /* ---------- Socket Init >>> Socket Listen ---------- */	
 	Read_Socket_Protocol,
 	Verify_Socket_Protocol,
+	Config_RTR_Reg,
+	Config_RCR_Reg,
+	Config_Keep_alive_Reg,
 	Send_Socket_Listen_Command,
 	
 	Sock_Reopen_Next_Function
