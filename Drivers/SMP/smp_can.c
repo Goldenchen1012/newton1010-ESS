@@ -232,6 +232,7 @@ int8_t smp_can_deinit(smp_can_t *p_can)
 
 int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 {
+	int8_t	status = SMP_SUCCESS;
 	uint16_t size = 0, i =0;
 	uint32_t              TxMailbox;
 	CAN_TxHeaderTypeDef   TxHeader;
@@ -240,7 +241,7 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 
 	
 	if(p_can->num == __CAN0){
-		smp_can_fifo_push(&can0_tx_fifo, pCanDat);// == SMP_SUCCESS)
+		status = smp_can_fifo_push(&can0_tx_fifo, pCanDat);// == SMP_SUCCESS)
 //			 if (smp_can_fifo_push(&can1_tx_fifo, pCanDat) == SMP_SUCCESS)
 		if(1)
         {
@@ -273,7 +274,7 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
   			}	
 	   	}		
 	}else if(p_can->num == __CAN1){		
-        smp_can_fifo_push(&can1_tx_fifo, pCanDat);// == SMP_SUCCESS)
+        status = smp_can_fifo_push(&can1_tx_fifo, pCanDat);// == SMP_SUCCESS)
 //			 if (smp_can_fifo_push(&can1_tx_fifo, pCanDat) == SMP_SUCCESS)
 		if(1)
         {
@@ -309,7 +310,7 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 		return SMP_ERROR_FULL;
 	}
 	
-	return SMP_SUCCESS;
+	return status;
 }
 
 

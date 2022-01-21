@@ -542,13 +542,14 @@ static void buttonEventHandler(void *pDest, uint16_t evt, void *pData)
 }
 
 static void releaseOCP(void);
+extern uint32_t	can_full_count;
 
 static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
-//#define	APP_RESET_TEST
+#define	APP_RESET_TEST
 
 #ifdef APP_RESET_TEST
-	static	uint8_t		resetcount = 1350;
+	static	uint8_t		resetcount = 1650;	
 #endif
 	static	uint8_t		SystemReadyCount = 10;
 	char	str[100];
@@ -578,6 +579,12 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 		apiRamSaveRtcDateTime();
 		if(NFaultIdleCount < 200)
 			NFaultIdleCount++;
+#if 0			
+		{
+			sprintf(str,"CanFullCount = %d",can_full_count);
+			appSerialCanDavinciSendTextMessage(str);
+		}
+#endif		
 	}
 }
 
@@ -865,8 +872,8 @@ void appProjectOpen(void){
 		RtcValid = 1;
 	}
 
-	appTestProjectOpen();
-	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.19...10");
+//	appTestProjectOpen();
+	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.21...0");
 
 }
 

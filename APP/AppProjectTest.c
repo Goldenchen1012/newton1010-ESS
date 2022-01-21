@@ -38,13 +38,18 @@
 #include "LibNtc.h"
 #include "smp_ADS7946_Driver.h"
 #include "smp_w5500_DMA.h"
+#include "smp_MX25L_Driver.h"
 
 #if 0
 #define	BSP_UART2_TEST
 #endif
 
-#if 1
+#if 0
 #define	TCPIP_SOCKET_TEST
+#endif
+
+#if 1
+#define	FU_OTHER_SCU_TEST
 #endif
 
 #ifdef BSP_UART2_TEST
@@ -320,6 +325,9 @@ static void uart2_rcv(void)
 }
 #endif
 
+#ifdef FU_OTHER_SCU_TEST
+
+#endif
 
 static void testSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
@@ -350,7 +358,15 @@ static void testSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 #endif		
 	}
 }
-void appTestProjectOpen(void){
+
+
+//			smp_mx25l_flash_fast_read_data_bytes_addr(addr, &FwUpdateInfo.CodeBuf[0][0], 256, spiromEventHandler);
+
+
+
+
+void appTestProjectOpen(void)
+{
 	
 #if	0	
 	DebugGPIOInit();

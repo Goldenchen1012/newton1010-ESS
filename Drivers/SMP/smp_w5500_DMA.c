@@ -115,7 +115,6 @@ W5500_RegisterList smpW5500Socket[W5500_MAX_SOCKET_NUM];
 
 smp_gpio_t		W5500_RST_PIN;
 smp_gpio_t		W5500_INT_PIN;
-smp_gpio_state 	W5500_INT_PIN_State;
 smp_gpio_t		W5500_SPI_CS_PIN;
 smp_spi_cs_t 	W5500_CS;
 smp_spi_t 		SPI_W5500;
@@ -135,7 +134,7 @@ static uint8_t gSocketNum = 0;
 wiz_PhyConf PHYconf, PHYconf_Verify;
 wiz_NetInfo TempNetInfo;
 
-static bool Flag_Check_INT = false;
+volatile bool Flag_W5500_INT_Trigger;
 
 static char str[100];
 void appSerialCanDavinciSendTextMessage(char *msg);
@@ -306,8 +305,12 @@ void smp_w5500_spi_config(void){
 	/*EXTI Pin init*/
 	W5500_INT_PIN.pin = BSP_W5500_INT_PIN;
 	W5500_INT_PIN.port = BSP_W5500_INT_PORT;
-	W5500_INT_PIN.mode = SMP_GPIO_MODE_INPUT;
+	W5500_INT_PIN.mode = SMP_GPIO_MODE_IT_FALLING;
 	smp_gpio_init(&W5500_INT_PIN);
+	
+	/*EXTI interrupt vector init*/
+	HAL_NVIC_SetPriority(BSP_W5500_INT_PIN_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(BSP_W5500_INT_PIN_IRQn);
 	
 	W5500_SPI_CS_PIN.pin = BSP_W5500_SPI_SCS_PIN;
 	W5500_SPI_CS_PIN.port = BSP_W5500_SPI_SCS_PORT;	
@@ -458,10 +461,6 @@ enum{
 	Send_Socket_Open_Command_Index,
 	Read_Socket_Protocol_Index,
 	Verify_Socket_Protocol_Index,
-	Config_RTR_Reg_Index,
-	Config_RCR_Reg_Index,
-	Config_Socket_KeepAlive_Time_Interval_Index,
-	
 	Send_Socket_Listen_Command_Index,
 	
 };
@@ -488,7 +487,6 @@ static void Socket_Status_Handle(void){
 		case SOCK_LISTEN:
 			smpW5500Socket[gSocketNum].SocketStatus = Socket_Open;
 			Sock_Reopen_Index = 0;
-			Flag_Check_INT = false;
 			break;
 	}
 }
@@ -523,7 +521,6 @@ static void Send_Command_Socket_Close(void){
 static void Reset_Socket_INT_Register(void){
 	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), 0xFF&SOCKET_NUM_BASE);
 	Sock_Reopen_Next_Function();
-	Flag_Check_INT = true;
 }
 
 static void Check_Socket_Is_Close(void){
@@ -576,40 +573,6 @@ static void Verify_Socket_Protocol(void){
 		Sock_Reopen_Next_Function();
 }
 
-static void Config_RTR_Reg(void){
-	static uint8_t Result; 
-	Result = Config_and_Verify_Word_Regsiter(_RTR_,0x0FA0);
-	if( Result == Config_Done){	
-		Sock_Reopen_Next_Function();
-	}else if (Result == Config_Fail){
-		W5500Function = W5500_Error;
-	}
-
-}
-
-
-static void Config_RCR_Reg(void){
-	static uint8_t Result; 
-	Result = Config_and_Verify_Byte_Regsiter(_RCR_,1);
-	if( Result == Config_Done){	
-		Sock_Reopen_Next_Function();
-	}else if (Result == Config_Fail){
-		W5500Function = W5500_Error;
-	}
-
-}
-
-static void Config_Socket_KeepAlive_Time_Interval(void){
-	static uint8_t Result; 
-	Result = Config_and_Verify_Byte_Regsiter(Sn_KPALVTR(gSocketNum), 1);
-	if( Result == Config_Done){
-		Sock_Reopen_Next_Function();
-	}else if (Result == Config_Fail){
-		W5500Function = W5500_Error;
-	}		
-
-}
-
 static void Send_Socket_Listen_Command(void){
 	static uint8_t Result; 
 	Result = W5500_Send_Socket_Command(gSocketNum,Sn_CR_LISTEN);
@@ -637,9 +600,6 @@ const W5500_Socket_Server_Table Sock_Reopen_Function_Table[] = {
 /* ---------- Socket Init >>> Socket Listen ---------- */	
 	Read_Socket_Protocol,
 	Verify_Socket_Protocol,
-	Config_RTR_Reg,
-	Config_RCR_Reg,
-	Config_Socket_KeepAlive_Time_Interval,
 	Send_Socket_Listen_Command,
 	Sock_Reopen_Next_Function
 };
@@ -681,7 +641,7 @@ enum{
 	Clr_INT_RECV_and_SENDOK_Bits_Index,
 /* ---------- Disonnect INT ---------- */
 	Send_Socket_Close_EvtHandle_Index,
-	Reset_SocketStatus_Index,
+	Reset_Discon_INT_Bit_and_SocketStatus_Index,
 	Socket_Reopen_Index,
 	Clr_INT_Discon_Bit_Index
 	
@@ -700,7 +660,6 @@ static void Read_INT_Summary(void){
 static void Verify_Which_Socket_INT(void){
 	static uint8_t i;
 	if(Readbyte_value == 0){
-		Flag_Check_INT = false;
 		Flag_W5500_INT_Trigger = false;
 		Sock_EvtHandle_Index = Read_INT_Summary_Index;
 	}else{
@@ -727,7 +686,6 @@ static void Socket_INTEvt_Handle(void){
 		case Sn_IR_RECV:
 			Sock_EvtHandle_Index = 	Read_Socket_RX_Buf_Data_Size_Highbyte_Index;
 			break;
-		case Sn_IR_TIMEOUT:
 		case Sn_IR_DISCON:
 			Sock_EvtHandle_Index = Send_Socket_Close_EvtHandle_Index;
 			break;
@@ -767,7 +725,6 @@ static void Socket_Con_CBFunction(void){
 static void Reset_Con_INT_Bit(void){
 	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), (Sn_IR_CON&SOCKET_NUM_BASE)); 
 	Sock_EvtHandle_Index = Read_INT_Summary_Index;
-	Flag_Check_INT = true;
 }
 /* ---------- Receive INT ---------- */
 static void Read_Socket_RX_Buf_Data_Size_Highbyte(void){
@@ -903,7 +860,6 @@ static void Verify_Data_Send_Done(void){
 static void Clr_INT_RECV_and_SENDOK_Bits(void){
 	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), ((Sn_IR_RECV|Sn_IR_SENDOK)&SOCKET_NUM_BASE)); 
 	Sock_EvtHandle_Index = Read_INT_Summary_Index;
-	Flag_Check_INT = true;
 }
 /* ---------- Disonnect INT ---------- */
 static void Send_Socket_Close_EvtHandle(void){
@@ -914,7 +870,8 @@ static void Send_Socket_Close_EvtHandle(void){
 	}
 }
 
-static void Reset_SocketStatus(void){
+static void Reset_Discon_INT_Bit_and_SocketStatus(void){
+	smp_w5500_spiDMA_write_byte(Sn_IR(gSocketNum), (Sn_IR_DISCON &SOCKET_NUM_BASE)); 
 	smpW5500Socket[gSocketNum].SocketStatus = Socket_Close;
 	Sock_EvtHandle_Next_Function();
 }
@@ -922,8 +879,7 @@ static void Reset_SocketStatus(void){
 static void Socket_Reopen(void){
 	Sock_Reopen_Function_Table[Sock_Reopen_Index]();
 	if(smpW5500Socket[gSocketNum].SocketStatus == Socket_Open){
-		Flag_Check_INT = true;
-		Sock_EvtHandle_Index = Read_INT_Summary_Index;
+		Sock_EvtHandle_Next_Function();
 	}
 }
 
@@ -968,17 +924,21 @@ const W5500_Socket_Server_Table Sock_Evt_Handle_Function_Table[]={
 	Clr_INT_RECV_and_SENDOK_Bits,
 /* ---------- Disonnect INT ---------- */	
 	Send_Socket_Close_EvtHandle,
-	Reset_SocketStatus,
+	Reset_Discon_INT_Bit_and_SocketStatus,
 	Socket_Reopen,
+	Clr_INT_Discon_Bit,
 	
 	Sock_EvtHandle_Next_Function
 };
 
 static void W5500_Server(void){
 	static uint8_t Result;
+	smp_gpio_state W5500_INT_PIN_State;
+	
 	if(gSPI_Status == SPI_Idle){
 		smp_gpio_get_state(&W5500_INT_PIN,&W5500_INT_PIN_State);
-		if((W5500_INT_PIN_State == GPIO_ACTIVE_LOW)||Flag_Check_INT){
+		if((W5500_INT_PIN_State == GPIO_ACTIVE_LOW))//||Flag_Check_INT)
+			{
 			Sock_Evt_Handle_Function_Table[Sock_EvtHandle_Index]();
 		}
 	}

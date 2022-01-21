@@ -125,7 +125,7 @@ static void writeCodeDataToSpiRom(uint32_t addr, uint8_t *pDatBuf, uint16_t leng
 	}
 	page = addr / 256;
 	smp_mx25l_flash_page_program(page, pDatBuf, 256, spiromEventHandler);
-	sprintf(str,"Write:%d", page);
+	sprintf(str,"Write:%d - %d", page, page&0x0f);
 	fuDebugMsg(str);
 }
 
