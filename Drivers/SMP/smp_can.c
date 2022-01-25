@@ -90,13 +90,9 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		smp_can0_handle.Init.TimeSeg1 = CAN_BS1_4TQ;
   		smp_can0_handle.Init.TimeSeg2 = CAN_BS2_5TQ;
   		smp_can0_handle.Init.Prescaler = 16;
-		Gpio13Debug(1);
-	//	HAL_CAN_DeInit(&smp_can0_handle);
-		Gpio13Debug(2);
 
   		if (HAL_CAN_Init(&smp_can0_handle) != HAL_OK)
   		{
-			Gpio13Debug(3);
     		/* Initialization Error */
     		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
@@ -112,23 +108,18 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
   		sFilterConfig.FilterActivation = ENABLE;
   		sFilterConfig.SlaveStartFilterBank = 0;
-		Gpio13Debug(4);
   		if (HAL_CAN_ConfigFilter(&smp_can0_handle, &sFilterConfig) != HAL_OK)
   		{
-			Gpio13Debug(5);
     		/* Filter configuration Error */
     		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
-		Gpio13Debug(6);
   		/*##-3- Start the CAN peripheral ###########################################*/
   		if (HAL_CAN_Start(&smp_can0_handle) != HAL_OK)
   		{
-			Gpio13Debug(7);
     		/* Start Error */
     		//Error_Handler();
     		return SMP_ERROR_NOT_FOUND;
   		}	
-		Gpio13Debug(8);
 		/*##-4- Activate CAN RX notification #######################################*/
 		if (HAL_CAN_ActivateNotification(&smp_can0_handle,
 				(CAN_IT_RX_FIFO0_MSG_PENDING |
@@ -139,7 +130,6 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
 			//Error_Handler();
 			return SMP_ERROR_NOT_FOUND;
 		}  
-		Gpio13Debug(9);
 		can0_evt_cb = smp_can_event_handler;
 		// Configure buffer RX buffer.
 		can_fifo_init(&can0_rx_fifo, p_can->buffers.rx_buf, p_can->buffers.rx_buf_size);

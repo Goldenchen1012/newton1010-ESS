@@ -27,7 +27,7 @@
 #include "LibSwTimer.h"
 #include "AppSerialCanDavinci.h"
 #include "ApiSysPar.h"
-#include "ApiSysPar.h"
+#include "ApiFu.h"
 
 
 void appSerialUartSendMessage(uint8_t *str);
@@ -147,12 +147,12 @@ static void DavinciCanParameterFwVersion(smp_can_package_t *pCanPkg){
 									SMP_CMD_PAR_RD_OBJ_INDEX,
 									SMP_PAR_ID_FW_VERSION);
 		CanPkg.dlc = 3;
-		version.l = apiSysParGetFwVersion();
+		version.l = apiFuGetFwVersion();
 		CanPkg.dat[0] = version.b[0];
 		CanPkg.dat[1] = version.b[1];
 		CanPkg.dat[2] = version.b[2];
 		
-		appSerialCanDavinciParDebugMsg("Read Hw Version");
+		appSerialCanDavinciParDebugMsg("Read Fw Version");
 	}
 	else if(isParWritable())
 	{
@@ -160,7 +160,7 @@ static void DavinciCanParameterFwVersion(smp_can_package_t *pCanPkg){
 									SMP_CMD_PAR_WR_OBJ_INDEX,
 									SMP_PAR_ID_FW_VERSION);
 		CanPkg.dlc = 0;
-		appSerialCanDavinciParDebugMsg("Can't write Hw Version");
+		appSerialCanDavinciParDebugMsg("Can't write Fw Version");
 	}
 	else
 		return;
@@ -171,7 +171,7 @@ static void DavinciCanParameterFwVersion(smp_can_package_t *pCanPkg){
 static void DavinciCanParameterFwBuildDateTime(smp_can_package_t *pCanPkg)
 {
 	smp_can_package_t	CanPkg;
-	tLbyte	version;
+	tLbyte	BuildDate,BuildTime;
 
 	if(SMP_CAN_GET_OBJ_INDEX(pCanPkg->id) == SMP_CMD_PAR_RD_OBJ_INDEX)
 	{
@@ -179,6 +179,11 @@ static void DavinciCanParameterFwBuildDateTime(smp_can_package_t *pCanPkg)
 									SMP_CMD_PAR_RD_OBJ_INDEX,
 									SMP_PAR_ID_FW_BUILD_DATE_TIME);
 		CanPkg.dlc = 7;
+//		uint32_t apiFuGetFwVersion(void);
+//uint32_t apiFuGetFwBuildDate(void);
+//uint32_t apiFuGetFwBuildTime(void);
+
+
 		CanPkg.dat[3] = 0x20;
 		CanPkg.dat[2] = 0x21;
 		CanPkg.dat[1] = 0x10;

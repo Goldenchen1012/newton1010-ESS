@@ -25,6 +25,8 @@
 #include "LibSwTimer.h"
 #include "LibHwTimer.h"
 #include "ApiSysPar.h"
+#include "RTT_Log.h"
+
 
 /* Private define ------------------------------------------------------------*/
 
@@ -75,7 +77,7 @@ static void getIRMonitoringVoValue_cb(float *read_volt_data)
 {
 	  irm_adc_data = *read_volt_data;  //Get Voltage data
 	  irm_adc_data /= IRM_K1;
-	  irm_adc_data *= 2;
+	  //irm_adc_data *= 2;
 	  irm_data_ready_f = 1;	           //Setting data ready falg
 }
 static uint8_t IRMonitoring_Init(uint8_t exe_interval_s, uint16_t sw_delay_ms, apiIRMonitoring_cb_t callbackfunc)
@@ -98,7 +100,7 @@ static uint8_t IRMonitoring_Init(uint8_t exe_interval_s, uint16_t sw_delay_ms, a
 	      return(0);
 	  }else{
 		    irm_event_cb.GetVoltDeviceInit_cb = callbackfunc.GetVoltDeviceInit_cb;
-			   irm_event_cb.GetVoltDeviceInit_cb ();
+	      irm_event_cb.GetVoltDeviceInit_cb ();
 		}	
 			
     if(callbackfunc.irm_outdata==NULL){
@@ -220,10 +222,9 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 						  irm_data_ready_f = 0;
 						
 				      irm_data.Vo_stack = irm_adc_data;
-				      //	irm_data.Vo_stack = doCalibration(&SysCalPar.RamPar.VBat[0], irm_adc_data);
-
-			        irm_data.V_stack  = (irm_data.Vo_stack * IRM_K1 / 2 );
-			
+			        irm_data.V_stack  = (irm_data.Vo_stack * IRM_K1);
+			        irm_res_out.V_stack = irm_data.V_stack;
+						
               //If callback function exist then execution this.
 	            if((irm_event_cb.irm_outdata != NULL) && (irm_vstack_f==1)){	
 								
@@ -258,8 +259,11 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 			    irm_sub_step = 0;
 			    irm_mes_step = IRM_S4;    											
 		      break;
-			case IRM_S4:			
-			    if(((fabs(irm_data.Vp - irm_data.Vn))/irm_data.V_stack) < IRM_KTHD){
+			case IRM_S4:	
+
+          LOG_GREEN("Vp=%d , Vn=%d , Vstack=%d\r\n", (int)(irm_data.Vp),(int)(irm_data.Vn),(int)(irm_data.V_stack));
+			
+			    if((((fabs(irm_data.Vp - irm_data.Vn))*100)/irm_data.V_stack) < IRM_KTHD){
 					    irm_sub_step = 1;
 					    irm_mes_step = IRM_S5;
 					}else{
@@ -275,6 +279,8 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 					irm_mes_step = IRM_S6;
 					#endif 
 					
+					LOG_GREEN("STEP=%d\r\n",irm_mes_step);
+							
 		      break;
 			case IRM_S5:      //Balance resistor detection 
 		      switch(irm_sub_step){
@@ -386,6 +392,9 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 						  sub_step_count = 0;
 					    irm_mes_step = IRM_DEVICE_WAITTING;   
 					}
+					
+					//Test 2022.01.10
+					GPIOD->ODR ^= GPIO_PIN_14;
 			    break;
 			case IRM_DEVICE_WAITTING:
           ++sub_step_count;

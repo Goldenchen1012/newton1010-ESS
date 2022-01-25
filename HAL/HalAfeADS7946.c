@@ -53,7 +53,7 @@ enum{
 /* Private variables ---------------------------------------------------------*/
 void (*adc7946FunctionProcessor)(void) = {0};
 
-static uint8_t	adcChannel = 0;
+//static uint8_t	adcChannel = 0;
 
 static uint8_t	WaitAdcCallbackCount;
 static uint8_t	AdcFlag = 0;
@@ -134,7 +134,7 @@ static void getVpackWaitResponse(void)
 	if(WaitAdcCallbackCount >= 5)
 	{
 		adc7946FunctionProcessor = getVpack;
-		//halAfeADS7946DebugMsg("get VPack-2");
+		halAfeADS7946DebugMsg("get VPack-2");
 	}
 }
 
@@ -157,7 +157,7 @@ static void getVbatWaitResponse(void)
 	if(WaitAdcCallbackCount >= 5)
 	{
 		adc7946FunctionProcessor = getVbat;
-		//halAfeADS7946DebugMsg("get Vbat-2");
+		halAfeADS7946DebugMsg("get Vbat-2");
 	}
 }
 
@@ -221,7 +221,7 @@ static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 		AdcFlag &= ~VBAT_FLAG;
 		if(appProjectIsInSimuMode() == 0)
 		{
-//			halAfeSetVBatAdcValue(0, AdcValue.i);
+			halAfeSetVBatAdcValue(0, AdcValue.i);
 //			updateInternalVbatVoltage();
 		}
 	}
@@ -241,7 +241,7 @@ static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 	else if(AdcFlag & VBAT_FLAG)
 	{
 		adc7946FunctionProcessor = getVbat;
-		//halAfeADS7946DebugMsg("get Vbat-0");
+		halAfeADS7946DebugMsg("get Vbat-0");
 	}
 	else
 		adc7946FunctionProcessor = 0;
@@ -289,18 +289,18 @@ static void currentSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr
 		if(count >= 50)
 		{
 			count = 0;
-			#if	0
+			#if	1
 			if(appProjectIsInEngMode())
 			{
 				AdcFlag |= (VPACK_FLAG + VBAT_FLAG);
 				//count = 30;	
-				//halAfeADS7946DebugMsg("Read Int Ext");
+				halAfeADS7946DebugMsg("Read Int Ext");
 			}
 			else
 			#endif
 			{
 				AdcFlag |= (VPACK_FLAG);
-				//halAfeADS7946DebugMsg("Read Ext");
+				halAfeADS7946DebugMsg("Read Ext");
 			}
 			if(adc7946FunctionProcessor == 0)
 				adc7946FunctionProcessor = getVpack;

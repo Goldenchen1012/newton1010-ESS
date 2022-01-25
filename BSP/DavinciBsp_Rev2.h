@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file        DavinciBsp_Rev2.h
   * @author      Johnny/ Golden Chen
-  * @version     v0.0.2
-  * @date        2022/01/06
+  * @version     v0.0.3
+  * @date        2022/01/21
   * @brief       
   ******************************************************************************
   * @attention
@@ -37,6 +37,7 @@ uint16_t      gpio_pin;
 #define BSP_MX25L
 #define BSP_W5500
 #define BSP_IRM
+#define BSP_TLC6C5912
 
 #ifndef SMP_APP_FM_NOR_FLASH_ENABLE
 	#define SMP_APP_FM_NOR_FLASH_ENABLE 1
@@ -157,6 +158,7 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 										                            GPIO_MODE_INPUT, GPIO_NOPULL, \
 										                            GPIO_SPEED_FREQ_HIGH);}
 #define BSP_NFAULT_READ()                       (BSP_NFAULT_GPIO->IDR & BSP_NFAULT_PIN)	 
+																																																
 //----------------------------------------------------------------------------------
 
 // Board Output function pin define
@@ -310,7 +312,20 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_WDI_HI()                        (BSP_WDI_GPIO->BSRR = BSP_WDI_PIN)
 #define BSP_WDI_LO()                        (BSP_WDI_GPIO->BRR = BSP_WDI_PIN)
 				
-																							 
+
+/********************************* BSP_TLC6C5912 I/O Pin define(please use "smp_gpio.h") *************/
+#ifdef BSP_TLC6C5912																							 
+#define BSP_TLC6C5912_SER_IN_PIN               GPIO_PIN_13
+#define BSP_TLC6C5912_SER_IN_PORT              GPIOE
+
+#define BSP_TLC6C5912_SRCK_PIN                 GPIO_PIN_11
+#define BSP_TLC6C5912_SRCK_PORT                GPIOE	
+
+#define BSP_TLC6C5912_RCK_PIN                  GPIO_PIN_12
+#define BSP_TLC6C5912_RCK_PORT                 GPIOE																								 
+#endif	
+
+											  
 /********************************* BSP_BQ79600 I/O Pin define(please use "smp_gpio.h") *************/
 #ifdef BSP_BQ7600																							 
 #define BSP_BQ796XX_NCS_PIN                    PIN4
