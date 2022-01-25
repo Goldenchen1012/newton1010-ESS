@@ -24,6 +24,7 @@
 #include "ApiIRMonitoring.h"
 #include "LibSwTimer.h"
 #include "LibHwTimer.h"
+#include "RTT_Log.h"
 
 /* Private define ------------------------------------------------------------*/
 
@@ -254,8 +255,11 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 			    irm_sub_step = 0;
 			    irm_mes_step = IRM_S4;    											
 		      break;
-			case IRM_S4:			
-			    if(((fabs(irm_data.Vp - irm_data.Vn))/irm_data.V_stack) < IRM_KTHD){
+			case IRM_S4:	
+
+          LOG_GREEN("Vp=%d , Vn=%d , Vstack=%d\r\n", (int)(irm_data.Vp),(int)(irm_data.Vn),(int)(irm_data.V_stack));
+			
+			    if((((fabs(irm_data.Vp - irm_data.Vn))*100)/irm_data.V_stack) < IRM_KTHD){
 					    irm_sub_step = 1;
 					    irm_mes_step = IRM_S5;
 					}else{
@@ -271,6 +275,8 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 					irm_mes_step = IRM_S6;
 					#endif 
 					
+					LOG_GREEN("STEP=%d\r\n",irm_mes_step);
+							
 		      break;
 			case IRM_S5:      //Balance resistor detection 
 		      switch(irm_sub_step){

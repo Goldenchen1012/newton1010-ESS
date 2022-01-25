@@ -2178,6 +2178,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Drivers\SMP\smp_MX25L_Driver.c</FilePath>
             </File>
+            <File>
+              <FileName>smp_TLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Drivers\SMP\smp_TLC6C5912.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -4389,6 +4394,11 @@
               <FileName>smp_MX25L_Driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Drivers\SMP\smp_MX25L_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>smp_TLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Drivers\SMP\smp_TLC6C5912.c</FilePath>
             </File>
           </Files>
         </Group>

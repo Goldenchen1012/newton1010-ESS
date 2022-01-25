@@ -134,7 +134,7 @@ typedef struct{
 #define IRM_K1                     ((IRM_RA + IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)        //Unit: NA
 #define IRM_K2                     ((IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)                 //Unit: NA
 #define IRM_K3                     ((IRM_RB + IRM_RC + IRM_RD + IRM_RSW)/IRM_RC)        //Unit: NA
-#define IRM_KTHD                   1.0f                                                 //Unit: NA
+#define IRM_KTHD                   2.0f                                                 //Unit: %
 
 #define IRM_READ_TIMEOUT           10                                                   //Uint: ms
 #define IRM_DATA_READY_TIMEOUT     5                                                    //Uint: ms

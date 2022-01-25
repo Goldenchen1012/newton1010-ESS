@@ -32,6 +32,7 @@
 #include "AppProjectTest.h"
 #include "smp_MX25L_Driver.h"
 #include "smp_max7219.h"
+#include "smp_TLC6C5912.h"
 #include "smp_log_managment.h"
 #include "SEGGER_RTT.h"
 #include "RTT_Log.h"
@@ -43,6 +44,14 @@
 #if 0
 #define G_TEST_MX25LXX_FLASH 
 #endif
+
+#if 1
+#define G_TEST_TLC6C5912
+#endif
+
+#if 1
+#define G_TEST_LED_DISPLAY_BUTTON
+#endif 
 
 #if 0
 #define G_TEST_MAX7219_LCD_MARITEX
@@ -59,23 +68,23 @@
 
 #if 1
 #define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP
-#define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_TEST_CYCLE_NUM      10
-#define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_WAKE_CNT            10
+#define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_TEST_CYCLE_NUM      5
+#define G_TEST_BQ796XX_SETTING_INIT_WITH_STEP_WAKE_CNT            5
 #endif
 
 #if 1
 #define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
-#define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP_TEST_CYCLE_NUM   100
+#define G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP_TEST_CYCLE_NUM   10000000
 #endif
 
-#if 1
+#if 0
 #define G_TEST_BQ796XX_CELL_BALANCE_FUNC 
 #define G_TEST_BQ796XX_CELL_BALANCE_FUNC_TEST_CYCLE_NUM           100
 #endif
 
 #if 1
 #define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
-#define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM   100
+#define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM   5
 #endif
 
 #if 1
@@ -158,6 +167,9 @@ uint8_t	test_ntcChannelStartIndex = 0;
 uint8_t	test_ntcChannelOffset = 0;
 uint8_t	test_NtcChannelSelect = 0;
 #endif 
+
+LED_Display_Indicator_Type led_status_temp;
+uint32_t test_led_display_cnt=0; 
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -663,6 +675,88 @@ int main(void)
 	SEGGER_RTT_Init();
 	SEGGER_RTT_printf(0,"  start\r\n" );
 	
+	//LED Display Indicator Test
+	//-------------------------------------------
+	#ifdef G_TEST_TLC6C5912
+	
+	smp_TLC6C5912_Init();
+	for(int i=0;i<10;i++){
+	    if((i%2)==1)
+	        smp_TLC6C5912_All_LED_Off();
+	    else
+				  smp_TLC6C5912_All_LED_On();
+			HAL_Delay(200);
+	}
+	
+	for(int i=0;i<10;i++){
+		  led_status_temp.w = 0x0555;
+      smp_TLC6C5912_Set_Ledstauts(led_status_temp);
+		  smp_TLC6C5912_Display_Ledstauts(); 
+			HAL_Delay(250);
+	}	
+
+	for(int i=0;i<10;i++){
+		  led_status_temp.w = 0x0AAA;
+      smp_TLC6C5912_Set_Ledstauts(led_status_temp);
+		  smp_TLC6C5912_Display_Ledstauts(); 
+			HAL_Delay(250);
+	}	
+	
+	smp_TLC6C5912_All_LED_Off();
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Percent20_LED(i%2);
+			HAL_Delay(250);
+	}	
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Percent40_LED(i%2);
+			HAL_Delay(250);
+	}
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Percent60_LED(i%2);
+			HAL_Delay(250);
+	}	
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Percent80_LED(i%2);
+			HAL_Delay(250);
+	}	
+
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Percent100_LED(i%2);
+			HAL_Delay(250);
+	}	
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Discharge_LED(i%2);
+			HAL_Delay(250);
+	}		
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Charge_LED(i%2);
+			HAL_Delay(250);
+	}
+	
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Alarm_LED(i%2);
+			HAL_Delay(250);
+	}
+
+	for(int i=0;i<10;i++){
+      smp_TLC6C5912_Comm_LED(i%2);
+			HAL_Delay(250);
+	}	
+	
+	smp_TLC6C5912_All_LED_Off();
+	//HAL_Delay(10);
+	smp_TLC6C5912_Percent100_LED(LED_ON);
+	//HAL_Delay(10);
+	smp_TLC6C5912_Comm_LED(LED_ON);
+	//HAL_Delay(10);
+	#endif
+	
   // MAX7219 LCD Maritex Test
 	//-------------------------------------------
 	#ifdef G_TEST_MAX7219_LCD_MARITEX
@@ -903,6 +997,7 @@ int main(void)
 				 test_ntcChannelOffset =0;
 			}
 			
+			//test_NtcChannelSelect = 1;
 			LOG_GREEN("Stack set BMU GPIO select Ch=%02d\r\n", test_NtcChannelSelect);
 			
 			//Set BMU GPIO 
@@ -933,8 +1028,9 @@ int main(void)
 	      if(test_ntcIoIndex >= 4)
 	      {
 		       test_ntcIoIndex = 0;
+					 drv_bq796xx_delay_ms(10); 
 	      } 				
-	      HAL_Delay(2);
+	      drv_bq796xx_delay_ms(2); 
 		 }
 		 	
 		 test_ntcChannelOffset++;
@@ -943,13 +1039,13 @@ int main(void)
 	  drv_bq796xx_clean_fifo();
 	  drv_bq796xx_Read_AFE_ALL_ADC(STACK, 0, 0);    //Stack(BMU #1,#2) Read all AUX ADC   (GPIO1~8).
 			
-    HAL_Delay(10);		
+    drv_bq796xx_delay_ms(10); 
 		 
 		for(int ki =0; ki<10*BMU_TOTAL_BOARDS; ki++){
           res = drv_bq796xx_data_frame_parser();
 		}
 			
-		HAL_Delay(10);
+		drv_bq796xx_delay_ms(10);
 		LOG_GREEN("Stack Read GPIO1=");
 		
 		for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){ 
@@ -959,6 +1055,8 @@ int main(void)
 		
 		test_cont++;
 		if(test_cont>G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM) break;
+		
+		HAL_Delay(500); 
   }
 	#endif
 	//----------------------------------------------------------------------------------
@@ -1037,11 +1135,29 @@ int main(void)
 	
 	while(1)
 	{
+		
+		#ifdef G_TEST_LED_DISPLAY_BUTTON
+	  if(BSP_BUTTON_READ() == 0){
+			  if(test_led_display_cnt==0){
+			      led_status_temp = smp_TLC6C5912_Get_Ledstauts(); 
+        }
+				smp_TLC6C5912_All_LED_On();
+			  test_led_display_cnt++;
+    }else{
+			  test_led_display_cnt = 0;
+			  smp_TLC6C5912_Set_Ledstauts(led_status_temp);
+			  smp_TLC6C5912_Display_Ledstauts();
+ 	  }
+		#endif	
+			
 		#if 0
 		GPIOD->ODR |= GPIO_PIN_13;
 		#endif
 		
 		LibSwTimerHandle();
+		
+		
+		
 		
 		#if 0
 		GPIOD->ODR &= ~GPIO_PIN_13;

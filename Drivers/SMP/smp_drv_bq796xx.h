@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    smp_drv_bq796xx.h 
   * @author  Golden Chen
-  * @version V0.0.12
-  * @date    2021/12/23
+  * @version V0.0.13
+  * @date    2022/01/13
   * @brief   Header for smp_drv_bq796xx.c module
   ******************************************************************************
   */
@@ -17,6 +17,11 @@
 #include <stdbool.h>
 #include "smp_gpio.h"
 #include "smp_uart.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Exported types ------------------------------------------------------------*/
 typedef enum{
 	BQ_GPIO          = 0,										/* GPIO */
@@ -337,12 +342,12 @@ typedef enum{
 }bq796xx_dir_set_steps_enum;
 
 /* Exported constants --------------------------------------------------------*/ 
-#define BMU_TOTAL_BOARDS															11
+#define BMU_TOTAL_BOARDS															16
 #define BMU_CELL_SERIES             									16
 
-#define BQ796XX_TX_BUFFER_SIZE												512
-#define BQ796XX_RX_BUFFER_SIZE												(512*1)
-#define BQ796XX_RESPONE_BUFFER_SIZE										(128+6)
+#define BQ796XX_TX_BUFFER_SIZE												1024
+#define BQ796XX_RX_BUFFER_SIZE												(1024*1)
+#define BQ796XX_RESPONE_BUFFER_SIZE										(1024+6)
 
 #define BQ796XX_UART_BAUD_RATE												1000000
 
@@ -791,7 +796,11 @@ void fill_data4_payload(uint8_t *payload,uint8_t b1,uint8_t b2,uint8_t b3,uint8_
 													
 extern uint8_t bq796xx_res_buf[BQ796XX_RESPONE_BUFFER_SIZE];													
 extern uint16_t bq796xx_res_buf_c;
-													
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __SMP_DRV_BQ796XX_H */
 
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

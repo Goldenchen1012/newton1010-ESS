@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    smp_drv_bq796xx.c
   * @author  Golden Chen
-  * @version V0.0.12
-  * @date    2021/12/23
+  * @version V0.0.13
+  * @date    2022/01/13
   * @brief   
   ******************************************************************************
   * @attention
@@ -142,8 +142,11 @@ void drv_bq796xx_clear_fifobuffer(void){
 	
 	  GPIOD->ODR |= GPIO_PIN_14;
     while(smp_uart_get(&bq796xx_uart, &rx_data)==SMP_SUCCESS){
-        bq796xx_res_buf_c--;
+        
     }
+		
+		bq796xx_res_buf_c=0;
+		
 		GPIOD->ODR &= ~GPIO_PIN_14;
 }
 
