@@ -90,13 +90,9 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		smp_can0_handle.Init.TimeSeg1 = CAN_BS1_4TQ;
   		smp_can0_handle.Init.TimeSeg2 = CAN_BS2_5TQ;
   		smp_can0_handle.Init.Prescaler = 16;
-		Gpio13Debug(1);
-	//	HAL_CAN_DeInit(&smp_can0_handle);
-		Gpio13Debug(2);
 
   		if (HAL_CAN_Init(&smp_can0_handle) != HAL_OK)
   		{
-			Gpio13Debug(3);
     		/* Initialization Error */
     		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
@@ -112,23 +108,18 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
   		sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
   		sFilterConfig.FilterActivation = ENABLE;
   		sFilterConfig.SlaveStartFilterBank = 0;
-		Gpio13Debug(4);
   		if (HAL_CAN_ConfigFilter(&smp_can0_handle, &sFilterConfig) != HAL_OK)
   		{
-			Gpio13Debug(5);
     		/* Filter configuration Error */
     		return SMP_ERROR_NOT_FOUND;//SMP_ERROR_NOT_FOUND;//Error_Handler();
   		}
-		Gpio13Debug(6);
   		/*##-3- Start the CAN peripheral ###########################################*/
   		if (HAL_CAN_Start(&smp_can0_handle) != HAL_OK)
   		{
-			Gpio13Debug(7);
     		/* Start Error */
     		//Error_Handler();
     		return SMP_ERROR_NOT_FOUND;
   		}	
-		Gpio13Debug(8);
 		/*##-4- Activate CAN RX notification #######################################*/
 		if (HAL_CAN_ActivateNotification(&smp_can0_handle,
 				(CAN_IT_RX_FIFO0_MSG_PENDING |
@@ -139,7 +130,6 @@ int8_t smp_can_init(smp_can_t *p_can, smp_can_event_t smp_can_event_handler)
 			//Error_Handler();
 			return SMP_ERROR_NOT_FOUND;
 		}  
-		Gpio13Debug(9);
 		can0_evt_cb = smp_can_event_handler;
 		// Configure buffer RX buffer.
 		can_fifo_init(&can0_rx_fifo, p_can->buffers.rx_buf, p_can->buffers.rx_buf_size);
@@ -232,6 +222,7 @@ int8_t smp_can_deinit(smp_can_t *p_can)
 
 int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 {
+	int8_t	status = SMP_SUCCESS;
 	uint16_t size = 0, i =0;
 	uint32_t              TxMailbox;
 	CAN_TxHeaderTypeDef   TxHeader;
@@ -240,7 +231,7 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 
 	
 	if(p_can->num == __CAN0){
-		smp_can_fifo_push(&can0_tx_fifo, pCanDat);// == SMP_SUCCESS)
+		status = smp_can_fifo_push(&can0_tx_fifo, pCanDat);// == SMP_SUCCESS)
 //			 if (smp_can_fifo_push(&can1_tx_fifo, pCanDat) == SMP_SUCCESS)
 		if(1)
         {
@@ -273,7 +264,7 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
   			}	
 	   	}		
 	}else if(p_can->num == __CAN1){		
-        smp_can_fifo_push(&can1_tx_fifo, pCanDat);// == SMP_SUCCESS)
+        status = smp_can_fifo_push(&can1_tx_fifo, pCanDat);// == SMP_SUCCESS)
 //			 if (smp_can_fifo_push(&can1_tx_fifo, pCanDat) == SMP_SUCCESS)
 		if(1)
         {
@@ -309,7 +300,7 @@ int8_t smp_can_put(smp_can_t *p_can, smp_can_package_t *pCanDat)
 		return SMP_ERROR_FULL;
 	}
 	
-	return SMP_SUCCESS;
+	return status;
 }
 
 

@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file    smp_fifo.c
-  * @author  Golden Chen
-  * @version V0.0.1
-  * @date    2021/9/30
+  * @author  Golden
+  * @version V0.0.w
+  * @date    2022/01/13
   * @brief   
   ******************************************************************************
   * @attention
@@ -100,17 +100,5 @@ int8_t smp_fifo_clean(smp_fifo_t *p_fifo)
 	p_fifo->out=0;	
 	return SMP_SUCCESS;
 }
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

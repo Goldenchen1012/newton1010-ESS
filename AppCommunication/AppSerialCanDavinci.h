@@ -66,7 +66,7 @@ typedef struct {
 uint8_t appSerialCanDavinciIsCorrectScuId(smp_can_package_t *pCanPkg);
 void appSerialCanDavinciOpen(void);
 void appSerialCanDavinciClose(void);
-void appSerialCanDavinciPutPkgToCanFifo(smp_can_package_t *pCanPkg);
+int8_t appSerialCanDavinciPutPkgToCanFifo(smp_can_package_t *pCanPkg);
 void appSerialCanDavinciSendTextMessage(char *msg);
 
 

@@ -69,11 +69,24 @@ typedef struct{
 	uint32_t		NtcFlag[MAX_BMU_NUM];
 	uint8_t			BmuNumber;
 	uint16_t		TerminateVoltage;
-
-	uint16_t		OtHwSetValue;
-	uint16_t		UtHwSetValue;
-	uint16_t		OvpHwSetValue;
-	uint16_t		UvpHwSetValue;
+	
+	struct{
+		uint16_t		SetValue;
+		uint8_t			SetTime;
+	}OtHwSetValue;
+	struct{
+		uint16_t		SetValue;
+		uint8_t			SetTime;
+	}UtHwSetValue;
+	struct{
+		uint16_t		SetValue;
+		uint8_t			SetTime;
+	}OvpHwSetValue;
+	struct{
+		uint16_t		SetValue;
+		uint8_t			SetTime;
+	}UvpHwSetValue;
+	
 	uint16_t		PreDischargeTime;
 	uint16_t		RelayOnThreshold;
 	
@@ -1057,10 +1070,14 @@ static void sysParSetDefaultRomValue(void)
 	SystemParemater.RomPar.MinFlatVoltage = 3278;
 	SystemParemater.RomPar.MaxFlatVoltage = 3344;
 	SystemParemater.RomPar.TerminateVoltage = 3000;
-	SystemParemater.RomPar.OtHwSetValue = (40+60);
-	SystemParemater.RomPar.UtHwSetValue = (40-10);
-	SystemParemater.RomPar.OvpHwSetValue = 3800;
-	SystemParemater.RomPar.UvpHwSetValue = 2500;
+	SystemParemater.RomPar.OtHwSetValue.SetValue = (40+60);
+	SystemParemater.RomPar.OtHwSetValue.SetTime = 0;
+	SystemParemater.RomPar.UtHwSetValue.SetValue = (40-10);
+	SystemParemater.RomPar.UtHwSetValue.SetTime = 0;
+	SystemParemater.RomPar.OvpHwSetValue.SetValue = 3800;
+	SystemParemater.RomPar.OvpHwSetValue.SetTime = 0;
+	SystemParemater.RomPar.UvpHwSetValue.SetValue = 2500;
+	SystemParemater.RomPar.UvpHwSetValue.SetTime = 0;
 	SystemParemater.RomPar.FullCharge.Current = 5250;
 	SystemParemater.RomPar.FullCharge.Voltage = 3400;
 	SystemParemater.RomPar.FullCharge.Time = 10;
@@ -1376,11 +1393,13 @@ void apiSysParSetHwVersion(uint32_t version)
 	SystemParemater.RomPar.HwVersion = version;
 	resetSysParIdleCount();
 }
+#if 0
 uint32_t apiSysParGetFwVersion(void)
 {
 	//SystemParemater.FwVersion = 0x010203;
 	return 0;//SystemParemater.FwVersion;
 }
+#endif
 
 uint8_t apiSysParGetBmuNumber(void)
 {
@@ -1582,7 +1601,10 @@ void apiSysParGetOvpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			pPar->SetValue.l = SystemParemater.RomPar.OvpHwSetValue;
+		{
+			pPar->SetValue.l = SystemParemater.RomPar.OvpHwSetValue.SetValue;
+			pPar->STime.l = SystemParemater.RomPar.OvpHwSetValue.SetTime;
+		}
 		else
 		{
 			pPar->SetValue.l = 0;
@@ -1603,7 +1625,10 @@ void apiSysParSetOvpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			SystemParemater.RomPar.OvpHwSetValue = pPar->SetValue.l;
+		{
+			SystemParemater.RomPar.OvpHwSetValue.SetValue = pPar->SetValue.l;
+			SystemParemater.RomPar.OvpHwSetValue.SetTime = pPar->STime.l;
+		}
 		return;
 	}
 	SystemParemater.RomPar.Ovp[level].SetValue = pPar->SetValue.l;
@@ -1620,7 +1645,10 @@ void apiSysParGetUvpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			pPar->SetValue.l = SystemParemater.RomPar.UvpHwSetValue;
+		{
+			pPar->SetValue.l = SystemParemater.RomPar.UvpHwSetValue.SetValue;		
+			pPar->STime.l = SystemParemater.RomPar.UvpHwSetValue.SetTime;		
+		}
 		else
 		{
 			pPar->SetValue.l = 0;
@@ -1641,7 +1669,10 @@ void apiSysParSetUvpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			SystemParemater.RomPar.UvpHwSetValue = pPar->SetValue.l;
+		{
+			SystemParemater.RomPar.UvpHwSetValue.SetValue = pPar->SetValue.l;
+			SystemParemater.RomPar.UvpHwSetValue.SetTime = pPar->STime.l;		
+		}
 		return;
 	}
 	SystemParemater.RomPar.Uvp[level].SetValue = pPar->SetValue.l;
@@ -1653,19 +1684,23 @@ void apiSysParSetUvpPar(uint8_t level, tScuProtectPar *pPar)
 
 void apiSysParGet2ndOtProtectPar(tScuProtectPar *pPar)
 {
-	pPar->SetValue.l = SystemParemater.RomPar.OtHwSetValue;
+	pPar->SetValue.l = SystemParemater.RomPar.OtHwSetValue.SetValue;
+	pPar->STime.l = SystemParemater.RomPar.OtHwSetValue.SetTime;
 }
 void apiSysParSet2ndOtProtectPar(tScuProtectPar *pPar)
 {
-	SystemParemater.RomPar.OtHwSetValue = pPar->SetValue.l; 
+	SystemParemater.RomPar.OtHwSetValue.SetValue = pPar->SetValue.l; 
+	SystemParemater.RomPar.OtHwSetValue.SetTime = pPar->STime.l;
 }
 void apiSysParGet2ndUtProtectPar(tScuProtectPar *pPar)
 {
-	pPar->SetValue.l = SystemParemater.RomPar.UtHwSetValue;
+	pPar->SetValue.l = SystemParemater.RomPar.UtHwSetValue.SetValue;
+	pPar->STime.l = SystemParemater.RomPar.UtHwSetValue.SetTime;
 }
 void apiSysParSet2ndUtProtectPar(tScuProtectPar *pPar)
 {
-	SystemParemater.RomPar.UtHwSetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.UtHwSetValue.SetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.UtHwSetValue.SetTime = pPar->STime.l;
 }
 
 //---------------------------------------------------
@@ -1767,7 +1802,10 @@ void apiSysParGetCotpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			 pPar->SetValue.l = SystemParemater.RomPar.OtHwSetValue;
+		{
+			 pPar->SetValue.l = SystemParemater.RomPar.OtHwSetValue.SetValue;
+			 pPar->STime.l = SystemParemater.RomPar.OtHwSetValue.SetTime;			
+		}
 		return;
 	}
 	pPar->SetValue.l = SystemParemater.RomPar.Cotp[level].SetValue;
@@ -1780,7 +1818,10 @@ void apiSysParSetCotpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			SystemParemater.RomPar.OtHwSetValue = pPar->SetValue.l;
+		{
+			SystemParemater.RomPar.OtHwSetValue.SetValue = pPar->SetValue.l;
+			SystemParemater.RomPar.OtHwSetValue.SetTime = pPar->STime.l;
+		}
 		return;
 	}
 	SystemParemater.RomPar.Cotp[level].SetValue = pPar->SetValue.l;
@@ -1808,7 +1849,10 @@ void apiSysParGetCutpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			pPar->SetValue.l = SystemParemater.RomPar.UtHwSetValue;
+		{
+			pPar->SetValue.l = SystemParemater.RomPar.UtHwSetValue.SetValue;
+			pPar->STime.l = SystemParemater.RomPar.UtHwSetValue.SetTime;
+		}
 		return;
 	}
 	pPar->SetValue.l = SystemParemater.RomPar.Cutp[level].SetValue;
@@ -1821,7 +1865,10 @@ void apiSysParSetCutpPar(uint8_t level, tScuProtectPar *pPar)
 	if(level >= 3)
 	{
 		if(level == 0x10)
-			SystemParemater.RomPar.UtHwSetValue = pPar->SetValue.l;
+		{
+			SystemParemater.RomPar.UtHwSetValue.SetValue = pPar->SetValue.l;
+			SystemParemater.RomPar.UtHwSetValue.SetTime = pPar->STime.l;			
+		}
 		return;
 	}
 	SystemParemater.RomPar.Cutp[level].SetValue = pPar->SetValue.l;

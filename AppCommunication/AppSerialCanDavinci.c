@@ -207,12 +207,13 @@ uint8_t appSerialCanDavinciIsCorrectScuId(smp_can_package_t *pCanPkg)
 		return 0;
 }
 
-void appSerialCanDavinciPutPkgToCanFifo(smp_can_package_t *pCanPkg)
+int8_t appSerialCanDavinciPutPkgToCanFifo(smp_can_package_t *pCanPkg)
 {
 //	SMP_CAN_GET_SCU_ID(id)		((id>>18)&0x7f)
 //	appSerialCanDavinciPutPkgToCanFifo
 	
-	smp_can_put(&mDavinci_can0, pCanPkg);
+	return smp_can_put(&mDavinci_can0, pCanPkg);
+	
 }
 
 

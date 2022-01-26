@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
   * @file    smp_fifo.h 
-  * @author  SMP Randy
-  * @version V0.0.1
-  * @date    23-December-2016
+  * @author  Golden
+  * @version V0.0.3
+  * @date    2022/01/13
   * @brief   Header for smp_fifo.c module
   ******************************************************************************
   */
@@ -14,6 +14,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Exported types ------------------------------------------------------------*/
 typedef struct{
 	char		*buffer_addr;	/* FIFO queue buffer start address */
@@ -34,18 +39,9 @@ int8_t smp_fifo_check(smp_fifo_t *p_fifo, char *val, uint32_t index);
 int8_t smp_fifo_get_size(smp_fifo_t *p_fifo, uint16_t *size);
 int8_t smp_fifo_clean(smp_fifo_t *p_fifo);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __SMP_FIFO_H */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

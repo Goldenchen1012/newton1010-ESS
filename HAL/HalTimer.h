@@ -39,6 +39,7 @@ typedef struct{
 /* Public macro -------------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
+uint16_t halTimerGetCountValue(tHalTimer *pHalTimer);
 tErrCode HalTimerOpen(tHalTimer *pHalTimer, tHalTimerEvtHandler evtHandler);
 tErrCode HalSpiClose(tHalTimer *pHalTimer);
 

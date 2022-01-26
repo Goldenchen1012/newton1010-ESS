@@ -123,12 +123,20 @@ static void app_imr_ads7946_callBack(uint8_t *pDat, uint8_t size)
 	tIbyte	AdcValue;
 	static float volt_data;
 	static float adc_bits;
+	char	str[100];
 	
 	AdcValue.b[1] = pDat[2];
 	AdcValue.b[0] = pDat[3];
 	AdcValue.i >>= 2;
 #if 1	
-	volt_data = doCalibration(&SysCalPar.RamPar.VBat[0], AdcValue.i);
+//	if(isCalibrationExist(&SysCalPar.RamPar.VBat[0]))
+		volt_data = doCalibration(&SysCalPar.RamPar.VBat[0], AdcValue.i);
+	sprintf(str,"Vbat = %f", volt_data);
+	projectIrDbgMsg(str);
+//	else
+//	{
+		
+//	}
 #else	
   	adc_bits = (float)(1<<ADS7946_RESOLUTION_B); 	
 	volt_data = (float)(AdcValue.i)/adc_bits * ADS7946_VREF;
@@ -174,11 +182,23 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
  	{
  	case IRM_EVENT_BALANCE:
     	temp_irm_data = *irm_res_data;
- //   	projectIrDbgMsg("IRM_EVENT_BALANCE");
+    	projectIrDbgMsg("IRM_EVENT_BALANCE");
+		sprintf(str,"Rn= %d, Rp= %d, Vbat=%.3f ", 
+				temp_irm_data.Rn_kohm,
+				temp_irm_data.Rp_kohm,
+				temp_irm_data.V_stack
+				);
+    	projectIrDbgMsg(str);
 		break;
  	case IRM_EVENT_UNBALANCE:
     	temp_irm_data = *irm_res_data;
-//    	projectIrDbgMsg("IRM_EVENT_UNBALANCE");
+    	projectIrDbgMsg("IRM_EVENT_UNBALANCE");
+		sprintf(str,"Rn= %d, Rp= %d,Vbat= %.3f ", 
+				temp_irm_data.Rn_kohm,
+				temp_irm_data.Rp_kohm,
+				temp_irm_data.V_stack
+				);
+    	projectIrDbgMsg(str);
 		break;
  	case IRM_EVENT_GET_VSTACK:
     	temp_irm_vstack = irm_res_data->V_stack;

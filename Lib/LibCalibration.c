@@ -26,6 +26,14 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
+bool isCalibrationExist(const tCalibCoef *par){
+	if((par->A1 == 0) && (par->A2 == 0)){
+		return false;
+	}else{
+		return true;
+	}
+}
+
 int32_t doCalibration(tCalibCoef *par, int32_t dataX){ //Y = A1*X + A2*X/10000 + B
 	int32_t dataTemp;
 	dataTemp = dataX * par->A1;

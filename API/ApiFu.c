@@ -53,8 +53,17 @@ typedef  void (*pFunction)(void);
 const uint8_t	SmpFwHeadInfo1[]="SmpHvEssFirmware";
 const uint8_t	SmpFwHeadInfo2[]="SMPhvessFirmWare";
 
-
-
+static struct{
+	uint8_t		FwHeadInfo1[16];
+	tLbyte		Version;
+	tLbyte		BuildDate;
+	tLbyte		BuildTime;
+	tLbyte		CheckSum;
+	tLbyte		Reserved[4];
+	uint8_t		FwHeadInfo2[16];
+	uint8_t		ProjectId[16];
+	uint8_t		Rev[10];
+}FwInformation __ALIGNED(4); 
 /* Private variables ---------------------------------------------------------*/
 static __IO uint8_t	MagicCodeBuf[24]  __attribute__((at(0x20000000)));
 static __IO uint32_t	TestCount  __attribute__((at(0x2000001C)));
@@ -170,11 +179,14 @@ void apiFuSetMagicCode(uint8_t type)
 	MagicCodeBuf[0] = 0xAA;
 	MagicCodeBuf[1] = 0x55;
 }
+void DumpBuffer(uint8_t *pBuf,uint16_t len);
 
 void apiFuCheckMagicCode(void)
 {
 #if defined (USE_BOOTLOADER)
-	uint8_t	index;
+	tErrCode		result;
+	tHalEeProm		mHalEeProm;
+	uint8_t			index;
 	index = apiFuGetMagicModeIndex();
 	switch(index)
 	{	
@@ -199,9 +211,49 @@ void apiFuCheckMagicCode(void)
 	case MAGIC_CODE_APP_NORMAL:
 		fuDebugMsg("MAGIC_CODE_APP_NORMAL");
 		break;
-	}
+	}	
 	apiFuSetMagicCode(MAGIC_CODE_APP_NORMAL);
+	fuDebugMsg("Read Fw Info Error..0");
+//	return;
+	mHalEeProm.StartAddress = 0x08004000;
+	mHalEeProm.Length = 80;
+	mHalEeProm.pDataBuffer = (uint8_t *)&FwInformation;
+	result = HalEePromRead(&mHalEeProm);
+	DumpBuffer((uint8_t *)&FwInformation, 80);
+		fuDebugMsg(FwInformation.FwHeadInfo1);
+		fuDebugMsg(FwInformation.FwHeadInfo2);
+
+	if(result == RES_SUCCESS)
+	{
+		
+		if(memcmp(&FwInformation.FwHeadInfo1, &SmpFwHeadInfo1, 16) != 0 ||
+		   memcmp(&FwInformation.FwHeadInfo2, &SmpFwHeadInfo2, 16) != 0)
+		{
+			memset(&FwInformation, 0, sizeof(FwInformation));
+			fuDebugMsg("Read Fw Info Error");
+		}
+	}
+	else
+	{
+		memset(&FwInformation, 0, sizeof(FwInformation));
+		fuDebugMsg("Read Fw Info Error..2");
+	} 
+	
 #endif	
+}
+
+uint32_t apiFuGetFwVersion(void)
+{
+	return FwInformation.Version.l;
+}
+uint32_t apiFuGetFwBuildDate(void)
+{
+	return FwInformation.BuildDate.l;
+	
+}
+uint32_t apiFuGetFwBuildTime(void)
+{
+	return FwInformation.BuildTime.l;
 }
 
 //----------------------------------------------------------------

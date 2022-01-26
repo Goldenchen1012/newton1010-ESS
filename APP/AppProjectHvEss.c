@@ -55,11 +55,18 @@
 #include "AppProjectHvEss_IR.h"
 #include "AppProjectTest.h"
 #include "smp_log_managment.h"
+#include "ApiFu.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
+#if 0 
+#define	RTC_DEBUG
+#endif
+
+#define	SYSTEM_READY_SECOND	10
+
 #define	saveEventLog(type, par)		apiEventLogSaveLogData(type, par)
 #define	NFAULT_IDLE_COUNT	10
 /* Private macro -------------------------------------------------------------*/
@@ -542,15 +549,16 @@ static void buttonEventHandler(void *pDest, uint16_t evt, void *pData)
 }
 
 static void releaseOCP(void);
+extern uint32_t	can_full_count;
 
 static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
 //#define	APP_RESET_TEST
 
 #ifdef APP_RESET_TEST
-	static	uint8_t		resetcount = 1350;
+	static	uint8_t		resetcount = 1650;	
 #endif
-	static	uint8_t		SystemReadyCount = 10;
+	static	uint8_t		SystemReadyCount = SYSTEM_READY_SECOND;
 	char	str[100];
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
@@ -569,7 +577,7 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 #endif	
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{
-		if(SystemReadyCount)
+		if(SystemReadyCount &&  halAfeGetState() == AFE_STATE_NORMAL)
 		{
 			SystemReadyCount--;
 			if(!SystemReadyCount)
@@ -578,6 +586,12 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 		apiRamSaveRtcDateTime();
 		if(NFaultIdleCount < 200)
 			NFaultIdleCount++;
+#if 0			
+		{
+			sprintf(str,"CanFullCount = %d",can_full_count);
+			appSerialCanDavinciSendTextMessage(str);
+		}
+#endif		
 	}
 }
 
@@ -605,13 +619,13 @@ void DumpBuffer(uint8_t *pBuf,uint16_t len)
 		
 		if((i&0x0f) == 0x0f)
 		{
-			appProjectDebugMsg(str);
+			appSerialCanDavinciSendTextMessage(str);
 			str[0] = 0;	
 		}
 		
 	}
 	if(str[0])
-		appProjectDebugMsg(str);
+		appSerialCanDavinciSendTextMessage(str);
 }
 
 void EepromFunctionTest(void)
@@ -770,26 +784,21 @@ void appProjectOpen(void){
 	char	str[100];
 	uint32_t	len;
 	 
-	Gpio13Debug(2);
 	HalRtcOpen();
-	Gpio13Debug(3);
 	apiRamOpen();
-	Gpio13Debug(4);
 	HalTimerOpen(&mHalTimer3, appProjectHwTimerHandler);
-	Gpio13Debug(5);
 	appSerialUartDavinciOpen();
-	Gpio13Debug(6);
 	appSerialCanDavinciOpen();
-	Gpio13Debug(7);
   	//------------------------------------------
 	len = apiSysParOpen();
 	
 	appProtectOpen(protectEventHandler);
 	appGaugeOpen(gaugeEventHandler);
+
 	halafeOpen(afeEventHandler, afeLineLossCallBack);
+
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
-	Gpio13Debug(4);
 	halSpiromOpen();
 	
   	//------------------------------------------
@@ -811,7 +820,6 @@ void appProjectOpen(void){
   	apiSystemFlagOpen();
   	apiEventLogOpen();
 	appButtonOpen(buttonEventHandler);
-	Gpio13Debug(5);
 	appTcpipSmpOpen();
 	IrFunctionOpen();
 
@@ -856,17 +864,18 @@ void appProjectOpen(void){
 	if(apiRamLoadRtcMagicCode() != 0x5ACD)
 	{
 		apiRamSaveRtcMagicCode(0x5ACD);
-		appProjectDebugMsg("Rtc Invalid");
+//		appProjectDebugMsg("Rtc Invalid");
 		RtcValid = 0;
 	}
 	else
 	{
-		appProjectDebugMsg("Rtc valid");
+		//appProjectDebugMsg("Rtc valid");
 		RtcValid = 1;
 	}
+	apiFuCheckMagicCode();
 
-	appTestProjectOpen();
-	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.19...10");
+//	appTestProjectOpen();
+	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.25...0");
 
 }
 

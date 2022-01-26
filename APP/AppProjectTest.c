@@ -38,13 +38,23 @@
 #include "LibNtc.h"
 #include "smp_ADS7946_Driver.h"
 #include "smp_w5500_DMA.h"
+#include "smp_MX25L_Driver.h"
+#include "smp_TLC6C5912.h"
 
 #if 0
 #define	BSP_UART2_TEST
 #endif
 
-#if 1
+#if 0
 #define	TCPIP_SOCKET_TEST
+#endif
+
+#if 0
+#define	FU_OTHER_SCU_TEST
+#endif
+
+#if 0
+#define	LED_BOARD_TEST
 #endif
 
 #ifdef BSP_UART2_TEST
@@ -229,26 +239,6 @@ static void ADDS7946_Test_API2_Open(void){
 	LibSwTimerOpen(ADS7946_Test_API1_2_SwTimerHandler, 0);
 }
 
-static void appProjectTestSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
-{
-	static	uint8_t		SystemReadyCount = 10;
-	char	str[100];
-
-    if(evt == LIB_SW_TIMER_EVT_SW_1MS)
-	{
-			
-	}
-	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
-	{
-		if(SystemReadyCount)
-		{
-			SystemReadyCount--;
-			if(!SystemReadyCount)
-				SystemReadyFlag = 1;
-		}
-	}
-}
-
 static void appProjectTestHwTimerHandler(void *pin, uint16_t evt, void *pData)
 {
 	LibSwTimerHwHandler(LIB_SW_TIMER_EVT_HW_1MS, 0);
@@ -320,6 +310,124 @@ static void uart2_rcv(void)
 }
 #endif
 
+#ifdef FU_OTHER_SCU_TEST
+
+#endif
+
+#ifdef LED_BOARD_TEST
+enum{
+	LED_TEST_INI = 0,
+	LED_TEST_ALL_ON_OFF,
+	LED_TEST_CAPACITY,
+	LED_TEST_STATUS,
+	LEE_TEST_END
+};
+static void LedBoardTest(void)
+{
+	static uint8_t	step = LED_TEST_INI;
+	static uint16_t	test_count = 0;
+	static uint16_t	delay = 0;
+	static uint16_t	test_cycle = 0;
+	if(delay)
+	{
+		delay--;
+		return;
+	}
+	switch(step)
+	{
+	case LED_TEST_INI:	
+		smp_TLC6C5912_Init();
+		step =  LED_TEST_ALL_ON_OFF;
+		test_count = 0;
+		test_cycle = 0;
+		break;
+	case LED_TEST_ALL_ON_OFF:
+		test_count ^= 0x01;
+		delay = 50;
+		if(test_count == 1)
+			smp_TLC6C5912_All_LED_On();						
+		else if(test_count == 0)		
+		{
+			smp_TLC6C5912_All_LED_Off();
+			test_count = 0;
+			test_cycle++;
+			if(test_cycle >= 5)
+			{
+				step =  LED_TEST_CAPACITY;
+				test_count = 0;
+				test_cycle = 0;
+			}
+		}
+		break;
+	case LED_TEST_CAPACITY:
+		delay = 50;
+		test_count++;
+		switch(test_count)
+		{
+		case 1:
+			smp_TLC6C5912_Percent20_LED(LED_ON);
+			break;
+		case 2:
+			smp_TLC6C5912_Percent40_LED(LED_ON);
+			break;
+		case 3:
+			smp_TLC6C5912_Percent60_LED(LED_ON);
+			break;
+		case 4:
+			smp_TLC6C5912_Percent80_LED(LED_ON);
+			break;
+		case 5:
+			smp_TLC6C5912_Percent100_LED(LED_ON);
+			break;
+		default:
+			smp_TLC6C5912_All_LED_Off();
+			test_count = 0;
+			test_cycle++;
+			if(test_cycle >= 5)
+			{
+				step =  LED_TEST_STATUS;
+				test_count = 0;
+				test_cycle = 0;
+			}
+			break;
+		}
+		break;
+	case LED_TEST_STATUS:
+		delay = 50;
+		test_count++;
+		switch(test_count)
+		{
+		case 1:
+			smp_TLC6C5912_Charge_LED(LED_ON);
+			break;
+		case 2:
+			smp_TLC6C5912_Discharge_LED(LED_ON);
+			break;
+		case 3:
+			smp_TLC6C5912_Comm_LED(LED_ON);
+			break;
+		case 4:
+			smp_TLC6C5912_Alarm_LED(LED_ON);
+			break;
+		default:
+			smp_TLC6C5912_All_LED_Off();
+			test_count = 0;
+			test_cycle++;
+			if(test_cycle >= 5)
+			{
+				step =  LED_TEST_ALL_ON_OFF;
+				test_count = 0;
+				test_cycle = 0;
+			}
+			break;
+		}
+		break;
+	default:
+		step = LED_TEST_ALL_ON_OFF;
+		break;
+	}
+}
+#endif
 
 static void testSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
@@ -332,6 +440,10 @@ static void testSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_1)
 	{
+#ifdef LED_BOARD_TEST
+		LedBoardTest();
+#endif		
+
 #ifdef BSP_UART2_TEST		
 		GPIOC->ODR ^= GPIO_PIN_6;
 		
@@ -350,8 +462,15 @@ static void testSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 #endif		
 	}
 }
-void appTestProjectOpen(void){
-	
+
+
+//			smp_mx25l_flash_fast_read_data_bytes_addr(addr, &FwUpdateInfo.CodeBuf[0][0], 256, spiromEventHandler);
+
+
+
+
+void appTestProjectOpen(void)
+{
 #if	0	
 	DebugGPIOInit();
 	HalTimerOpen(&mHalTimer4, appProjectTestHwTimerHandler);
@@ -366,9 +485,6 @@ void appTestProjectOpen(void){
 	 }else{
      	teatDebugMsg("smp uart initial fail!");
   	}  
-
-
-	LibSwTimerOpen(testSwTimerHandler, 0);
 #endif
 
 #ifdef TCPIP_SOCKET_TEST
@@ -397,4 +513,6 @@ void appTestProjectOpen(void){
 #endif		
 #endif		
 #endif
+	LibSwTimerOpen(testSwTimerHandler, 0);
+
 }

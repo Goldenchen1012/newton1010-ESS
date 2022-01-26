@@ -37,6 +37,7 @@ typedef struct {
 /* Public macro -------------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
+bool isCalibrationExist(const tCalibCoef *par);
 int32_t doCalibration(tCalibCoef *par, int32_t dataX);
 tCalibCoef calCoef(int32_t valL, int32_t adcL, int32_t valH, int32_t adcH);
 

@@ -336,7 +336,7 @@ int8_t W5500_Socket_Register(W5500_Socket_parm *parm, smp_w5500_event_t w5500_ev
 			smpW5500Socket[i].Parm.Memory.tx_buf_size = parm->Memory.tx_buf_size;
 			smpW5500Socket[i].Parm.Protocol = parm->Protocol;
 			smpW5500Socket[i].Parm.PortNum = parm->PortNum;
-			smpW5500Socket[i].Parm.DeviceID = parm->DeviceID;
+			smpW5500Socket[i].Parm.SlaveAddr = parm->SlaveAddr;
 			break;
 		}
 	}
@@ -638,7 +638,6 @@ const W5500_Socket_Server_Table Sock_Reopen_Function_Table[] = {
 	Config_RCR_Reg,
 	Config_Keep_alive_Reg,
 	Send_Socket_Listen_Command,
-	
 	Sock_Reopen_Next_Function
 };
 
@@ -976,6 +975,8 @@ const W5500_Socket_Server_Table Sock_Evt_Handle_Function_Table[]={
 
 static void W5500_Server(void){
 	static uint8_t Result;
+	smp_gpio_state W5500_INT_PIN_State;
+	
 	if(gSPI_Status == SPI_Idle){
 		smp_gpio_get_state(&W5500_INT_PIN,&W5500_INT_PIN_State);
 		if((W5500_INT_PIN_State == GPIO_ACTIVE_LOW)||Flag_Check_INT){
