@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * @file        AppLed.h
+  * @file        AppProtectDtp.h
   * @author      Johnny
   * @version     v0.0.1
-  * @date        2022/1/26
+  * @date        2022/1/27
   * @brief       
   ******************************************************************************
   * @attention
@@ -13,34 +13,30 @@
   *
   ******************************************************************************
   */
-
-#ifndef _APP_LED_H_
-#define _APP_LED_H_
+#ifndef _API_PROTECT_DTP_H_
+#define _API_PROTECT_DTP_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
-
+#include "AppProtect.h"
+#include "LibRegister.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Public typedef -----------------------------------------------------------*/
 
 /* Public define ------------------------------------------------------------*/
-enum{
-	LED_STATE_CAPACITY = 1,
-	LED_STATE_WAIT_SYS_READY,
-	LED_STATE_SCU_ID,
-	LED_STATE_SOC_OFF,
-	LED_STATE_ALARM,
-	LED_STATE_COMM,
-	LED_STATE_CRH,
-	LED_STATE_DSG	
-};
+/* Public typedef -----------------------------------------------------------*/
 
 /* Public macro -------------------------------------------------------------*/
-
+/* Public variables ---------------------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
-void appLedOpen(void);
-void appLedSetState(uint16_t ShowTime, uint8_t state, uint16_t par);
+void apiProtectDtpOpen(tAppProtectEvtHandler evtHandler);
+uint8_t	apiProtectDtpGetFlag(void);
+uint8_t apiProtectDtpHandler(void);
+
+/* Exported types ------------------------------------------------------------*/
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 
 
 #ifdef __cplusplus
@@ -48,9 +44,8 @@ void appLedSetState(uint16_t ShowTime, uint8_t state, uint16_t par);
 #endif
 
 
-	
+#endif /* _API_PROTECT_DTP_H_ */
 
-#endif /* _APP_LED_H_ */
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

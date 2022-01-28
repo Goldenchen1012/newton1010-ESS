@@ -157,11 +157,15 @@ uint8_t apiProtectOvpHandler(uint8_t ProtectLevel)
 
 void apiProtectOvpPfHandler(void)
 {
+	uint8_t		bmu,posi;
 	tScuProtectPar	ProtectPar;
+	uint16_t	voltage;
+	
 	if(mOvpProtect.PfFlag)
 		return;
 	apiSysParGetOvpPfPar(&ProtectPar);
-	if(halAfeGetMaxCellVoltage() > ProtectPar.SetValue.l && ProtectPar.STime.l)
+	voltage = halAfeGetMaxCellVoltage(&bmu, &posi);
+	if(voltage > ProtectPar.SetValue.l && ProtectPar.STime.l)
 	{
 		mOvpProtect.PfSetCount++;
 		if(mOvpProtect.PfSetCount >= ProtectPar.STime.l)

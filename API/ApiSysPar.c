@@ -111,7 +111,7 @@ typedef struct{
 		uint8_t		SetTime;
 		uint16_t	ReleaseValue;
 		uint8_t		ReleaseTime;
-	}Ovp[3];	
+	}Ovp[3];
 		
 	struct{
 		uint16_t	SetValue;
@@ -125,14 +125,22 @@ typedef struct{
 		uint8_t		SetTime;
 		uint16_t	ReleaseValue;
 		uint8_t		ReleaseTime;
+	}Dvp[3];
+	
+	struct{
+		uint16_t	SetValue;
+		uint8_t		SetTime;
+		uint16_t	ReleaseValue;
+		uint8_t		ReleaseTime;
 	}Cotp[3];
+	
 	struct{
 		uint16_t	SetValue;
 		uint8_t		SetTime;
 		uint16_t	ReleaseValue;
 		uint8_t		ReleaseTime;
 	}Cutp[3];
-		struct{
+	struct{
 		uint16_t	SetValue;
 		uint8_t		SetTime;
 		uint16_t	ReleaseValue;
@@ -203,6 +211,14 @@ typedef struct{
 		uint16_t		RlxDeltaSet;
 		uint16_t		RlxDeltaRelease;
 	}Balance;
+	
+	struct{
+		uint16_t	SetValue;
+		uint8_t		SetTime;
+		uint16_t	ReleaseValue;
+		uint8_t		ReleaseTime;
+	}ScuOt[5][3];
+	
 	uint32_t	RelayActiveFlag;
 	uint32_t	W5500_IpAddress;
 	uint8_t		NoteMessage[MAX_NOTE_MESSAGE_STRING_ITEM + 2];
@@ -254,7 +270,7 @@ typedef struct{
 /* Private define ------------------------------------------------------------*/
 
 #define	SYSPAR_HEAD_INFO			"SysPar01"
-#define	SYSPAR_DATE_CODE			0x1214
+#define	SYSPAR_DATE_CODE			0x0127
 #define	PAR_ADDR					(0x08000000L + 510L * 1024L)
 
 #define	CAL_PAR_HEAD_INFO			"CalPar01"
@@ -823,8 +839,44 @@ static void setDefaultUvpValue(void)
 	SystemParemater.RomPar.Uvp[2].SetTime = 10;
 	SystemParemater.RomPar.Uvp[2].ReleaseValue = 2650;
 	SystemParemater.RomPar.Uvp[2].ReleaseTime = 10;	
-	
 }
+
+static void setDefaultDvpValue(void)
+{
+	SystemParemater.RomPar.Dvp[0].SetValue =300;
+	SystemParemater.RomPar.Dvp[0].SetTime = 10;
+	SystemParemater.RomPar.Dvp[0].ReleaseValue = 200;
+	SystemParemater.RomPar.Dvp[0].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.Dvp[1].SetValue = 500;
+	SystemParemater.RomPar.Dvp[1].SetTime = 10;
+	SystemParemater.RomPar.Dvp[1].ReleaseValue = 400;
+	SystemParemater.RomPar.Dvp[1].ReleaseTime = 10;
+                   
+	SystemParemater.RomPar.Dvp[2].SetValue = 1000;
+	SystemParemater.RomPar.Dvp[2].SetTime = 10;
+	SystemParemater.RomPar.Dvp[2].ReleaseValue = 700;
+	SystemParemater.RomPar.Dvp[2].ReleaseTime = 10;		
+}
+
+static void setDefaultDtpValue(void)
+{
+	SystemParemater.RomPar.Dtp[0].SetValue =10;
+	SystemParemater.RomPar.Dtp[0].SetTime = 10;
+	SystemParemater.RomPar.Dtp[0].ReleaseValue = 8;
+	SystemParemater.RomPar.Dtp[0].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.Dtp[1].SetValue = 12;
+	SystemParemater.RomPar.Dtp[1].SetTime = 10;
+	SystemParemater.RomPar.Dtp[1].ReleaseValue = 10;
+	SystemParemater.RomPar.Dtp[1].ReleaseTime = 10;
+                   
+	SystemParemater.RomPar.Dtp[2].SetValue = 15;
+	SystemParemater.RomPar.Dtp[2].SetTime = 10;
+	SystemParemater.RomPar.Dtp[2].ReleaseValue = 13;
+	SystemParemater.RomPar.Dtp[2].ReleaseTime = 10;		
+}
+
 static void setDefaultCotpValue(void)
 {
 	SystemParemater.RomPar.Cotp[0].SetValue = 
@@ -1059,10 +1111,118 @@ static void setDefaultUvpPfValue(void)
 	SystemParemater.RomPar.UvpPf.SetTime = 20;
 }
 
+static void setDefaultScuOtValue(void)
+{
+	SystemParemater.RomPar.ScuOt[0][0].SetValue = 
+				LibSetRealTemperatureToInternalValue(70);
+	SystemParemater.RomPar.ScuOt[0][0].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[0][0].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(67);
+	SystemParemater.RomPar.ScuOt[0][0].ReleaseTime = 10;
+
+	SystemParemater.RomPar.ScuOt[0][1].SetValue = 
+				LibSetRealTemperatureToInternalValue(80);
+	SystemParemater.RomPar.ScuOt[0][1].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[0][1].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(77);
+	SystemParemater.RomPar.ScuOt[0][1].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[0][2].SetValue = 
+				LibSetRealTemperatureToInternalValue(90);
+	SystemParemater.RomPar.ScuOt[0][2].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[0][2].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(87);
+	SystemParemater.RomPar.ScuOt[0][2].ReleaseTime = 10;
+
+	SystemParemater.RomPar.ScuOt[1][0].SetValue = 
+				LibSetRealTemperatureToInternalValue(70);
+	SystemParemater.RomPar.ScuOt[1][0].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[1][0].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(67);
+	SystemParemater.RomPar.ScuOt[1][0].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[1][1].SetValue = 
+				LibSetRealTemperatureToInternalValue(80);
+	SystemParemater.RomPar.ScuOt[1][1].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[1][1].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(77);
+	SystemParemater.RomPar.ScuOt[1][1].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[1][2].SetValue = 
+				LibSetRealTemperatureToInternalValue(90);
+	SystemParemater.RomPar.ScuOt[1][2].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[1][2].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(87);
+	SystemParemater.RomPar.ScuOt[1][2].ReleaseTime = 10;
+	//----------------------------
+	//	Abmi
+	SystemParemater.RomPar.ScuOt[2][0].SetValue = 
+				LibSetRealTemperatureToInternalValue(50);
+	SystemParemater.RomPar.ScuOt[2][0].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[2][0].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(47);
+	SystemParemater.RomPar.ScuOt[2][0].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[2][1].SetValue = 
+				LibSetRealTemperatureToInternalValue(60);
+	SystemParemater.RomPar.ScuOt[2][1].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[2][1].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(57);
+	SystemParemater.RomPar.ScuOt[2][1].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[2][2].SetValue = 
+				LibSetRealTemperatureToInternalValue(70);
+	SystemParemater.RomPar.ScuOt[2][2].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[2][2].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(67);
+	SystemParemater.RomPar.ScuOt[2][2].ReleaseTime = 10;
+	//----------------------------------
+	//	BusBar
+		SystemParemater.RomPar.ScuOt[3][0].SetValue = 
+				LibSetRealTemperatureToInternalValue(70);
+	SystemParemater.RomPar.ScuOt[3][0].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[3][0].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(67);
+	SystemParemater.RomPar.ScuOt[3][0].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[3][1].SetValue = 
+				LibSetRealTemperatureToInternalValue(80);
+	SystemParemater.RomPar.ScuOt[3][1].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[3][1].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(77);
+	SystemParemater.RomPar.ScuOt[3][1].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[3][2].SetValue = 
+				LibSetRealTemperatureToInternalValue(90);
+	SystemParemater.RomPar.ScuOt[3][2].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[3][2].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(87);
+	SystemParemater.RomPar.ScuOt[3][2].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[4][0].SetValue = 
+				LibSetRealTemperatureToInternalValue(70);
+	SystemParemater.RomPar.ScuOt[4][0].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[4][0].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(67);
+	SystemParemater.RomPar.ScuOt[4][0].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[4][1].SetValue = 
+				LibSetRealTemperatureToInternalValue(80);
+	SystemParemater.RomPar.ScuOt[4][1].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[4][1].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(77);
+	SystemParemater.RomPar.ScuOt[4][1].ReleaseTime = 10;
+	
+	SystemParemater.RomPar.ScuOt[4][2].SetValue = 
+				LibSetRealTemperatureToInternalValue(90);
+	SystemParemater.RomPar.ScuOt[4][2].SetTime = 10;
+	SystemParemater.RomPar.ScuOt[4][2].ReleaseValue = 
+				LibSetRealTemperatureToInternalValue(87);
+	SystemParemater.RomPar.ScuOt[4][2].ReleaseTime = 10;
+}
 static void sysParSetDefaultRomValue(void)
 {
 	uint8_t	i;
-	
 	
 	SystemParemater.RomPar.HwVersion=0x0102;
 	SystemParemater.RomPar.ZeroCurrent = 200;
@@ -1106,6 +1266,8 @@ static void sysParSetDefaultRomValue(void)
 
 	setDefaultOvpValue();
 	setDefaultUvpValue();
+	setDefaultDvpValue();
+	setDefaultDtpValue();
 	setDefaultCotpValue();
     setDefaultCutpValue();
 	setDefaultDotpValue();
@@ -1118,6 +1280,8 @@ static void sysParSetDefaultRomValue(void)
 	
 	setDefaultOvpPfValue();
 	setDefaultUvpPfValue();
+	
+	setDefaultScuOtValue();
 }
 static void setSysParRamValue(void)
 {
@@ -1393,13 +1557,6 @@ void apiSysParSetHwVersion(uint32_t version)
 	SystemParemater.RomPar.HwVersion = version;
 	resetSysParIdleCount();
 }
-#if 0
-uint32_t apiSysParGetFwVersion(void)
-{
-	//SystemParemater.FwVersion = 0x010203;
-	return 0;//SystemParemater.FwVersion;
-}
-#endif
 
 uint8_t apiSysParGetBmuNumber(void)
 {
@@ -1681,7 +1838,37 @@ void apiSysParSetUvpPar(uint8_t level, tScuProtectPar *pPar)
 	SystemParemater.RomPar.Uvp[level].ReleaseTime = pPar->RTime.l;
 	resetSysParIdleCount();
 }
+//---------------------------------------------------------------
+//	DVP
+void apiSysParGetDvpPar(uint8_t level, tScuProtectPar *pPar)
+{
+	if(level >= 3)
+	{
+		pPar->SetValue.l = 0;
+		pPar->STime.l = 0;
+		pPar->RelValue.l = 0;
+		pPar->RTime.l = 0;
+		return;
+	}
+	pPar->SetValue.l = SystemParemater.RomPar.Dvp[level].SetValue;
+	pPar->STime.l = SystemParemater.RomPar.Dvp[level].SetTime; 
+	pPar->RelValue.l = SystemParemater.RomPar.Dvp[level].ReleaseValue;
+	pPar->RTime.l = SystemParemater.RomPar.Dvp[level].ReleaseTime;
+}
 
+void apiSysParSetDvpPar(uint8_t level, tScuProtectPar *pPar)
+{	
+	if(level >= 3)
+	{
+		return;
+	}
+	SystemParemater.RomPar.Dvp[level].SetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.Dvp[level].SetTime = pPar->STime.l;
+	SystemParemater.RomPar.Dvp[level].ReleaseValue = pPar->RelValue.l;
+	SystemParemater.RomPar.Dvp[level].ReleaseTime = pPar->RTime.l;
+	resetSysParIdleCount();
+}
+//---------------------------------------------------------------
 void apiSysParGet2ndOtProtectPar(tScuProtectPar *pPar)
 {
 	pPar->SetValue.l = SystemParemater.RomPar.OtHwSetValue.SetValue;
@@ -1877,7 +2064,32 @@ void apiSysParSetCutpPar(uint8_t level, tScuProtectPar *pPar)
 	SystemParemater.RomPar.Cutp[level].ReleaseTime = pPar->RTime.l;	
 	resetSysParIdleCount();
 }
+//-----------------------------------------------------
+void apiSysParSetScuOtPar(uint8_t index, uint8_t level, tScuProtectPar *pPar)
+{
+	if(index >= 5 || level >= 3)
+	{
+		return;
+	}
+	SystemParemater.RomPar.ScuOt[index][level].SetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.ScuOt[index][level].SetTime = pPar->STime.l;
+	SystemParemater.RomPar.ScuOt[index][level].ReleaseValue = pPar->RelValue.l;
+	SystemParemater.RomPar.ScuOt[index][level].ReleaseTime = pPar->RTime.l;	
+	resetSysParIdleCount();
+}
 
+void apiSysParGetScuOtPar(uint8_t index, uint8_t level, tScuProtectPar *pPar)
+{
+	if(index >=5 || level >= 3)
+	{
+		return;
+	}
+	pPar->SetValue.l = SystemParemater.RomPar.ScuOt[index][level].SetValue;
+	pPar->STime.l = SystemParemater.RomPar.ScuOt[index][level].SetTime;
+	pPar->RelValue.l = SystemParemater.RomPar.ScuOt[index][level].ReleaseValue;
+	pPar->RTime.l = SystemParemater.RomPar.ScuOt[index][level].ReleaseTime;
+	
+}
 //-----------------------------------------------------
 //	Docp
 void apiSysParGetDocpPar(uint8_t level, tScuProtectPar *pPar)
@@ -2062,5 +2274,4 @@ uint16_t apiSysParOpen(void)
 
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
-
 

@@ -152,15 +152,26 @@ uint8_t ns_recheck_cnt = 0;
 extern bq796xx_wake_tone_switch wake_sw;
 uint8_t wake_cnt = 0;
 
+#ifdef G_TEST_INT_ADC
 uint16_t app_adc_temp[5]={0};
+#endif
 
+
+#ifdef G_TEST_BQ796XX_DIRECTION_CHECK_BMU_WITH_STEP
 long int test_bmu_statistics_num[2][BMU_TOTAL_BOARDS+1] ={0};
 long int test_bmu_ring_total_count = 0;
+#endif
+
 //long int test_dir_fail[2] ={0};
 long int irm_get_vstack_cont = 0;
-uint16_t  test_init_rec_bmu_num[2][40]={0};
 
+#ifdef G_TEST_BQ796XX_SETTING_INIT_WITH_STEP
+uint16_t  test_init_rec_bmu_num[2][40]={0};
+#endif
+
+#ifdef G_TEST_IRM_FUNCTION
 uint16_t test_get_vatck_cnt = 0;
+#endif
 
 #ifdef G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
 uint16_t test_gpio_HL=0;
@@ -170,8 +181,10 @@ uint8_t	test_ntcChannelOffset = 0;
 uint8_t	test_NtcChannelSelect = 0;
 #endif 
 
+#ifdef G_TEST_TLC6C5912
 LED_Display_Indicator_Type led_status_temp;
 uint32_t test_led_display_cnt=0; 
+#endif
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -200,11 +213,12 @@ void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_Statistics(long int k_c
 #define VSTACK_CAL_P2                          -0.2192f
 #define VO_CAL_V_P1                            0.002f   //unit:V
 
-
+#ifdef G_TEST_IRM_FUNCTION
 apiIRMonitoring_cb_t app_irm_event_cb;
-
+#endif
 //  Test use IRM calllback function to rx IRM data.
 //--------------------------------------------------
+#ifdef G_TEST_IRM_FUNCTION
 uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonitoring_event_cb_type irm_event){
 
   static IRMonitoring_Resistor_t temp_irm_data;
@@ -232,8 +246,9 @@ uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonitoring_ev
 	
 	return 0;
 }
+#endif
 //--------------------------------------------------
-
+#ifdef G_TEST_IRM_FUNCTION
 void app_irm_sw_gpio_init_cb(void){
     GPIO_InitTypeDef GPIO_InitStructure;
 	
@@ -343,6 +358,7 @@ IRMonitoring_event_read_cb_type app_irm_trigger_voltage_data_cb(void){
 void app_irm_get_device_init_cb(void){
     smp_ADS7946_init();
 }
+#endif
 
 #ifdef G_TEST_EVENT_LOG_FUNC
 extern uint16_t Davinci_uart_rx_cnt;
@@ -605,13 +621,6 @@ int main(void)
   HAL_RCC_MCOConfig( RCC_MCO1 ,RCC_MCO1SOURCE_SYSCLK, RCC_MCODIV_16);          //Output SYSCLK to GPIOA PIN8
   #endif
 	
-	GPIO_InitStructure.Pin = 0x1F;                                               //GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3;
-	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStructure.Pull = GPIO_PULLUP;
-	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-	#if 0
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStructure); 
-	#endif
 	
 	GPIO_InitStructure.Pin = GPIO_PIN_13 | GPIO_PIN_14 |GPIO_PIN_15;
 	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
@@ -619,13 +628,6 @@ int main(void)
 	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOD, &GPIO_InitStructure); 
 
-	GPIO_InitStructure.Pin = GPIO_PIN_10 | GPIO_PIN_11;
-	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStructure.Pull = GPIO_PULLUP;
-	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-	#if 0
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStructure); 
-  #endif
 	
 	GPIO_InitStructure.Pin = GPIO_PIN_6;
 	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
@@ -633,13 +635,6 @@ int main(void)
 	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStructure); 
 	
-	GPIO_InitStructure.Pin = GPIO_PIN_5 | GPIO_PIN_6;
-	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStructure.Pull = GPIO_PULLUP;
-	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-  #if 0
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStructure); 
-  #endif
 
 #if	1
 	GPIO_InitStructure.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;

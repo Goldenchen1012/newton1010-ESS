@@ -59,7 +59,6 @@ enum{
 /* Private variables ---------------------------------------------------------*/
 void (*apiRelayControlFunctionProcessor)(void) = {0};
 static uint8_t MasterTurnOnRelayFlag = 0;
-//static uint8_t Relay
 static uint8_t RelayOnStep = RELAY_CTRL_INI;
 static uint16_t DelayCount;	
 /* Private function prototypes -----------------------------------------------*/
@@ -102,6 +101,44 @@ static void turnOnRelayProcess(void)
 	}
 }
 
+static uint8_t isSystemRelay(void)
+{
+	uint32_t	SystemFlag1;
+	SystemFlag1 = apiSystemFlagGetFlag1();
+	if((SystemFlag1 & SYSTEM_FLAG1_SYSTEM_READY))
+		return 1;
+	return 0;
+}
+
+static uint8_t isRelayOn(void)
+{
+	uint32_t	SystemFlag2;
+	SystemFlag2 = apiSystemFlagGetFlag2();
+	if(SystemFlag2 & SYSTEM_FLAG2_RELAY_ON)
+		return 1;
+	return 0;
+}
+static uint8_t isInProtectState(void)
+{
+	uint32_t	SystemFlag1, SystemFlag2;
+	uint32_t	SystemFlag3, SystemFlag4;
+	
+	SystemFlag1 = apiSystemFlagGetFlag1();
+	SystemFlag2 = apiSystemFlagGetFlag2();
+	SystemFlag3 = apiSystemFlagGetFlag3();
+	SystemFlag4 = apiSystemFlagGetFlag4();
+
+
+	if(SystemFlag1 & FLAG1_PROTECT_MASK)
+		return 1;
+	if(SystemFlag2 & FLAG2_PROTECT_MASK)
+		return 1;
+	if(SystemFlag3 & FLAG3_PROTECT_MASK)
+		return 1;
+	if(SystemFlag4 & FLAG4_PROTECT_MASK)
+		return 1;
+	return 0;
+}
 
 static void checkRelayOn(void)
 {
@@ -110,36 +147,24 @@ static void checkRelayOn(void)
 	SystemFlag1 = apiSystemFlagGetFlag1();
 	SystemFlag2 = apiSystemFlagGetFlag2();
 	
-	if(SystemFlag2 & SYSTEM_FLAG2_RELAY_ON)
-	{
+	if(isRelayOn())
 		return;
-	}
-//	else
-//	{
-//		RelayOnStep	= RELAY_CTRL_STEP_OFF;
-//	}
+
 	if(appProjectIsInEngMode())
 		return;
+		
 	if(MasterTurnOnRelayFlag == 0)		
 		return;
 		
-	if((SystemFlag1 & SYSTEM_FLAG1_SYSTEM_READY) == 0)
+	if(isSystemRelay() == 0)
 		return;
 	
-//	if(SystemFlag2 & SYSTEM_FLAG2_RELAY_ON)		
-//		return;
-	if(SystemFlag1 & FLAG1_PROTECT_MASK)
-		return;
-	if(SystemFlag2 & FLAG2_PROTECT_MASK)
+	if(isInProtectState())
 		return;
 
 	if(RelayOnStep != RELAY_CTRL_INI)
 		return;
 		
-//		void halBspPreDischargeRelayOn(void);
-//void halBspPreDischargeRelayOff(void);
-
-//	HalBspK2Ctrl(1);
 	appRelayControlDebugMsg("On Pre..0");
 	if(apiRelayControlFunctionProcessor == 0)
 	{
@@ -148,9 +173,6 @@ static void checkRelayOn(void)
 		RELAY_POWER_ON();
 		appRelayControlDebugMsg("On Pre..1");
 	}
-
-//	P_MAIN_RELAY_ON();
-//	M_MAIN_RELAY_ON();
 }
 
 static void relayControlSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)

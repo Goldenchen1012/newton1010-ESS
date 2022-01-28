@@ -168,6 +168,9 @@ void apiSysParSetOvpPar(uint8_t level, tScuProtectPar *pPar);
 void apiSysParGetUvpPar(uint8_t level, tScuProtectPar *pPar);
 void apiSysParSetUvpPar(uint8_t level, tScuProtectPar *pPar);
 
+void apiSysParGetDvpPar(uint8_t level, tScuProtectPar *pPar);
+void apiSysParSetDvpPar(uint8_t level, tScuProtectPar *pPar);
+
 void apiSysParGet2ndOtProtectPar(tScuProtectPar *pPar);
 void apiSysParSet2ndOtProtectPar(tScuProtectPar *pPar);
 void apiSysParGet2ndUtProtectPar(tScuProtectPar *pPar);
@@ -225,6 +228,9 @@ void apiSysParSetCycleCount(uint16_t count);
 uint16_t apiSysParGetPfFlag(void);
 void apiSysParSetPfFlag(uint16_t flag);
 uint32_t apiSysParGetChecksum(void);
+
+void apiSysParSetScuOtPar(uint8_t index, uint8_t level, tScuProtectPar *pPar);
+void apiSysParGetScuOtPar(uint8_t index, uint8_t level, tScuProtectPar *pPar);
 
 uint16_t apiSysParOpen(void);
 

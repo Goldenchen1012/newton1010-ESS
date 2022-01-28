@@ -45,6 +45,9 @@
 #include "ApiSignalFeedback.h"
 #include "HalRtc.h"
 #include "AppBms.h"
+#include "ApiProtectScuOt.h"
+#include "ApiProtectDvp.h"
+#include "ApiProtectDtp.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 
@@ -62,9 +65,14 @@ typedef void (* tSystemFlagCheckFunTable)(void);
 static uint16_t	SystemFlagSubIndex = 0;
 static uint32_t	SystemFlag1Temp;
 static uint32_t	SystemFlag2Temp;
+static uint32_t	SystemFlag3Temp;
+static uint32_t	SystemFlag4Temp;
+
 static uint8_t 	SystemFlagFunIndex = 0;
 static uint32_t	SystemFlag1 = 0;
 static uint32_t	SystemFlag2 = 0;
+static uint32_t	SystemFlag3 = 0;
+static uint32_t	SystemFlag4 = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void systemFlagNextFunction(void)
@@ -80,6 +88,9 @@ static void systemFlagCheckFinish(void)
 {
 	SystemFlag1 = SystemFlag1Temp;
 	SystemFlag2 = SystemFlag2Temp;
+	SystemFlag3 = SystemFlag3Temp;
+	SystemFlag4 = SystemFlag4Temp;
+
 	SystemFlagFunIndex = 0;
 	SystemFlagSubIndex = 0;
 }
@@ -572,12 +583,93 @@ static void checkOVP_L1(void)
 	}
 }
 
+static void checkScuOt(void)
+{
+	uint8_t	flag;
+	
+	flag = apiProtectScuOtFlag(0);
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_RLY1_OT_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_RLY1_OT_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_RLY1_OT_L3;
+		
+	flag = apiProtectScuOtFlag(1);
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_RLY2_OT_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_RLY2_OT_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_RLY2_OT_L3;
+
+	flag = apiProtectScuOtFlag(2);
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_AMBI_OT_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_AMBI_OT_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_AMBI_OT_L3;
+
+	flag = apiProtectScuOtFlag(3);
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_BUSBARP_OT_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_BUSBARP_OT_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_BUSBARP_OT_L3;
+
+	flag = apiProtectScuOtFlag(4);
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_BUSBARN_OT_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_BUSBARN_OT_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_BUSBARN_OT_L3;
+		
+	systemFlagNextFunction();
+}
+
+static void checkDvp(void)
+{
+	uint8_t	flag;
+	
+	flag = apiProtectDvpGetFlag();
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_DVP_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_DVP_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_DVP_L3;
+		
+	systemFlagNextFunction();
+}
+
+
+static void checkDtp(void)
+{
+	uint8_t	flag;
+	
+	flag = apiProtectDtpGetFlag();
+	if( (flag & PROTECT_FLAG_L1_MASK) >= PROTECT_FLAG_L1_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_DTP_L1;
+	if( (flag & PROTECT_FLAG_L2_MASK) >= PROTECT_FLAG_L2_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_DTP_L2;
+	if( (flag & PROTECT_FLAG_L3_MASK) >= PROTECT_FLAG_L3_SETTED)
+		SystemFlag3Temp |= SYSTEM_FLAG3_DTP_L3;
+		
+	systemFlagNextFunction();
+}
+
+
 static void systemFlagIni(void)
 {
 	SystemFlagFunIndex = 1;
 	SystemFlagSubIndex = 0;
 	SystemFlag1Temp = 0;
 	SystemFlag2Temp = 0;
+	SystemFlag3Temp = 0;
+	SystemFlag4Temp = 0;
 }
 
 const tSystemFlagCheckFunTable mSystemFlagCheckFunTable[]={
@@ -605,6 +697,9 @@ const tSystemFlagCheckFunTable mSystemFlagCheckFunTable[]={
 		checkOtherFlag,
 		checkMinMaxCellVoltage,
 		checkMinMaxNtcTempVoltage,
+		checkScuOt,
+		checkDvp,
+		checkDtp,
 		
 		systemFlagCheckFinish
 };
@@ -633,6 +728,14 @@ uint32_t apiSystemFlagGetFlag1(void)
 uint32_t apiSystemFlagGetFlag2(void)
 {
 	return SystemFlag2;
+}
+uint32_t apiSystemFlagGetFlag3(void)
+{
+	return SystemFlag3;
+}
+uint32_t apiSystemFlagGetFlag4(void)
+{
+	return SystemFlag4;
 }
 
 void apiSystemFlagOpen(void)

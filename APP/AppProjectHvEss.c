@@ -56,6 +56,7 @@
 #include "AppProjectTest.h"
 #include "smp_log_managment.h"
 #include "ApiFu.h"
+#include "AppLed.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
@@ -69,8 +70,18 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 
 #define	saveEventLog(type, par)		apiEventLogSaveLogData(type, par)
 #define	NFAULT_IDLE_COUNT	10
+
+enum{
+	APP_EVENT_T10MS = 0,
+	APP_EVENT_STATE_INI,
+	APP_EVENT_STATE_UNINI,
+	APP_EVENT_END
+};
+
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
+typedef void (* tProjectStateEvtHandler)(uint8_t evt);
+
 /* Public variables ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
@@ -82,7 +93,63 @@ static uint8_t	SystemReadyFlag = 0;
 static uint8_t	RelayOnFlag = 0;
 static uint8_t	NFaultIdleCount = NFAULT_IDLE_COUNT;
 
+tProjectStateEvtHandler	projectStateHandler = 0;
+
 /* Private function prototypes -----------------------------------------------*/
+
+static void exeProjectStateHandler(uint8_t evt)
+{
+	if(projectStateHandler)
+		projectStateHandler(evt);
+}
+
+static void changeProjectState(tProjectStateEvtHandler handler)
+{
+	exeProjectStateHandler(APP_EVENT_STATE_UNINI);
+	projectStateHandler = handler;
+	exeProjectStateHandler(APP_EVENT_STATE_INI);
+}
+
+static void projectSystemReadyState(uint8_t evt)
+{
+	uint8_t	soc,step;
+	switch(evt)
+	{
+	case APP_EVENT_T10MS:
+		break;
+	case APP_EVENT_STATE_INI:
+		appLedSetState(0, LED_STATE_CAPACITY, 0);
+		appLedSetState(0, LED_STATE_COMM, 0);
+		appSerialCanDavinciSendTextMessage("projectSystemReadyState ini");
+		break;
+	case APP_EVENT_STATE_UNINI:
+		appSerialCanDavinciSendTextMessage("projectSystemReadyState Unini");
+		break;
+	}
+}
+
+static void projectPowerOnState(uint8_t evt)
+{
+	switch(evt)
+	{
+	case APP_EVENT_T10MS:
+		if(appProjectIsSystemReadyFlag())
+		{
+			changeProjectState(projectSystemReadyState);
+			return;
+		}	
+		break;
+	case APP_EVENT_STATE_INI:
+		appLedSetState(0, LED_STATE_WAIT_SYS_READY, 0);
+		appSerialCanDavinciSendTextMessage("projectPowerOnState ini");
+		break;
+	case APP_EVENT_STATE_UNINI:
+		appSerialCanDavinciSendTextMessage("projectPowerOnState Unini");
+		break;
+	}	
+}
+
+
 static void releaseOCP(void);
 
 static void afeLineLossCallBack(uint16_t channel, uint16_t *CellVoltage)
@@ -137,7 +204,6 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_PROTECT_OVP_L3_SET:
 		relayOff();
-		//appProjectDebugMsg("OVP L3 set");
 		saveEventLog(EVENT_TYPE_OVP_L3_SET, libGetUint16((uint8_t *)pData));
 		break;
 	case APP_PROTECT_OVP_L1_RELEASE:
@@ -156,8 +222,8 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		saveEventLog(EVENT_TYPE_UVP_L2_SET, libGetUint16((uint8_t *)pData));	
 		break;
 	case APP_PROTECT_UVP_L3_SET:
-		saveEventLog(EVENT_TYPE_UVP_L3_SET, libGetUint16((uint8_t *)pData));
 		relayOff();
+		saveEventLog(EVENT_TYPE_UVP_L3_SET, libGetUint16((uint8_t *)pData));		
 		break;
 	case APP_PROTECT_UVP_L1_RELEASE:
 		saveEventLog(EVENT_TYPE_UVP_L1_RELEASE, libGetUint16((uint8_t *)pData));
@@ -169,6 +235,31 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		saveEventLog(EVENT_TYPE_UVP_L3_RELEASE, libGetUint16((uint8_t *)pData));
 		relayOff();
 		break;
+	case APP_PROTECT_DVP_L1_SET:
+	case APP_PROTECT_DVP_L2_SET:
+		break;
+	case APP_PROTECT_DVP_L3_SET:
+		relayOff();
+		break;
+	case APP_PROTECT_DVP_L1_RELEASE:
+	case APP_PROTECT_DVP_L2_RELEASE:
+		break;
+	case APP_PROTECT_DVP_L3_RELEASE:
+		relayOff();
+		break;
+	case APP_PROTECT_DTP_L1_SET:
+	case APP_PROTECT_DTP_L2_SET:
+		break;
+	case APP_PROTECT_DTP_L3_SET:
+		relayOff();
+		break;
+	case APP_PROTECT_DTP_L1_RELEASE:
+	case APP_PROTECT_DTP_L2_RELEASE:
+		break;
+	case APP_PROTECT_DTP_L3_RELEASE:
+		relayOff();
+		break;
+
 	case APP_PROTECT_COTP_L1_SET:
 		saveEventLog(EVENT_TYPE_COTP_L1_SET, libGetUint16((uint8_t *)pData));
 		break;	
@@ -176,8 +267,8 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		saveEventLog(EVENT_TYPE_COTP_L2_SET, libGetUint16((uint8_t *)pData));
 		break;
 	case APP_PROTECT_COTP_L3_SET:
-		saveEventLog(EVENT_TYPE_COTP_L3_SET, libGetUint16((uint8_t *)pData));
 		relayOff();
+		saveEventLog(EVENT_TYPE_COTP_L3_SET, libGetUint16((uint8_t *)pData));		
 		break;
 	case APP_PROTECT_COTP_L4_SET:
 		saveEventLog(EVENT_TYPE_COTP_L4_SET, libGetUint16((uint8_t *)pData));
@@ -202,8 +293,8 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		saveEventLog(EVENT_TYPE_CUTP_L2_SET, libGetUint16((uint8_t *)pData));
 		break;
 	case APP_PROTECT_CUTP_L3_SET:
-		saveEventLog(EVENT_TYPE_CUTP_L3_SET, libGetUint16((uint8_t *)pData));
 		relayOff();
+		saveEventLog(EVENT_TYPE_CUTP_L3_SET, libGetUint16((uint8_t *)pData));		
 		break;
 	case APP_PROTECT_CUTP_L4_SET:
 		saveEventLog(EVENT_TYPE_CUTP_L4_SET, libGetUint16((uint8_t *)pData));
@@ -321,6 +412,101 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		apiSysParUvpPfSet();
 		saveEventLog(EVENT_TYPE_UVP_PF, libGetUint16((uint8_t *)pData));
 		break;
+	case APP_PROTECT_RLY1_OT_L1_SET:
+		saveEventLog(EVENT_TYPE_RLY1_OT_L1_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY1_OT_L2_SET:
+		saveEventLog(EVENT_TYPE_RLY1_OT_L2_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY1_OT_L3_SET:
+		relayOff();
+		saveEventLog(EVENT_TYPE_RLY1_OT_L3_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY1_OT_L1_RELEASE:
+		saveEventLog(EVENT_TYPE_RLY1_OT_L1_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY1_OT_L2_RELEASE:
+		saveEventLog(EVENT_TYPE_RLY1_OT_L2_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY1_OT_L3_RELEASE:
+		saveEventLog(EVENT_TYPE_RLY1_OT_L3_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY2_OT_L1_SET:
+		saveEventLog(EVENT_TYPE_RLY2_OT_L1_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY2_OT_L2_SET:
+		saveEventLog(EVENT_TYPE_RLY2_OT_L2_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY2_OT_L3_SET:
+		relayOff();
+		saveEventLog(EVENT_TYPE_RLY2_OT_L3_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY2_OT_L1_RELEASE:
+		saveEventLog(EVENT_TYPE_RLY2_OT_L1_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY2_OT_L2_RELEASE:
+		saveEventLog(EVENT_TYPE_RLY2_OT_L2_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_RLY2_OT_L3_RELEASE:
+		saveEventLog(EVENT_TYPE_RLY2_OT_L3_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_AMBI_OT_L1_SET:
+		saveEventLog(EVENT_TYPE_AMBI_OT_L1_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_AMBI_OT_L2_SET:
+		saveEventLog(EVENT_TYPE_AMBI_OT_L2_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_AMBI_OT_L3_SET:
+		relayOff();
+		saveEventLog(EVENT_TYPE_AMBI_OT_L3_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_AMBI_OT_L1_RELEASE:
+		saveEventLog(EVENT_TYPE_AMBI_OT_L1_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_AMBI_OT_L2_RELEASE:
+		saveEventLog(EVENT_TYPE_AMBI_OT_L2_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_AMBI_OT_L3_RELEASE:
+		saveEventLog(EVENT_TYPE_AMBI_OT_L3_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_P_OT_L1_SET:
+		saveEventLog(EVENT_TYPE_BUSBAR_P_OT_L1_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_P_OT_L2_SET:
+		saveEventLog(EVENT_TYPE_BUSBAR_P_OT_L2_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_P_OT_L3_SET:
+		relayOff();
+		saveEventLog(EVENT_TYPE_BUSBAR_P_OT_L3_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_P_OT_L1_RELEASE:
+		saveEventLog(EVENT_TYPE_BUSBAR_P_OT_L1_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_P_OT_L2_RELEASE:
+		saveEventLog(EVENT_TYPE_BUSBAR_P_OT_L2_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_P_OT_L3_RELEASE:
+		saveEventLog(EVENT_TYPE_BUSBAR_P_OT_L3_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_N_OT_L1_SET:
+		saveEventLog(EVENT_TYPE_BUSBAR_N_OT_L1_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_N_OT_L2_SET:
+		saveEventLog(EVENT_TYPE_BUSBAR_N_OT_L2_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_N_OT_L3_SET:
+		relayOff();
+		saveEventLog(EVENT_TYPE_BUSBAR_N_OT_L3_SET, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_N_OT_L1_RELEASE:
+		saveEventLog(EVENT_TYPE_BUSBAR_N_OT_L1_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_N_OT_L2_RELEASE:
+		saveEventLog(EVENT_TYPE_BUSBAR_N_OT_L2_RELEASE, libGetUint16((uint8_t *)pData));
+		break;
+	case APP_PROTECT_BUSBAR_N_OT_L3_RELEASE:
+		saveEventLog(EVENT_TYPE_BUSBAR_N_OT_L3_RELEASE, libGetUint16((uint8_t *)pData));
+		break;	
 	}
 }
 
@@ -563,6 +749,11 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
+		
+	}
+	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_3)
+	{
+		exeProjectStateHandler(APP_EVENT_T10MS);
 	}
 #ifdef APP_RESET_TEST
 	else if(evt == LIB_SW_TIMER_EVT_SW_10MS_2)
@@ -593,6 +784,7 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 		}
 #endif		
 	}
+	
 }
 
 static void appProjectHwTimerHandler(void *pin, uint16_t evt, void *pData)
@@ -809,6 +1001,7 @@ void appProjectOpen(void){
 	//EepromFunctionTest();
 
 	sprintf(str,"Par Len = %d", len);
+	appSerialCanDavinciSendTextMessage(str);
 	appProjectDebugMsg(str);
 	appBalanceOpen(appProjectDavinciBalanceEventHandler);
 	apiSignalFeedbackOpen(signalFeedbackEventHandler);
@@ -822,7 +1015,7 @@ void appProjectOpen(void){
 	appButtonOpen(buttonEventHandler);
 	appTcpipSmpOpen();
 	IrFunctionOpen();
-
+	appLedOpen();
 
 //HalBspReleaseCtrl
 //	NtcTest();
@@ -876,7 +1069,7 @@ void appProjectOpen(void){
 
 //	appTestProjectOpen();
 	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.25...0");
-
+	changeProjectState(projectPowerOnState);
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

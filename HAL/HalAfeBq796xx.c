@@ -36,7 +36,7 @@
 #define	AFE_DEBUG_S_NUM		2
 
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	halAfeBq796xxDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
+#define	halAfeBq796xxDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	afeCommL1Time()					5
@@ -47,7 +47,7 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 
 #define	PASER_COUNT_PER_ONE_TIMES		3
 
-#define	afeBmuNumber()					11//apiSysParGetBmuNumber()
+#define	afeBmuNumber()					apiSysParGetBmuNumber()
 
 //#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01,GPIOD->ODR ^= GPIO_PIN_13;}
 #define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01;}
@@ -98,7 +98,6 @@ static uint8_t	AfeCommFlag = 0;
 static uint16_t	BalanceData[64];
 
 static uint16_t	AfeFailTimerCount = 0;
-//static uint8_t	IsBalanceEnable = 1;
 
 static uint8_t	PaserCount;
 static uint8_t	PaserIndex;
@@ -290,13 +289,11 @@ static void paserAfeResponse(void)
 
 static void mainFunStartGetNtc(void)
 {
-//	halAfeBq796xxDebugMsg("main-1");
 	ntcChannelOffset = 0;
 	getNextMainFunctionPointer();
 }
 static void mainFunChangeChannel(void)
 {
-//	halAfeBq796xxDebugMsg("main-3");
 	if(StackCountForIni[BridgeDirection] < afeBmuNumber())
 	{
 		if(BridgeDirection == DIR_NORTH)
@@ -558,7 +555,6 @@ static void sendOutBalanceDataLo(void)
 	//BalanceOnFlag = 1;
 	if(BalanceOnFlag == 0)
 	{
-//		IsBalanceEnable = 0;
 		getNextMainFunctionPointer();
 		return;
 	}
@@ -586,7 +582,6 @@ static void sendOutBalanceDataLo(void)
 		//halAfeBq796xxDebugMsg(str);
 		if(dat)
 		{
-//			IsBalanceEnable = 1;
 			drv_bq796xx_CellBalance_1to8_set(BalanceBmuIndex + 1, dat, CB_TIME_10S, 0);
 		}
 		if(isLastBmuForBalance())
@@ -609,7 +604,6 @@ static void sendOutBalanceDataHi(void)
 	
 	if(BalanceOnFlag == 0)
 	{
-//		IsBalanceEnable = 0;
 		getNextMainFunctionPointer();
 		return;
 	}
@@ -636,7 +630,6 @@ static void sendOutBalanceDataHi(void)
 		//halAfeBq796xxDebugMsg(str);
 		if(dat)
 		{
-//			IsBalanceEnable = 1;
 			drv_bq796xx_CellBalance_9to16_set(BalanceBmuIndex + 1, dat, CB_TIME_10S, 0);
 		}
 		if(isLastBmuForBalance())
@@ -778,7 +771,7 @@ static void DecodeNtcVoltageByNtcFlag(bq796xx_data_t *bq_data,uint8_t NtcDataCha
 				{
 					adc = bq_data->gpio_data[BmuIndex][0];
 					voltage = CvtNtcAdcToMv(adc);
-					halAfeSetNtcAdcData(LogicNtcIndex, voltage);
+					halAfeSetNtcVoltage(LogicNtcIndex, voltage);
 				}
 				LogicNtcIndex++;
 			}
@@ -1468,6 +1461,7 @@ static void setupAfe2ndOvValue(void)
 	#define	OV_STEP_MV					25
 	tScuProtectPar	ProtectPar;
 	uint16_t		setvalue;	
+	
 	apiSysParGetOvpPar(HW_2ND_PROTECT_PAR_INDEX, &ProtectPar);
 	if(ProtectPar.STime.l == 0)
 	{
@@ -1502,6 +1496,16 @@ static void setupAfe2ndOvValue(void)
 	else
 		setvalue = 0x3f;
 	afe_load_data.ov_threshold = setvalue;		  
+#if 1
+	{
+		char	str[100];	
+		sprintf(str,"Sen OV = %d %d, %d", setvalue,
+					afe_load_data.ov_enable,
+					ProtectPar.SetValue.l
+					);
+		halAfeBq796xxDebugMsg(str);
+	}
+#endif
 }
 static void setupAfe2ndUvValue(void)
 {
@@ -1527,6 +1531,17 @@ static void setupAfe2ndUvValue(void)
 	else
 		setvalue = UV_2500MV;
 	afe_load_data.uv_threshold = setvalue;
+#if 1
+	{
+		char	str[100];	
+		sprintf(str,"Sen UV = %d %d, %d", setvalue,
+					afe_load_data.uv_enable,
+					ProtectPar.SetValue.l
+					);
+		halAfeBq796xxDebugMsg(str);
+	}
+#endif	
+	
 }
 uint8_t	converterNtcVoltageToPercentage(uint16_t voltage)
 {
@@ -1543,7 +1558,6 @@ static void setupAfe2ndOtValue(void)
 	uint16_t	ntc_voltage;
 	uint8_t		Percentage;
 	tScuProtectPar	ProtectPar;
-	char	str[100];
 	
 	apiSysParGet2ndOtProtectPar(&ProtectPar);
 	if(ProtectPar.STime.l == 0)
@@ -1566,20 +1580,33 @@ static void setupAfe2ndOtValue(void)
 		Percentage = OT_10_PCT;
 	afe_load_data.ot_threshold = Percentage;
 	
-	sprintf(str,"Sen OT = %d",10 + Percentage);
-	halAfeBq796xxDebugMsg(str);
-// .ot_threshold         =OT_10_PCT,                      \
-// .ut_threshold         =UT_80_PCT,                      \
-
+#if 1
+	{
+		char	str[100];	
+		sprintf(str,"Sen OT = %d %d %d, %d",Percentage,
+					ntc_voltage,
+					afe_load_data.ot_enable,
+					ProtectPar.SetValue.i[0]					
+					);
+		halAfeBq796xxDebugMsg(str);
+	}
+#endif	
 }
 static void setupAfe2ndUtValue(void)
 {
 	uint16_t	ntc_voltage;
 	uint8_t		Percentage;
 	tScuProtectPar	ProtectPar;
-	char	str[100];
 	
 	apiSysParGet2ndUtProtectPar(&ProtectPar);
+	if(ProtectPar.STime.l == 0)
+	{
+		afe_load_data.ut_enable = BQ_DISABLE;	
+	}
+	else
+	{
+		afe_load_data.ut_enable = BQ_ENABLE;	
+	}
 	ntc_voltage = LibTemperatureToVoltage(ProtectPar.SetValue.i[0]);
 	
 	Percentage = converterNtcVoltageToPercentage(ntc_voltage);
@@ -1592,9 +1619,18 @@ static void setupAfe2ndUtValue(void)
 	else 
 		Percentage = UT_80_PCT;
 	afe_load_data.ut_threshold = Percentage;
+#if 1
+	{
+		char	str[100];	
 	
-	sprintf(str,"Sen UT = %d",66 + (Percentage * 2));
-	halAfeBq796xxDebugMsg(str);
+		sprintf(str,"Sen UT = %d %d %d, %d", Percentage,
+						ntc_voltage,
+						afe_load_data.ut_enable,
+						ProtectPar.SetValue.i[0]
+						);	
+		halAfeBq796xxDebugMsg(str);
+	}
+#endif
 }
 
 /* Public function prototypes -----------------------------------------------*/

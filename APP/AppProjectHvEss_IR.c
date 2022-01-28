@@ -57,7 +57,7 @@
 
 
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	projectIrDbgMsg(str)	appSerialCanDavinciSendTextMessage(str)
+#define	projectIrDbgMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define ADS7946_VREF                           4.096f
@@ -129,10 +129,10 @@ static void app_imr_ads7946_callBack(uint8_t *pDat, uint8_t size)
 	AdcValue.b[0] = pDat[3];
 	AdcValue.i >>= 2;
 #if 1	
-//	if(isCalibrationExist(&SysCalPar.RamPar.VBat[0]))
+	//if(isCalibrationExist(&SysCalPar.RamPar.VBat[0]))
 		volt_data = doCalibration(&SysCalPar.RamPar.VBat[0], AdcValue.i);
-	sprintf(str,"Vbat = %f", volt_data);
-	projectIrDbgMsg(str);
+//	sprintf(str,"Vbat = %f", volt_data);
+//	projectIrDbgMsg(str);
 //	else
 //	{
 		

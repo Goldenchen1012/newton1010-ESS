@@ -56,10 +56,11 @@ const uint8_t	SmpFwHeadInfo2[]="SMPhvessFirmWare";
 static struct{
 	uint8_t		FwHeadInfo1[16];
 	tLbyte		Version;
+	tLbyte		Length;
 	tLbyte		BuildDate;
 	tLbyte		BuildTime;
 	tLbyte		CheckSum;
-	tLbyte		Reserved[4];
+	tLbyte		Reserved[3];
 	uint8_t		FwHeadInfo2[16];
 	uint8_t		ProjectId[16];
 	uint8_t		Rev[10];
@@ -187,6 +188,8 @@ void apiFuCheckMagicCode(void)
 	tErrCode		result;
 	tHalEeProm		mHalEeProm;
 	uint8_t			index;
+	char	str[100];
+	
 	index = apiFuGetMagicModeIndex();
 	switch(index)
 	{	
@@ -222,10 +225,18 @@ void apiFuCheckMagicCode(void)
 	DumpBuffer((uint8_t *)&FwInformation, 80);
 		fuDebugMsg(FwInformation.FwHeadInfo1);
 		fuDebugMsg(FwInformation.FwHeadInfo2);
+		
+	sprintf(str,"Ver=%X",FwInformation.Version.l);
+	fuDebugMsg(str);
+
+	sprintf(str,"Date=%X",FwInformation.BuildDate.l);
+	fuDebugMsg(str);
+
+	sprintf(str,"Time=%X",FwInformation.BuildTime.l);
+	fuDebugMsg(str);
 
 	if(result == RES_SUCCESS)
-	{
-		
+	{		
 		if(memcmp(&FwInformation.FwHeadInfo1, &SmpFwHeadInfo1, 16) != 0 ||
 		   memcmp(&FwInformation.FwHeadInfo2, &SmpFwHeadInfo2, 16) != 0)
 		{
@@ -254,6 +265,10 @@ uint32_t apiFuGetFwBuildDate(void)
 uint32_t apiFuGetFwBuildTime(void)
 {
 	return FwInformation.BuildTime.l;
+}
+uint32_t apiFuGetFwChecksum(void)
+{
+	return FwInformation.CheckSum.l;
 }
 
 //----------------------------------------------------------------

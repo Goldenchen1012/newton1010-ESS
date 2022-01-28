@@ -63,7 +63,7 @@ uint8_t apiProtectCutpHandler(uint8_t ProtectLevel)
 //	if(InEngineerModeFlag)
 //		return;	
 	uint8_t		checkcount = 0;
-	tNtcAdcData		NtcAdcValue;
+	tNtcVoltage		NtcVoltage;
 	tProtectFlagValue	ProtectFlagValue;
 	tScuProtectPar		ProtectPar;
 
@@ -78,14 +78,14 @@ uint8_t apiProtectCutpHandler(uint8_t ProtectLevel)
 
 	while(1)
 	{			
-		NtcAdcValue = HalAfeGetNtcAdc(CutpNtcIndex);
+		NtcVoltage = HalAfeGetNtcVoltage(CutpNtcIndex);
 
-//		sprintf(str,"%d %d",CutpNtcIndex, NtcAdcValue);
+//		sprintf(str,"%d %d",CutpNtcIndex, NtcVoltage);
 //		if(!flag)
 //			appProtectCutpDebugMsg(str);
 //		flag = 1;
 		
-		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.SetValue.l) && ProtectPar.STime.l)
+		if(appProtectIsUnderTemperter(NtcVoltage, ProtectPar.SetValue.l) && ProtectPar.STime.l)
 		{
 			if((mCutpProtect.Flag[CutpNtcIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -115,7 +115,7 @@ uint8_t apiProtectCutpHandler(uint8_t ProtectLevel)
 		}
 		//--------------------------------------------------------------------------
 		//	Level	Release
-		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
+		if(appProtectIsOverTemperter(NtcVoltage, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
 		{
 			if((mCutpProtect.Flag[CutpNtcIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

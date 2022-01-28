@@ -28,6 +28,7 @@
 #include "ApiProtectDutp.h"
 #include "ApiProtectCocp.h"
 #include "ApiProtectDocp.h"
+#include "ApiProtectScuOt.h"
 #include "LibSwTimer.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -208,11 +209,41 @@ static void appProtectDocp_L3(void)
 	checkNextProtectFunction();
 }
 //---------------------------------
+
+//	scuot
+static void appProtectScuOt_L1(void)
+{
+	apiProtectScuOtHandler(0);
+	checkNextProtectFunction();
+}
+static void appProtectScuOt_L2(void)
+{
+	apiProtectScuOtHandler(1);
+	checkNextProtectFunction();
+}
+
+static void appProtectScuOt_L3(void)
+{
+	apiProtectScuOtHandler(2);
+	checkNextProtectFunction();
+}
+//---------------------------------
+static void appProtectDvp(void)
+{
+	apiProtectDvpHandler();
+	checkNextProtectFunction();
+}
+//---------------------------------
+static void appProtectDtp(void)
+{
+	apiProtectDtpHandler();
+	checkNextProtectFunction();
+}
+//---------------------------------
 static void appProtectEnd(void)
 {
 	ProtectFunIndex	= 0;
 }
-
 
 const tProtectRunTable	ProtectRunTable[]={
 	appProtectNone,
@@ -258,6 +289,16 @@ const tProtectRunTable	ProtectRunTable[]={
 	appProtectDocp_L2,
 	appProtectDocp_L3,
 #endif
+#if 1
+	appProtectScuOt_L1,
+	appProtectScuOt_L2,
+	appProtectScuOt_L3,
+#endif
+#if 1
+	appProtectDvp,
+	appProtectDtp,
+#endif
+
 	appProtectEnd
 };
 
@@ -278,12 +319,12 @@ void appProtectGetLevelMask(uint8_t Level, tProtectFlagValue *pProtectFlagValue)
 	pProtectFlagValue->Releasing = LevelTable[Level][3];
 }
 
-uint8_t	appProtectIsUnderTemperter(tNtcAdcData NtcAdcValue, tNtcAdcData CompareAdcValue)
+uint8_t	appProtectIsUnderTemperter(tNtcVoltage NtcVoltage, tNtcVoltage CompareVoltage)
 {
 #ifdef USE_TEMP_VALUE_FOR_TEMP_COMPARE	
-	if(NtcAdcValue < CompareAdcValue)
+	if(NtcVoltage < CompareVoltage)
 #else
-	if(NtcAdcValue > CompareAdcValue)
+	if(NtcVoltage > CompareVoltage)
 #endif	
 	{
 		return 1;
@@ -292,12 +333,12 @@ uint8_t	appProtectIsUnderTemperter(tNtcAdcData NtcAdcValue, tNtcAdcData CompareA
 		return 0;
 }
 
-uint8_t	appProtectIsOverTemperter(tNtcAdcData NtcAdcValue, tNtcAdcData CompareAdcValue)
+uint8_t	appProtectIsOverTemperter(tNtcVoltage NtcVoltage, tNtcVoltage CompareVoltage)
 {
 #ifdef USE_TEMP_VALUE_FOR_TEMP_COMPARE	
-	if(NtcAdcValue > CompareAdcValue)
+	if(NtcVoltage > CompareVoltage)
 #else	
-	if(NtcAdcValue < CompareAdcValue)
+	if(NtcVoltage < CompareVoltage)
 #endif
 	{	
 		return 1;
@@ -344,6 +385,9 @@ void appProtectOpen(tAppProtectEvtHandler evtHandler)
 	apiProtectDotpOpen(evtHandler);
 	apiProtectCocpOpen(evtHandler);
 	apiProtectDocpOpen(evtHandler);
+	apiProtectScuOtOpen(evtHandler);
+	apiProtectDvpOpen(evtHandler);
+	apiProtectDtpOpen(evtHandler);
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

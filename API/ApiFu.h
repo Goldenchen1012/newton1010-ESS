@@ -77,6 +77,7 @@ void apiFuCheckMagicCode(void);
 uint32_t apiFuGetFwVersion(void);
 uint32_t apiFuGetFwBuildDate(void);
 uint32_t apiFuGetFwBuildTime(void);
+uint32_t apiFuGetFwChecksum(void);
 
 
 #ifdef __cplusplus

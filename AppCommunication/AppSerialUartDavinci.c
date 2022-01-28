@@ -300,7 +300,7 @@ static void appSerialUartSendNtcTemp(void)
 	uint8_t	buf[100];
 	tIbyte	Ibyte;
 	
-	Ibyte.i = HalAfeGetNtcAdc(SubIndex);
+	Ibyte.i = HalAfeGetNtcVoltage(SubIndex);
 	buf[1] = 8;
 	buf[2] = 'U';
 	buf[3] = 'I';
@@ -398,7 +398,7 @@ static void appSerialUartPackageParser(void)
 				CellVoltage.i /= 100;
 				CellVoltage.i = LibTemperatureToVoltage(CellVoltage.i);
 				
-				halAfeSetNtcAdcData(ntc++, CellVoltage.i);				
+				halAfeSetNtcVoltage(ntc++, CellVoltage.i);				
 			}
 			break;
 		case 'I':	//current

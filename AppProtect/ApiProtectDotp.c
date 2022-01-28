@@ -62,7 +62,7 @@ uint8_t apiProtectDotpHandler(uint8_t ProtectLevel)
 //	if(InEngineerModeFlag)
 //		return;	
 	static 	uint8_t		flag = 0;
-	uint16_t		NtcAdcValue;
+	uint16_t		NtcVoltage;
 	tProtectFlagValue	ProtectFlagValue;
 	tScuProtectPar		ProtectPar;
 	
@@ -78,13 +78,13 @@ uint8_t apiProtectDotpHandler(uint8_t ProtectLevel)
 
 	while(1)
 	{			
-		NtcAdcValue = HalAfeGetNtcAdc(DotpNtcIndex);
-//		sprintf(str,"%d %d",DotpNtcIndex, NtcAdcValue);
+		NtcVoltage = HalAfeGetNtcVoltage(DotpNtcIndex);
+//		sprintf(str,"%d %d",DotpNtcIndex, NtcVoltage);
 //		if(!flag)
 //			appProtectDotpDebugMsg(str);
 //		flag = 1;
 
-		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.SetValue.l) && ProtectPar.STime.l)
+		if(appProtectIsOverTemperter(NtcVoltage, ProtectPar.SetValue.l) && ProtectPar.STime.l)
 		{
 			if((mDotpProtect.Flag[DotpNtcIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -114,7 +114,7 @@ uint8_t apiProtectDotpHandler(uint8_t ProtectLevel)
 		}
 		//--------------------------------------------------------------------------
 		//	Level	Release
-		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
+		if(appProtectIsUnderTemperter(NtcVoltage, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
 		{
 			if((mDotpProtect.Flag[DotpNtcIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

@@ -82,6 +82,34 @@ extern "C" {
 #define	SYSTEM_FLAG2_ENG_MODE		(1 << 22)
 #define	SYSTEM_FLAG2_AFE_INI_STATE	(1 << 23)
 
+
+#define	SYSTEM_FLAG3_RLY1_OT_L1		(1 << 0)
+#define	SYSTEM_FLAG3_RLY1_OT_L2		(1 << 1)
+#define	SYSTEM_FLAG3_RLY1_OT_L3		(1 << 2)
+#define	SYSTEM_FLAG3_RLY2_OT_L1		(1 << 3)
+#define	SYSTEM_FLAG3_RLY2_OT_L2		(1 << 4)
+#define	SYSTEM_FLAG3_RLY2_OT_L3		(1 << 5)
+#define	SYSTEM_FLAG3_AMBI_OT_L1		(1 << 6)
+#define	SYSTEM_FLAG3_AMBI_OT_L2		(1 << 7)
+#define	SYSTEM_FLAG3_AMBI_OT_L3		(1 << 8)
+#define	SYSTEM_FLAG3_BUSBARP_OT_L1		(1 << 9)
+#define	SYSTEM_FLAG3_BUSBARP_OT_L2		(1 << 10)
+#define	SYSTEM_FLAG3_BUSBARP_OT_L3		(1 << 11)
+#define	SYSTEM_FLAG3_BUSBARN_OT_L1		(1 << 12)
+#define	SYSTEM_FLAG3_BUSBARN_OT_L2		(1 << 13)
+#define	SYSTEM_FLAG3_BUSBARN_OT_L3		(1 << 14)
+#define	SYSTEM_FLAG3_DVP_L1				(1 << 15)
+#define	SYSTEM_FLAG3_DVP_L2				(1 << 16)
+#define	SYSTEM_FLAG3_DVP_L3				(1 << 17)
+#define	SYSTEM_FLAG3_DTP_L1				(1 << 18)
+#define	SYSTEM_FLAG3_DTP_L2				(1 << 19)
+#define	SYSTEM_FLAG3_DTP_L3				(1 << 20)
+
+
+
+
+
+
 /* Public typedef -----------------------------------------------------------*/
 /* Public macro -------------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
@@ -91,6 +119,8 @@ void appSystemFlagClearReadOnFlag(void);
 
 uint32_t apiSystemFlagGetFlag1(void);
 uint32_t apiSystemFlagGetFlag2(void);
+uint32_t apiSystemFlagGetFlag3(void);
+uint32_t apiSystemFlagGetFlag4(void);
 
 void apiSystemFlagOpen(void);
 

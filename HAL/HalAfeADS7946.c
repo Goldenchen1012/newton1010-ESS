@@ -31,7 +31,7 @@
 void appSerialUartSendMessage(char *str);
 void appSerialCanDavinciSendTextMessage(char *str);
 
-#define	halAfeADS7946DebugMsg(str)		appSerialCanDavinciSendTextMessage(str);
+#define	halAfeADS7946DebugMsg(str)		//appSerialCanDavinciSendTextMessage(str);
 
 
 /* Private define ------------------------------------------------------------*/
@@ -222,7 +222,6 @@ static void ads7946_callBack(uint8_t *pDat, uint8_t size)
 		if(appProjectIsInSimuMode() == 0)
 		{
 			halAfeSetVBatAdcValue(0, AdcValue.i);
-//			updateInternalVbatVoltage();
 		}
 	}
 	

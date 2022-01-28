@@ -156,7 +156,7 @@ static void davinciCanRelayOn(smp_can_package_t *pCanPkg)
 }
 
 
-static void davinciCanChecksumn(smp_can_package_t *pCanPkg)
+static void davinciCanChecksum(smp_can_package_t *pCanPkg)
 {
 	smp_can_package_t	CanPkg;
 	uint8_t	subindex;
@@ -173,7 +173,7 @@ static void davinciCanChecksumn(smp_can_package_t *pCanPkg)
 
 	if(subindex == SMP_FW_CHECKSUM_SUB_INDEX)
 	{
-		checksum.l = 0x123456;	
+		checksum.l = apiFuGetFwChecksum();
 	}
 	else if(subindex == SMP_PAR_CHECKSUM_SUB_INDEX)
 	{
@@ -409,7 +409,7 @@ SMP_CAN_DECODE_CMD_START(mDavinciCanCmdRxTab)
 									SMP_CMD_CHECKSUM_OBJ_INDEX,
 									0),
 								CHECK_SMP_CAN_OBJ,
-								davinciCanChecksumn)
+								davinciCanChecksum)
 
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
 									SMP_CMD_PF_FLAG_OBJ_INDEX,

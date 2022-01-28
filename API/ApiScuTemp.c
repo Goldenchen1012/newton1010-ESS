@@ -25,34 +25,31 @@
 #include "LibSwTimer.h"
 #include "LibHwTimer.h"
 #include "HalRtc.h"
-//#include "ApiRamData.h"
-//#include "ApiSysPar.h"
 #include "AppBms.h"
 #include "ApiSystemFlag.h"
-//#include "ApiRelayControl.h"
 #include "AppSerialCanDavinci.h"
 #include "ApiSignalFeedback.h"
 #include "smp_adc.h"
-//#include "
 
 void appSerialUartSendMessage(char *str);
 void appSerialCanDavinciSendTextMessage(char *str);
 
 #define	appScuTempDebugMsg(str)		appSerialCanDavinciSendTextMessage(str);
-//appSerialCanDavinciSendTextMessage(str)
-
-//appSerialUartSendMessage
-
 /* Private define ------------------------------------------------------------*/
+#define	MAX_SCU_TEMP_ITEM	5
 /* Private typedef -----------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static uint16_t app_adc_temp[5]={0};
+
+static struct{
+	uint16_t	ScuTempAdcValue[MAX_SCU_TEMP_ITEM];
+	uint16_t	ScuTempValue[MAX_SCU_TEMP_ITEM];
+}ScuTemp = {0};
 
 //Select BSP_ADC Channel use
-bsp_adc_init_io_config bsp_in_adc_ch[5]={BSP_TMP_RLY_1,
+bsp_adc_init_io_config bsp_in_adc_ch[MAX_SCU_TEMP_ITEM]={BSP_TMP_RLY_1,
                                          BSP_TMP_RLY_2,
                                          BSP_TMP_RLY_AMB,
                                          BSP_TMP_RLY_BBP,
@@ -81,13 +78,25 @@ static uint16_t cvtMcuNtcTemp(uint16_t adc)
 
 static void getScuTempValue(void)
 {
-	int32_t	temp;
-	char	str[100];
-	hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[0]);
-	hal_internal_adc_get(&app_adc_temp[1] ,adc1 , bsp_in_adc_ch[1]);
-	hal_internal_adc_get(&app_adc_temp[2] ,adc1 , bsp_in_adc_ch[2]);
-	hal_internal_adc_get(&app_adc_temp[3] ,adc1 , bsp_in_adc_ch[3]);
-	hal_internal_adc_get(&app_adc_temp[4] ,adc1 , bsp_in_adc_ch[4]);
+	uint8_t		i;
+	int32_t		temp;
+	char		str[100];
+	
+	for(i=0; i<MAX_SCU_TEMP_ITEM; i++)
+	{
+		hal_internal_adc_get(&ScuTemp.ScuTempAdcValue[i] ,adc1 , bsp_in_adc_ch[i]);	
+		if(appProjectIsInSimuMode() == 0)
+		{
+			ScuTemp.ScuTempValue[i] = cvtMcuNtcTemp(ScuTemp.ScuTempAdcValue[i]);
+		}
+	}
+#if	0		
+	hal_internal_adc_get(&ScuTemp.ScuTempAdcValue[1] ,adc1 , bsp_in_adc_ch[1]);
+	hal_internal_adc_get(&ScuTemp.ScuTempAdcValue[2] ,adc1 , bsp_in_adc_ch[2]);
+	hal_internal_adc_get(&ScuTemp.ScuTempAdcValue[3] ,adc1 , bsp_in_adc_ch[3]);
+	hal_internal_adc_get(&ScuTemp.ScuTempAdcValue[4] ,adc1 , bsp_in_adc_ch[4]);
+#endif
+	
 	
 #if	0
 	sprintf(str,"RLY1 ADC = %d %.2lfC", app_adc_temp[0],
@@ -139,9 +148,19 @@ static void scuTempSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr
 }
 
 /* Public function prototypes -----------------------------------------------*/
+void apiScuTempSetTemperature(uint16_t index, uint16_t temp)
+{
+	if(index >= MAX_SCU_TEMP_ITEM)
+		return;
+	ScuTemp.ScuTempValue[index] = temp;
+}
+
 uint16_t apiScuTempGetTemperature(uint8_t index)
 {
-	return cvtMcuNtcTemp(app_adc_temp[index]);
+	if(index >= MAX_SCU_TEMP_ITEM)
+		return 0;
+	return ScuTemp.ScuTempValue[index];
+	//return cvtMcuNtcTemp(ScuTemp.ScuTempAdcValue[index]);
 }
 void apiScuTempOpen(void)
 {

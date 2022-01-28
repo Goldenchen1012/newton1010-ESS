@@ -31,7 +31,7 @@
 #include "AppSerialCanDavinciParameter.h"
 #include "AppBms.h"
 
-void appSerialUartSendMessage(uint8_t *str);
+void appSerialCanDavinciSendTextMessage(char *str);
 #define	canCmdDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,10 +49,16 @@ static void scuIdBrocast(smp_can_package_t *pCanPkg)
 
 static void scuSystemFlag(smp_can_package_t *pCanPkg)
 {
-	uint8_t	scuid;
+	uint8_t		scuid;
+	uint16_t	subindex;
 	
 	scuid = SMP_CAN_GET_SCU_ID(pCanPkg->id);
-	appBmsSetScuSystemFlag(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
+	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
+	if(subindex == 0)
+		appBmsSetScuSystemFlag1(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
+	else if(subindex ==1)
+		appBmsSetScuSystemFlag3(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
+		
 }
 static void scuCurrent(smp_can_package_t *pCanPkg)
 {
@@ -75,28 +81,26 @@ static void scuVbat(smp_can_package_t *pCanPkg)
 static void scuMinMaxValue(smp_can_package_t *pCanPkg)
 {
 	uint8_t	scuid;
-	tIbyte	MinCellVoltage;
-	tIbyte	MaxCellVoltage;
-	tIbyte	MinNtcTemp;
-	tIbyte	MaxNtcTemp;	
+	uint16_t subindex;
 	
 	scuid = SMP_CAN_GET_SCU_ID(pCanPkg->id);
-	
-	MinCellVoltage.b[0] = pCanPkg->dat[0];
-	MinCellVoltage.b[1] = pCanPkg->dat[1];
+	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
 
-	MaxCellVoltage.b[0] = pCanPkg->dat[2];
-	MaxCellVoltage.b[1] = pCanPkg->dat[3];
-
-	MinNtcTemp.b[0] = pCanPkg->dat[4];
-	MinNtcTemp.b[1] = pCanPkg->dat[5];
-
-	MaxNtcTemp.b[0] = pCanPkg->dat[6];
-	MaxNtcTemp.b[1] = pCanPkg->dat[7];	
-	
-	appBmsSetScuVbat(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
-
-
+	if(subindex == 0)
+	{
+		appBmsSetMinCellVoltage(scuid, GET_WORD(&pCanPkg->dat[0]),
+						pCanPkg->dat[4], pCanPkg->dat[5]);
+		appBmsSetMaxCellVoltage(scuid, GET_WORD(&pCanPkg->dat[2]),
+						pCanPkg->dat[6], pCanPkg->dat[7]);
+	}
+	else
+	{
+		appBmsSetMinNtcTemp(scuid, GET_WORD(&pCanPkg->dat[0]),
+						pCanPkg->dat[4], pCanPkg->dat[5]);
+		appBmsSetMaxNtcTemp(scuid, GET_WORD(&pCanPkg->dat[2]),
+						pCanPkg->dat[6], pCanPkg->dat[7]);
+	}
+//	appBmsSetScuVbat(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
 }
 
 SMP_CAN_DECODE_CMD_START(mDavinciCanBaseRxTxTab)

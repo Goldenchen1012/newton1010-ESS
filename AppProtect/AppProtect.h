@@ -66,8 +66,8 @@ typedef struct{
 /* Public variables ---------------------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
 void appProtectGetLevelMask(uint8_t Level, tProtectFlagValue *pProtectFlagValue);
-uint8_t	appProtectIsUnderTemperter(tNtcAdcData NtcAdcValue, tNtcAdcData CompareAdcValue);
-uint8_t	appProtectIsOverTemperter(tNtcAdcData NtcAdcValue, tNtcAdcData CompareAdcValue);
+uint8_t	appProtectIsUnderTemperter(tNtcVoltage NtcVoltage, tNtcVoltage CompareVoltage);
+uint8_t	appProtectIsOverTemperter(tNtcVoltage NtcVoltage, tNtcVoltage CompareVoltage);
 void appProtectOpen(tAppProtectEvtHandler evtHandler);
 void appProtectHandler(uint16_t evt);
 

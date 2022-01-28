@@ -71,7 +71,7 @@
 #define	SMP_PAR_ID_DVP_PROTECT           0x6C
 #define	SMP_PAR_ID_CURRENT_DIFF          0x6D
 #define	SMP_PAR_ID_DVB_PROTECT           0x6E
-
+#define	SMP_PAR_ID_SCU_TEMP_PROTECT		 0x6F
 
 #define	SMP_PAR_ID_BALANCE_DUTY          0x80
 #define	SMP_PAR_ID_BALANCE_CHG           0x81

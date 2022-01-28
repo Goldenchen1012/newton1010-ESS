@@ -30,7 +30,7 @@
 #include "ApiFu.h"
 
 
-void appSerialUartSendMessage(uint8_t *str);
+void appSerialCanDavinciSendTextMessage(char *str);
 #define	appSerialCanDavinciParDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private typedef -----------------------------------------------------------*/
@@ -180,18 +180,18 @@ static void DavinciCanParameterFwBuildDateTime(smp_can_package_t *pCanPkg)
 									SMP_PAR_ID_FW_BUILD_DATE_TIME);
 		CanPkg.dlc = 7;
 //		uint32_t apiFuGetFwVersion(void);
-//uint32_t apiFuGetFwBuildDate(void);
-//uint32_t apiFuGetFwBuildTime(void);
+		BuildDate.l = apiFuGetFwBuildDate();
+		BuildTime.l = apiFuGetFwBuildTime();
 
 
-		CanPkg.dat[3] = 0x20;
-		CanPkg.dat[2] = 0x21;
-		CanPkg.dat[1] = 0x10;
-		CanPkg.dat[0] = 0x26;
+		CanPkg.dat[3] = BuildDate.b[3];
+		CanPkg.dat[2] = BuildDate.b[2];
+		CanPkg.dat[1] = BuildDate.b[1];
+		CanPkg.dat[0] = BuildDate.b[0];
 		
-		CanPkg.dat[6] = 0x17;
-		CanPkg.dat[5] = 0x57;
-		CanPkg.dat[4] = 0x26;
+		CanPkg.dat[6] = BuildTime.b[2];
+		CanPkg.dat[5] = BuildTime.b[1];
+		CanPkg.dat[4] = BuildTime.b[0];
 		
 		appSerialCanDavinciParDebugMsg("Read Fw date time");
 	}
@@ -767,6 +767,50 @@ static void DavinciCanParameterUvp(smp_can_package_t *pCanPkg)
 
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
 }
+
+static void DavinciCanParameterDvp(smp_can_package_t *pCanPkg)
+{
+	smp_can_package_t	CanPkg;
+	tScuProtectPar		ProtectPar;
+
+	if(SMP_CAN_GET_OBJ_INDEX(pCanPkg->id) == SMP_CMD_PAR_RD_OBJ_INDEX)
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_RD_OBJ_INDEX,
+									SMP_PAR_ID_DVP_PROTECT);
+				
+		CanPkg.dlc = 7;
+		CanPkg.dat[0] = pCanPkg->dat[0];		
+		apiSysParGetDvpPar(pCanPkg->dat[0], &ProtectPar);
+		CanPkg.dat[1] = ProtectPar.SetValue.b[0];
+		CanPkg.dat[2] = ProtectPar.SetValue.b[1];
+		CanPkg.dat[3] = ProtectPar.STime.b[0];
+		CanPkg.dat[4] = ProtectPar.RelValue.b[0];
+		CanPkg.dat[5] = ProtectPar.RelValue.b[1];
+		CanPkg.dat[6] = ProtectPar.RTime.b[0];
+
+		appSerialCanDavinciParDebugMsg("Read Dvp");
+	}
+	else if(isParWritable())
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_WR_OBJ_INDEX,
+									SMP_PAR_ID_DVP_PROTECT);
+		CanPkg.dlc = 0;
+		ProtectPar.SetValue.l = GET_WORD(&pCanPkg->dat[1]);
+		ProtectPar.STime.l = pCanPkg->dat[3];
+		ProtectPar.RelValue.l = GET_WORD(&pCanPkg->dat[4]);
+		ProtectPar.RTime.l = pCanPkg->dat[6];
+
+		apiSysParSetDvpPar(pCanPkg->dat[0], &ProtectPar);
+		appSerialCanDavinciParDebugMsg("Write Dvp");
+	}
+	else
+		return;
+
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+}
+
 static void DavinciCanParameterCotp(smp_can_package_t *pCanPkg)
 {
 	smp_can_package_t	CanPkg;
@@ -1478,7 +1522,6 @@ static void DavinciCanParameterCurrentCalibration(smp_can_package_t *pCanPkg)
 }
 static void DavinciCanParameterVBatCalibration(smp_can_package_t *pCanPkg)
 {
-//	int8_t				cansendbf[8];
 	smp_can_package_t	CanPkg;
 	tLbyte				Value;
 	tLbyte				Adc;
@@ -1517,6 +1560,45 @@ static void DavinciCanParameterVBatCalibration(smp_can_package_t *pCanPkg)
 									
 		sprintf(str,"Wr Vbat %d %d",Value.sl, Adc.sl);
 		appSerialCanDavinciParDebugMsg(str);//"Write vbat Cali");
+	}
+	else
+		return;
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+}
+static void DavinciCanParameterScuTemperter(smp_can_package_t *pCanPkg)
+{
+	smp_can_package_t	CanPkg;
+	tScuProtectPar		ProtectPar;
+
+	if(SMP_CAN_GET_OBJ_INDEX(pCanPkg->id) == SMP_CMD_PAR_RD_OBJ_INDEX)
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_RD_OBJ_INDEX,
+									SMP_PAR_ID_SCU_TEMP_PROTECT);
+		CanPkg.dlc = 6;
+		apiSysParGetScuOtPar(pCanPkg->dat[0], pCanPkg->dat[1], &ProtectPar);		
+		CanPkg.dat[0] = pCanPkg->dat[0];
+		CanPkg.dat[1] = pCanPkg->dat[1];
+		CanPkg.dat[2] = ProtectPar.SetValue.b[0];
+		CanPkg.dat[3] = ProtectPar.STime.b[0];
+		CanPkg.dat[4] = ProtectPar.RelValue.b[0];
+		CanPkg.dat[5] = ProtectPar.RTime.b[0];
+		
+		appSerialCanDavinciParDebugMsg("Read Scu Temp");
+	}
+	else if(isParWritable())
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_WR_OBJ_INDEX,
+									SMP_PAR_ID_SCU_TEMP_PROTECT);
+		CanPkg.dlc = 0;
+		ProtectPar.SetValue.l = pCanPkg->dat[2];
+		ProtectPar.STime.l = pCanPkg->dat[3];
+		ProtectPar.RelValue.l = pCanPkg->dat[4];
+		ProtectPar.RTime.l = pCanPkg->dat[5];
+		apiSysParSetScuOtPar(pCanPkg->dat[0], pCanPkg->dat[1], &ProtectPar);
+
+		appSerialCanDavinciParDebugMsg("Write Scu Temp");
 	}
 	else
 		return;
@@ -1672,6 +1754,12 @@ SMP_CAN_DECODE_CMD_START(mDavinciParameterCanDecodeTab)
 
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
 									0,
+									SMP_PAR_ID_DVP_PROTECT),
+								CHECK_SMP_CAN_SUB,
+								DavinciCanParameterDvp)
+
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
+									0,
 									SMP_PAR_ID_COTP_PROTECT),
 								CHECK_SMP_CAN_SUB,
 								DavinciCanParameterCotp)
@@ -1766,6 +1854,14 @@ SMP_CAN_DECODE_CMD_START(mDavinciParameterCanDecodeTab)
 									SMP_PAR_ID_CALIB_VB),
 								CHECK_SMP_CAN_SUB,
 								DavinciCanParameterVBatCalibration)
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
+									0,
+									SMP_PAR_ID_SCU_TEMP_PROTECT),
+								CHECK_SMP_CAN_SUB,
+								DavinciCanParameterScuTemperter)
+
+
+
 
 SMP_CAN_DECODE_CMD_END();
 

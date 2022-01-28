@@ -468,6 +468,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\AppProjectHvEss_IR.c</FilePath>
             </File>
+            <File>
+              <FileName>AppLed.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppLed.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -517,6 +522,21 @@
               <FileName>ApiProtectDutp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\AppProtect\ApiProtectDutp.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiProtectScuOt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectScuOt.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiProtectDvp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectDvp.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiProtectDtp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectDtp.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -814,6 +834,11 @@
               <FileName>HalSpirom.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\HAL\HalSpirom.c</FilePath>
+            </File>
+            <File>
+              <FileName>HalLedTLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\HAL\HalLedTLC6C5912.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2863,6 +2888,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\AppProjectHvEss_IR.c</FilePath>
             </File>
+            <File>
+              <FileName>AppLed.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppLed.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2912,6 +2942,21 @@
               <FileName>ApiProtectDutp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\AppProtect\ApiProtectDutp.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiProtectScuOt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectScuOt.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiProtectDvp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectDvp.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiProtectDtp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectDtp.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -3209,6 +3254,11 @@
               <FileName>HalSpirom.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\HAL\HalSpirom.c</FilePath>
+            </File>
+            <File>
+              <FileName>HalLedTLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\HAL\HalLedTLC6C5912.c</FilePath>
             </File>
           </Files>
         </Group>

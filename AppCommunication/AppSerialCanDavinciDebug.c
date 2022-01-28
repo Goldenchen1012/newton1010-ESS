@@ -138,7 +138,7 @@ static void DavinciCanDebugNtcVSimu(smp_can_package_t *pCanPkg)
 	for(i=0; i<4 ; i++)
 	{
 		voltage = GET_WORD(&pCanPkg->dat[i*2]);
-		halAfeSetNtcAdcData(subindex++, voltage);
+		halAfeSetNtcVoltage(subindex++, voltage);
 	}
 	//appSerialCanDavinciDebugMsg("Decode NTC");
 
@@ -164,7 +164,7 @@ static void DavinciCanDebugNtcTSimu(smp_can_package_t *pCanPkg)
 		}
 		*/
 //		GPIOD->ODR ^= 	GPIO_PIN_15;	
-		halAfeSetNtcAdcData(subindex++, voltage);
+		halAfeSetNtcVoltage(subindex++, voltage);
 	}
 	//appSerialCanDavinciDebugMsg("Decode NTC");
 
@@ -318,6 +318,27 @@ static void DavinciCanDebugRelayControl(smp_can_package_t *pCanPkg)
 	}
 }
 
+static void DavinciCanDebugScuTempSimu(smp_can_package_t *pCanPkg)
+{
+	uint8_t		i;
+	tIbyte		temp;
+	uint16_t	subindex;
+	char	str[100];
+	
+	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
+
+	for(i=0; i<8 ; )
+	{
+		temp.b[0] =pCanPkg->dat[i++];
+		temp.b[1] =pCanPkg->dat[i++];
+		
+		apiScuTempSetTemperature(subindex++, temp.i);
+	}
+//	appSerialCanDavinciDebugMsg("Scu Temp Simu.");
+}
+
+
+
 void halAfeClearTestCount(void);
 
 static void DavinciCanDebugClearTestCount(smp_can_package_t *pCanPkg)
@@ -397,6 +418,12 @@ SMP_CAN_DECODE_CMD_START(mDavinciDebugCanDecodeTab)
 									0),
 								CHECK_SMP_CAN_OBJ,
 								DavinciCanDebugRelayControl)
+								
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_DEBUG_RX, 0,
+									SMP_DEBUG_SCU_TEMP_SIMU_OBJ_INDEX,
+									0),
+								CHECK_SMP_CAN_OBJ,
+								DavinciCanDebugScuTempSimu)
 								
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_DEBUG_RX, 0,
 									SMP_DEBUG_CLEAR_TEST_COUNT_OBJ_INDEX,

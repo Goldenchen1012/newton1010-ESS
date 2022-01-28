@@ -51,7 +51,7 @@ enum{
 typedef void(*tAfeLineLossCallBack)(uint16_t channel, uint16_t *cellVoltage);
 
 #define	tCellVoltage		uint16_t
-#define	tNtcAdcData			uint16_t
+#define	tNtcVoltage			uint16_t
 #define	tBatteryVoltage		uint32_t
 #define	tPackVoltage		uint32_t
 #define	tCurrent			int32_t
@@ -64,17 +64,17 @@ void halAfeSetVBatAdcValue(uint8_t VbIndex,int32_t adcvalue);
 
 tCellVoltage halAfeGetCellVoltage(uint16_t CellIndex);
 tCurrent halAfeGetCurrentValue(uint8_t index);
-tNtcAdcData HalAfeGetNtcAdc(uint16_t NtcIndex);
+tNtcVoltage HalAfeGetNtcVoltage(uint16_t NtcIndex);
 void halAfeSetCellVoltage(uint16_t cell, tCellVoltage voltage);
-void halAfeSetNtcAdcData(uint16_t ntcs, tNtcAdcData adcdata);
+void halAfeSetNtcVoltage(uint16_t ntcs, tNtcVoltage voltage);
 void HalAfeSetCurrentValue(uint8_t index, int32_t current);
 uint32_t halAfeGetVBatVoltage(uint8_t index);
 void halAfeSetVBatVoltage(uint8_t index, uint32_t voltage);
 
-tCellVoltage halAfeGetMaxCellVoltage(void);
-tCellVoltage halAfeGetMinCellVoltage(void);
-tNtcAdcData HalAfeGetMinNtcTempAdc(void);
-tNtcAdcData HalAfeGetMaxNtcTempAdc(void);
+tCellVoltage halAfeGetMaxCellVoltage(uint8_t *bmu, uint8_t *posi);
+tCellVoltage halAfeGetMinCellVoltage(uint8_t *bmu, uint8_t *posi);
+uint16_t HalAfeGetMinNtcTemp(uint8_t *bmu, uint8_t *posi);
+uint16_t HalAfeGetMaxNtcTemp(uint8_t *bmu, uint8_t *posi);
 
 void halAfeUpdateMinMaxCellVoltage(void);
 void halAfeUpdateMinMaxNtcTempVoltage(void);

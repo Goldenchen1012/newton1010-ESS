@@ -35,17 +35,17 @@
 
 typedef struct{
 	tCellVoltage	CellVoltage[MAX_CELL_NUMBER + 4];
-	tNtcAdcData		NtcAdcData[MAX_NTC_NUMBER + 4];
+	tNtcVoltage		NtcVoltage[MAX_NTC_NUMBER + 4];
 	tCurrent		CurrentValue[2];
 	int32_t			CurrentAdcValue[2];
 	uint32_t		VBat[2];
 	int32_t			VbatAdcValue[2];
-	uint16_t		CellNumber;
 	uint16_t		MaxCellVoltage;
 	uint16_t		MinCellVoltage;
 	uint16_t		MaxTempNtcVoltage;
-	uint16_t		MaxTempNtcPosition;
 	uint16_t		MinTempNtcVoltage;
+	uint16_t		MaxNtcTemp;
+	uint16_t		MinNtcTemp;
 	struct{
 		uint8_t		Bmu;
 		uint8_t		Channel;
@@ -82,14 +82,17 @@ static void logicalCellPositionToPhysicalPosition(uint16_t posi,uint8_t *retbmu,
 		flag = afeCellFlag(bmu);
 		for(i=0; i<32; i++)
 		{
-			if(flag &0x01)
+			if(flag & 0x01)
 			{
 				if(index == posi)
 				{
-					*retbmu = bmu;
-					*retch = i;
+					*retbmu = bmu + 1;
+					*retch = i + 1;
+					return;
 				}
-			}			
+				index++;
+			}
+			flag >>= 1;
 		}		
 	}
 }
@@ -106,14 +109,17 @@ static void logicalNtcPositionToPhysicalPosition(uint16_t posi,uint8_t *retbmu, 
 		flag = afeNtcFlag(bmu);
 		for(i=0; i<32; i++)
 		{
-			if(flag &0x01)
+			if(flag & 0x01)
 			{
 				if(index == posi)
 				{
-					*retbmu = bmu;
-					*retch = i;
+					*retbmu = bmu + 1;
+					*retch = i + 1;
+					return;
 				}
+				index++;
 			}			
+			flag >>= 1;
 		}		
 	}
 }
@@ -163,21 +169,9 @@ void halAfeSetCellVoltage(uint16_t cell, tCellVoltage voltage)
 {
 	AfeBuffer.CellVoltage[cell] = voltage;
 }
-void halAfeSetNtcAdcData(uint16_t ntcs, tNtcAdcData adcdata)
+void halAfeSetNtcVoltage(uint16_t ntcs, tNtcVoltage voltage)
 {
-	AfeBuffer.NtcAdcData[ntcs] = adcdata;
-}
-
-tBatteryVoltage HalAfeGetBatteryVoltage(void)
-{
-	tBatteryVoltage	vbat = 0;
-	uint16_t		cell;
-		 
-	for(cell=0; cell<AfeBuffer.CellNumber; cell++)
-	{
-		vbat += AfeBuffer.CellVoltage[cell];
-	}
-	return vbat;
+	AfeBuffer.NtcVoltage[ntcs] = voltage;
 }
 
 tCellVoltage halAfeGetCellVoltage(uint16_t CellIndex)
@@ -185,9 +179,9 @@ tCellVoltage halAfeGetCellVoltage(uint16_t CellIndex)
 	return AfeBuffer.CellVoltage[CellIndex];	
 }
 
-tNtcAdcData HalAfeGetNtcAdc(uint16_t NtcIndex)
+tNtcVoltage HalAfeGetNtcVoltage(uint16_t NtcIndex)
 {
-	return AfeBuffer.NtcAdcData[NtcIndex];	
+	return AfeBuffer.NtcVoltage[NtcIndex];	
 }
 
 tCurrent halAfeGetCurrentValue(uint8_t index)
@@ -209,23 +203,43 @@ void halAfeSetVBatVoltage(uint8_t index, uint32_t voltage)
 }
 
 
-tCellVoltage halAfeGetMaxCellVoltage(void)
+tCellVoltage halAfeGetMaxCellVoltage(uint8_t *bmu, uint8_t *posi)
 {
+	if(bmu)
+		*bmu = AfeBuffer.MaxVPosition.Bmu;
+	if(posi)
+		*posi = AfeBuffer.MaxVPosition.Channel;
+	
 	return AfeBuffer.MaxCellVoltage;
 }
 
-tCellVoltage halAfeGetMinCellVoltage(void)
+tCellVoltage halAfeGetMinCellVoltage(uint8_t *bmu, uint8_t *posi)
 {
+	if(bmu)
+		*bmu = AfeBuffer.MinVPosition.Bmu;
+	if(posi)
+		*posi = AfeBuffer.MinVPosition.Channel;
+		
 	return AfeBuffer.MinCellVoltage;
 }
 
-tNtcAdcData HalAfeGetMinNtcTempAdc(void)
+uint16_t HalAfeGetMinNtcTemp(uint8_t *bmu, uint8_t *posi)
 {
-	return AfeBuffer.MinTempNtcVoltage;
+	if(bmu)
+		*bmu = AfeBuffer.MinTPosition.Bmu;
+	if(posi)
+		*posi = AfeBuffer.MinTPosition.Channel;
+
+	return AfeBuffer.MinNtcTemp;
 }
-tNtcAdcData HalAfeGetMaxNtcTempAdc(void)
+uint16_t HalAfeGetMaxNtcTemp(uint8_t *bmu, uint8_t *posi)
 {
-	return AfeBuffer.MaxTempNtcVoltage;
+	if(bmu)
+		*bmu = AfeBuffer.MaxTPosition.Bmu;
+	if(posi)
+		*posi = AfeBuffer.MaxTPosition.Channel;
+
+	return AfeBuffer.MaxNtcTemp;
 }
 
 void halAfeUpdateMinMaxCellVoltage(void)
@@ -259,29 +273,44 @@ void halAfeUpdateMinMaxCellVoltage(void)
 	logicalCellPositionToPhysicalPosition(MinPosition,
 						&AfeBuffer.MinVPosition.Bmu,
 						&AfeBuffer.MinVPosition.Channel);
-
+#if 1
+	{						
+		char	str[100];
+		
+		sprintf(str,"MaxV = %d %d %d, MinV=%d %d %d",
+				MaxPosition,
+				AfeBuffer.MaxVPosition.Bmu,
+				AfeBuffer.MaxVPosition.Channel,
+				MinPosition,
+				AfeBuffer.MinVPosition.Bmu,
+				AfeBuffer.MinVPosition.Channel
+				);
+		appSerialCanDavinciSendTextMessage(str);
+	}
+#endif
 }
 void halAfeUpdateMinMaxNtcTempVoltage(void)
 {
 	uint16_t	ntc;
-	uint16_t	cv;
+	uint16_t	ntcv;
 	uint16_t	MaxPosition = 0;
 	uint16_t	MinPosition = 0;
+	
 	
 	AfeBuffer.MinTempNtcVoltage = 0;
 	AfeBuffer.MaxTempNtcVoltage = 0xffff;
 	
 	for(ntc=0; ntc<afeNtcNumber(); ntc++)
 	{
-		cv = HalAfeGetNtcAdc(ntc);
-		if(cv < AfeBuffer.MaxTempNtcVoltage)
+		ntcv = HalAfeGetNtcVoltage(ntc);
+		if(ntcv < AfeBuffer.MaxTempNtcVoltage)
 		{		
-			AfeBuffer.MaxTempNtcVoltage = cv;
+			AfeBuffer.MaxTempNtcVoltage = ntcv;
 			MaxPosition =  ntc;
 		}
-		if(cv > AfeBuffer.MinTempNtcVoltage)
+		if(ntcv > AfeBuffer.MinTempNtcVoltage)
 		{		
-			AfeBuffer.MinTempNtcVoltage = cv;
+			AfeBuffer.MinTempNtcVoltage = ntcv;
 			MinPosition = ntc;
 		}
 	}
@@ -292,9 +321,26 @@ void halAfeUpdateMinMaxNtcTempVoltage(void)
 	logicalNtcPositionToPhysicalPosition(MinPosition,
 						&AfeBuffer.MinTPosition.Bmu,
 						&AfeBuffer.MinTPosition.Channel);
+			
+	AfeBuffer.MaxNtcTemp = LibNtcVoltageToTemperature(AfeBuffer.MaxTempNtcVoltage);
+	AfeBuffer.MinNtcTemp = LibNtcVoltageToTemperature(AfeBuffer.MinTempNtcVoltage);
+	
+#if 1
+	{
+		char	str[100];
+		sprintf(str,"MaxT = %d %d %d, MinT=%d %d %d",
+				MaxPosition,
+				AfeBuffer.MaxTPosition.Bmu,
+				AfeBuffer.MaxTPosition.Channel,
+				MinPosition,
+				AfeBuffer.MinTPosition.Bmu,
+				AfeBuffer.MinTPosition.Channel
+				);
+		appSerialCanDavinciSendTextMessage(str);
+	}
+#endif	
 }
 
-//tNtcAdcData HalAfeGetNtcAdc(uint16_t NtcIndex)
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

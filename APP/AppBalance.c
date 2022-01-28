@@ -304,9 +304,9 @@ static void appBalanceCheck(void)
 	TempSet = mDutyCondition.RelValue.l;
 	TempRelease = mDutyCondition.RTime.l;
 
-	MaxNtcTemp_1C = LibNtcVoltageToTemperature(HalAfeGetMaxNtcTempAdc()) / 100;
-	MinCellVoltage = halAfeGetMinCellVoltage();
-	MaxCellVoltage = halAfeGetMaxCellVoltage();
+	MaxNtcTemp_1C = HalAfeGetMaxNtcTemp(0,0) / 100;
+	MinCellVoltage = halAfeGetMinCellVoltage(0,0);
+	MaxCellVoltage = halAfeGetMaxCellVoltage(0,0);
 
 
 	sprintf(str,"%d %d %d %d %d %d %d %d %d %d %d",

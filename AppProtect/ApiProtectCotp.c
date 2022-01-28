@@ -62,7 +62,7 @@ uint8_t apiProtectCotpHandler(uint8_t ProtectLevel)
 	//static	uint8_t	flag = 0;
 	uint8_t		count = 0;
 	
-	tNtcAdcData		NtcAdcValue;
+	tNtcVoltage		NtcVoltage;
 	tProtectFlagValue	ProtectFlagValue;
 	tScuProtectPar		ProtectPar;
 
@@ -78,13 +78,13 @@ uint8_t apiProtectCotpHandler(uint8_t ProtectLevel)
 
 	while(1)
 	{			
-		NtcAdcValue = HalAfeGetNtcAdc(CotpNtcIndex);
+		NtcVoltage = HalAfeGetNtcVoltage(CotpNtcIndex);
 		
-		//sprintf(str,"%d %d",CotpNtcIndex, NtcAdcValue);
+		//sprintf(str,"%d %d",CotpNtcIndex, NtcVoltage);
 		//if(!flag)
 		//	appProtectCotpDebugMsg(str);
 		//flag = 1;
-		if(appProtectIsOverTemperter(NtcAdcValue, ProtectPar.SetValue.l) && ProtectPar.STime.l)
+		if(appProtectIsOverTemperter(NtcVoltage, ProtectPar.SetValue.l) && ProtectPar.STime.l)
 		{
 			if((mCotpProtect.Flag[CotpNtcIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -116,7 +116,7 @@ uint8_t apiProtectCotpHandler(uint8_t ProtectLevel)
 		}
 		//--------------------------------------------------------------------------
 		//	Level	Release
-		if(appProtectIsUnderTemperter(NtcAdcValue, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
+		if(appProtectIsUnderTemperter(NtcVoltage, ProtectPar.RelValue.l) && ProtectPar.RTime.l)
 		{
 			if((mCotpProtect.Flag[CotpNtcIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

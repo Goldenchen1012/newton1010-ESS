@@ -41,7 +41,7 @@
 #include "AppGauge.h"
 #include "AppBms.h"
 
-void appSerialUartSendMessage(uint8_t *str);
+void appSerialCanDavinciSendTextMessage(char *str);
 #define	notiDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private typedef -----------------------------------------------------------*/
@@ -120,6 +120,24 @@ static void notifyBaseSystemFlag(void)
 	CanPkg.dat[6] = Lbyte.b[2];
 	CanPkg.dat[7] = Lbyte.b[3];
 	
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+	
+	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, notifyScuId(),
+									SMP_BASE_SYSTEM_FLAG_OBJ_INDEX,
+									1);
+	CanPkg.dlc = 8;
+	
+	Lbyte.l = apiSystemFlagGetFlag3();
+	CanPkg.dat[0] = Lbyte.b[0];
+	CanPkg.dat[1] = Lbyte.b[1];
+	CanPkg.dat[2] = Lbyte.b[2];
+	CanPkg.dat[3] = Lbyte.b[3];
+
+	Lbyte.l = apiSystemFlagGetFlag4();
+	CanPkg.dat[4] = Lbyte.b[0];
+	CanPkg.dat[5] = Lbyte.b[1];
+	CanPkg.dat[6] = Lbyte.b[2];
+	CanPkg.dat[7] = Lbyte.b[3];
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
 }
 
@@ -223,6 +241,7 @@ static void notifyBaseVBatVoltage(void)
 
 static void notifyBaseMinMaxValue(void)
 {
+	uint8_t		bmu,posi;
 	smp_can_package_t	CanPkg;
 	tIbyte	Ibyte;
 	
@@ -230,23 +249,37 @@ static void notifyBaseMinMaxValue(void)
 									SMP_BASE_MIN_MAX_VALUE_OBJ_INDEX,
 									0);
 	CanPkg.dlc = 8;
-								
-			
-	Ibyte.i = halAfeGetMinCellVoltage();
+											
+	Ibyte.i = halAfeGetMinCellVoltage(&bmu, &posi);
 	CanPkg.dat[0] = Ibyte.b[0];
 	CanPkg.dat[1] = Ibyte.b[1];
+	CanPkg.dat[4] = bmu;
+	CanPkg.dat[5] = posi;
 
-	Ibyte.i = halAfeGetMaxCellVoltage();
+	Ibyte.i = halAfeGetMaxCellVoltage(&bmu, &posi);
 	CanPkg.dat[2] = Ibyte.b[0];
 	CanPkg.dat[3] = Ibyte.b[1];
-	
-	Ibyte.i = LibNtcVoltageToTemperature(HalAfeGetMinNtcTempAdc());
-	CanPkg.dat[4] = Ibyte.b[0];
-	CanPkg.dat[5] = Ibyte.b[1];
+	CanPkg.dat[6] = bmu;
+	CanPkg.dat[7] = posi;
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+	//----------------------------------------
+	//	MinT & Max T
+	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, notifyScuId(),
+									SMP_BASE_MIN_MAX_VALUE_OBJ_INDEX,
+									1);
+	CanPkg.dlc = 8;
+		
+	Ibyte.i = HalAfeGetMinNtcTemp(&bmu, &posi);
+	CanPkg.dat[0] = Ibyte.b[0];
+	CanPkg.dat[1] = Ibyte.b[1];
+	CanPkg.dat[4] = bmu;
+	CanPkg.dat[5] = posi;
 
-	Ibyte.i = LibNtcVoltageToTemperature(HalAfeGetMaxNtcTempAdc());
-	CanPkg.dat[6] = Ibyte.b[0];
-	CanPkg.dat[7] = Ibyte.b[1];
+	Ibyte.i = HalAfeGetMaxNtcTemp(&bmu, &posi);
+	CanPkg.dat[2] = Ibyte.b[0];
+	CanPkg.dat[3] = Ibyte.b[1];
+	CanPkg.dat[6] = bmu;
+	CanPkg.dat[7] = posi;
 	
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
 }
@@ -462,7 +495,7 @@ static void appSerialCanDavinciNotificationNtcVoltage(void)
 			memset(&CanPkg.dat, 0, 8);
 			DatIndex = 0;
 		}
-		Ibyte.i = HalAfeGetNtcAdc(NotificationSubIndex++);
+		Ibyte.i = HalAfeGetNtcVoltage(NotificationSubIndex++);
 
 		CanPkg.dat[DatIndex++] = Ibyte.b[0];
 		CanPkg.dat[DatIndex++] = Ibyte.b[1];
