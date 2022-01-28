@@ -142,7 +142,7 @@ static void smp_mx25l_flash_SwTimerHandler(__far void *dest, uint16_t evt, void 
 	if(evt == LIB_SW_TIMER_EVT_SW_10MS_2)
 	{
 		GPIOD->ODR |= GPIO_PIN_15;
-		if(smp_mx25l_is_flash_spi_Ready())
+		if(smp_mx25l_is_flash_spi_Ready()&& MX25L_SPI_get_command_size()>0)
 		{
 			smp_mx25l_flash_read_status(&mx251_status);
 			if((mx251_status.status1&STATUS_WRITE_IN_PROGRESS)==0)
@@ -373,6 +373,22 @@ int8_t smp_mx25l_flash_fast_read_data_bytes_page(uint16_t page , uint8_t *buffer
   return SMP_ERROR_RESOURCES;
 }
 
+int8_t smp_mx25l_flash_fast_read_data_bytes_page_blocking(uint16_t page , uint8_t *buffer , uint16_t read_byte_num)
+{
+  /* Send "read data bytes (READ)" command */
+	smp_flash_package	FlashPkg;
+	FlashPkg.command = MX25L_FAST_READ;
+  FlashPkg.addr[0] = (uint8_t)((page << MX25L_MX25L6433F_PAGE_SHIFT) >> 16) ;
+	FlashPkg.addr[1] = (uint8_t)((page << MX25L_MX25L6433F_PAGE_SHIFT) >> 8) ;
+	FlashPkg.addr[2] = (uint8_t)(page << MX25L_MX25L6433F_PAGE_SHIFT);
+	
+	FlashPkg.read_buffer = buffer;
+	FlashPkg.Dummy = MX25L_DUMMY;
+	FlashPkg.R_W_bytes = read_byte_num;
+	return smp_spi_master_send_recv_blocking(&MX25L_SPI_1, (uint8_t* )&FlashPkg , 5 , FlashPkg.read_buffer, FlashPkg.R_W_bytes, &MX25L_CS0);
+
+}
+
 int8_t smp_mx25l_flash_sector_erase_addr(uint8_t *flash_addr , smp_flash_event_t smp_flash_event_handle)
 {
   /* Send "sector_erase (SE)" command */
@@ -479,6 +495,13 @@ int8_t smp_mx25l_flash_release_deep_power_down(void)
 	UseDMAFlag = false;
 	tempstate = smp_spi_master_send_recv_blocking(&MX25L_SPI_1, MX25L_tx_data , 1 , 0, 0 , &MX25L_CS0);
   return tempstate;
+}
+
+uint16_t MX25L_SPI_get_command_size(void)
+{
+	uint16_t size = 0;
+	smp_fifo_flash_get_size(&flash_read_fifo,&size);
+	return size;
 }
 
 void MX25L_SPI_send_command(void)

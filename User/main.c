@@ -299,7 +299,12 @@ int a2i(char* txt)
     }
     return sum;
 }
-
+uint8_t temp[18];
+static uint8_t temp1[4];
+static uint8_t temp2[4];
+uint8_t temp3[14];
+uint16_t start_package;
+uint16_t length_data;
 void test_uart_rx_process(void)
 {
 	static uint8_t rx_data[256];
@@ -373,14 +378,9 @@ void test_uart_rx_process(void)
 					app_flash_check_head();
 				} 
 				
-				
-				uint8_t temp[18];
-				static uint8_t temp1[4];
-				static uint8_t temp2[4];
-				uint16_t start_package;
-				uint16_t length_data;
-				memcpy(temp,&rx_data[0],18);
-				if(!strcmp((char *)temp, "data load reflash ")){ 	//data load reflash xxxx xxxx
+
+				memcpy(temp,&rx_data[0],17);
+				if(!strcmp((char *)temp, "data load reflash")){ 	//data load reflash xxxx xxxx
 					memcpy(temp1,&rx_data[18],4);
 					memcpy(temp2,&rx_data[23],4);
 					start_package =  a2i((char *)temp1);
@@ -389,7 +389,7 @@ void test_uart_rx_process(void)
 					memset(&page_data_buffer[0], 0, 256);
 					app_flash_page_data_load(page_data_buffer,start_package,length_data,SMP_REFLASH_MEMORY);
 				} 
-				if(!strcmp((char *)temp, "data push reflash ")){  
+				if(!strcmp((char *)temp, "data push reflash")){  
 					smp_log_package log_package;
 					memcpy(temp1,&rx_data[18],4);
 					length_data =  a2i((char *)temp1);
@@ -406,9 +406,9 @@ void test_uart_rx_process(void)
 						app_flash_page_data_push(log_package,SMP_REFLASH_MEMORY);
 					}
 				} 
-				uint8_t temp3[14];
-				memcpy(temp3,&rx_data[0],14);
-				if(!strcmp((char *)temp3, "data load fix ")){ 	//data load fix xxxx xxxx
+				
+				memcpy(temp3,&rx_data[0],13);
+				if(!strcmp((char *)temp3, "data load fix")){ 	//data load fix xxxx xxxx
 					memcpy(temp1,&rx_data[14],4);
 					memcpy(temp2,&rx_data[19],4);
 					start_package =  a2i((char *)temp1);
@@ -417,7 +417,7 @@ void test_uart_rx_process(void)
 					memset(&page_data_buffer[0], 0, 256);
 					app_flash_page_data_load(page_data_buffer,start_package,length_data,SMP_FIX_MEMORY);
 				} 
-				if(!strcmp((char *)temp3, "data push fix ")){  
+				if(!strcmp((char *)temp3, "data push fix")){  
 					smp_log_package log_package;
 					memcpy(temp1,&rx_data[14],4);
 					length_data =  a2i((char *)temp1);

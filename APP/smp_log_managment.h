@@ -99,7 +99,7 @@
 	void app_flash_sector_header_save(smp_sector_header_package * sector_header);
 	void app_flash_sector_header_load(smp_sector_header_package * sector_header);
 	void app_flash_sector_header_get(smp_sector_header_package * sector_header);
-	void app_flash_check_head(void);
+	int8_t app_flash_check_head(void);
 	void app_flash_page_data_push(smp_log_package log_package,smp_flash_type flash_type);
 	void app_flash_page_data_save(smp_flash_type flash_type);
 	void app_flash_page_data_load(uint8_t * RX_buffer , uint16_t log_start_position, uint16_t log_length,smp_flash_type flash_type);
