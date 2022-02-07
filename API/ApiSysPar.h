@@ -105,6 +105,8 @@ void apiSysParSetHwVersion(uint32_t version);
 uint32_t apiSysParGetFwVersion(void);
 void appSysParSetFwVersion(uint32_t version);
 
+uint8_t apiSysParGetBmuNumInModule(void);
+void apiSysParSetBmuNumInModule(uint8_t BmuNumber);
 
 uint8_t apiSysParGetBmuNumber(void);
 void apiSysParSetBmuNumber(uint8_t BmuNumber);

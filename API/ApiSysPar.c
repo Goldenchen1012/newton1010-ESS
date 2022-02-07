@@ -67,6 +67,7 @@ typedef struct{
 	uint16_t		MaxFlatVoltage;
 	uint32_t		CellFlag[MAX_BMU_NUM];
 	uint32_t		NtcFlag[MAX_BMU_NUM];
+	uint8_t			BmuNumInModule;
 	uint8_t			BmuNumber;
 	uint16_t		TerminateVoltage;
 	
@@ -270,7 +271,7 @@ typedef struct{
 /* Private define ------------------------------------------------------------*/
 
 #define	SYSPAR_HEAD_INFO			"SysPar01"
-#define	SYSPAR_DATE_CODE			0x0127
+#define	SYSPAR_DATE_CODE			0x0207
 #define	PAR_ADDR					(0x08000000L + 510L * 1024L)
 
 #define	CAL_PAR_HEAD_INFO			"CalPar01"
@@ -1255,10 +1256,11 @@ static void sysParSetDefaultRomValue(void)
 	//SystemParemater.Qmax = 280000L;
 	SystemParemater.RomPar.ZeroCurrent = 200;
 	SystemParemater.RomPar.MinChargeDischargeCurrent = 300;
+	SystemParemater.RomPar.BmuNumInModule = 1;
 	SystemParemater.RomPar.BmuNumber = 2;
 	SystemParemater.RomPar.RelayActiveFlag = 0;
 	
-	for(i=0; i<32; i++)
+	for(i=0; i<MAX_BMU_NUM; i++)
 	{
 		SystemParemater.RomPar.CellFlag[i] = 0xffff;
 		SystemParemater.RomPar.NtcFlag[i] = 0xffff;		
@@ -1546,8 +1548,6 @@ uint32_t apiCaliParGetChecksum(void)
 //System parameter
 
 //-----------------------------------------------------------
-
-
 uint32_t apiSysParGetHwVersion(void)
 {
 	return SystemParemater.RomPar.HwVersion;
@@ -1555,6 +1555,16 @@ uint32_t apiSysParGetHwVersion(void)
 void apiSysParSetHwVersion(uint32_t version)
 {
 	SystemParemater.RomPar.HwVersion = version;
+	resetSysParIdleCount();
+}
+
+uint8_t apiSysParGetBmuNumInModule(void)
+{
+	return SystemParemater.RomPar.BmuNumInModule;	
+}
+void apiSysParSetBmuNumInModule(uint8_t num)
+{
+	SystemParemater.RomPar.BmuNumInModule = num;
 	resetSysParIdleCount();
 }
 
@@ -1570,10 +1580,14 @@ void apiSysParSetBmuNumber(uint8_t num)
 
 uint32_t apiSysParGetCellFlag(uint8_t BmuIndex)
 {
+	if(BmuIndex >= MAX_BMU_NUM)
+		return 0;
 	return SystemParemater.RomPar.CellFlag[BmuIndex];	
 }
 void apiSysParSetCellFlag(uint8_t BmuIndex,uint32_t CellFlag)
 {
+	if(BmuIndex >= MAX_BMU_NUM)
+		return;
 	SystemParemater.RomPar.CellFlag[BmuIndex] = CellFlag;
 	resetSysParIdleCount();
 }

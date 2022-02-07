@@ -1148,6 +1148,36 @@ static void DavinciCanParameterPF(smp_can_package_t *pCanPkg)
 }
 //---------------------------------
 
+static void DavinciParameterBmuNumInModule(smp_can_package_t *pCanPkg){
+	
+	smp_can_package_t	CanPkg;
+
+	if(SMP_CAN_GET_OBJ_INDEX(pCanPkg->id) == SMP_CMD_PAR_RD_OBJ_INDEX)
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_RD_OBJ_INDEX,
+									SMP_PAR_ID_BMU_NUMBER_IN_MODULE);
+		CanPkg.dlc = 1;
+		CanPkg.dat[0] = apiSysParGetBmuNumInModule();
+		appSerialCanDavinciParDebugMsg("Read BMU Num in Module");
+	}
+	else if(isParWritable())
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_WR_OBJ_INDEX,
+									SMP_PAR_ID_BMU_NUMBER_IN_MODULE);
+		CanPkg.dlc = 0;
+
+		apiSysParSetBmuNumInModule(pCanPkg->dat[0]);
+
+		appSerialCanDavinciParDebugMsg("Write BMU Num In Module");
+	}
+	else
+		return;
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);	
+}
+//---------------------------------
+
 static void DavinciParameterBmuNumber(smp_can_package_t *pCanPkg){
 	
 	smp_can_package_t	CanPkg;
@@ -1706,16 +1736,12 @@ SMP_CAN_DECODE_CMD_START(mDavinciParameterCanDecodeTab)
 								CHECK_SMP_CAN_SUB,
 								DavinciCanParameterNoteMessage)
 
-/*
-#define	    0x03
-#define SMP_PAR_ID_MID                   0x04
-#define	SMP_PAR_ID_MODEL_NAME            0x05
-#define	SMP_PAR_ID_MODULE_NUMBER         0x06
-#define	SMP_PAR_ID_PART_NUMBER           0x07
-#define SMP_PAR_ID_CELL_TYPE             0x08
-#define SMP_PAR_ID_BAUDRATE              0x09
-#define 			0x0A
-*/
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
+									0,
+									SMP_PAR_ID_BMU_NUMBER_IN_MODULE),
+								CHECK_SMP_CAN_SUB,
+								DavinciParameterBmuNumInModule)
+
 
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
 									0,

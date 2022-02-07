@@ -24,7 +24,7 @@
 #define	SMP_PAR_ID_FW_BUILD_DATE_TIME    0x03
 #define SMP_PAR_ID_MID                   0x04
 #define	SMP_PAR_ID_MODEL_NAME            0x05
-#define	SMP_PAR_ID_MODULE_NUMBER         0x06
+#define	SMP_PAR_ID_BMU_NUMBER_IN_MODULE	 0x06
 #define	SMP_PAR_ID_PART_NUMBER           0x07
 #define SMP_PAR_ID_CELL_TYPE             0x08
 #define SMP_PAR_ID_BAUDRATE              0x09
