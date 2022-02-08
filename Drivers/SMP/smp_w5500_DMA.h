@@ -68,7 +68,6 @@ typedef struct{
 	uint8_t					Num;
 	uint8_t					Protocol;	//MACRAW mode should be only used in Socket 0. Protocol include Sn_MR_MACRAW Sn_MR_IPRAW Sn_MR_UDP Sn_MR_TCP Sn_MR_CLOSE
 	uint16_t 				PortNum;
-	uint8_t					SlaveAddr;
 	w5500_socket_buffer_t 	Memory;
 	uint16_t				DestPort;
 }W5500_Socket_parm;

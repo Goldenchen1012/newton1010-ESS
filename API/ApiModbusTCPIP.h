@@ -19,8 +19,10 @@
 
 #include "smp_w5500_DMA.h"
 #include "halafe.h"
+#include "AppGauge.h"
 #include "LibNtc.h"
 #include "ApiScuTemp.h"
+#include "AppBms.h"
 
 
 void Modbus_TCPIP_Socket_Open(void);

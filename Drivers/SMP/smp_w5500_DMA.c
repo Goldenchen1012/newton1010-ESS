@@ -336,7 +336,6 @@ int8_t W5500_Socket_Register(W5500_Socket_parm *parm, smp_w5500_event_t w5500_ev
 			smpW5500Socket[i].Parm.Memory.tx_buf_size = parm->Memory.tx_buf_size;
 			smpW5500Socket[i].Parm.Protocol = parm->Protocol;
 			smpW5500Socket[i].Parm.PortNum = parm->PortNum;
-			smpW5500Socket[i].Parm.SlaveAddr = parm->SlaveAddr;
 			break;
 		}
 	}
