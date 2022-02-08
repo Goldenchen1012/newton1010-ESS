@@ -50,7 +50,7 @@ static uint8_t TxBuf[SMP_TCPIP_DATA_BUF_MAX_SIZE];
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 1384,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -63,7 +63,7 @@ W5500_Socket_parm SmpTcpipSocket = SMP_TCPIP_SOCKET;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 1,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -75,7 +75,7 @@ W5500_Socket_parm SmpTcpipSocket1 = SMP_TCPIP_SOCKET1;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 2,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -86,7 +86,7 @@ W5500_Socket_parm SmpTcpipSocket2 = SMP_TCPIO_SOCKET2;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 3,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -97,7 +97,7 @@ W5500_Socket_parm SmpTcpipSocket3 = SMP_TCPIO_SOCKET3;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 4,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -108,7 +108,7 @@ W5500_Socket_parm SmpTcpipSocket4 = SMP_TCPIO_SOCKET4;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 5,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -119,7 +119,7 @@ W5500_Socket_parm SmpTcpipSocket5 = SMP_TCPIO_SOCKET5;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 6,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -130,7 +130,7 @@ W5500_Socket_parm SmpTcpipSocket6 = SMP_TCPIO_SOCKET6;
 					.Num						= NULL,						\
 					.Protocol 					= Sn_MR_TCP,				\
 					.PortNum  					= 7,						\
-					.DeviceID					= 1,						\
+					.SlaveAddr					= 1,						\
 					.Memory.rx_buf_Ptr          = RxBuf,					\
 					.Memory.rx_buf_size         = SMP_TCPIP_DATA_BUF_MAX_SIZE,       	\
 					.Memory.tx_buf_Ptr          = TxBuf,					\
@@ -446,6 +446,7 @@ void appTcpipSmpOpen(void)
 	LibSwTimerOpen(smpTcpipSwTimerHandler, 0);
 
 	W5500_Socket_Register(&SmpTcpipSocket , SmpTcpip_CB); 
+	Modbus_TCPIP_Socket_Open();
 #if	0
 	W5500_Socket_Register(&SmpTcpipSocket1 , SmpTcpip_CB); 
 	W5500_Socket_Register(&SmpTcpipSocket2 , SmpTcpip_CB); 

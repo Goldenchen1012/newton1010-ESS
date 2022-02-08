@@ -51,10 +51,7 @@
 /* Private functions ---------------------------------------------------------*/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == SMP_GPIO_PIN(BSP_W5500_INT_PIN))
-  {
-	Flag_W5500_INT_Trigger = true;
-  }
+
 }
 
 
