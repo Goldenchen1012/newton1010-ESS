@@ -395,14 +395,14 @@ void test_uart_rx_process(void)
 					length_data =  a2i((char *)temp1);
 					LOG_YELLOW("EVENT_LOG Push Reflash %d\r\n",length_data);
 					for(int i = 0; i < length_data;i++){
-						log_package.ID = 0xaa;
-						log_package.SMP_RTC[0] = i;
-						log_package.SMP_RTC[1] = 0;
+						log_package.ID = 0xD6;
+						log_package.SMP_RTC[0] = 0x75;
+						log_package.SMP_RTC[1] = 0x04;
 						log_package.SMP_RTC[2] = 0;
 						log_package.SMP_RTC[3] = 0;
-						log_package.data[0] = 0x12;
-						log_package.data[1] = 0x34;
-						log_package.sum = 0xa5;
+						log_package.data[0] = 0x00;
+						log_package.data[1] = 0x00;
+						log_package.sum = 0x02;
 						app_flash_page_data_push(log_package,SMP_REFLASH_MEMORY);
 					}
 				} 
@@ -423,14 +423,14 @@ void test_uart_rx_process(void)
 					length_data =  a2i((char *)temp1);
 					LOG_YELLOW("EVENT_LOG Push Fix %d\r\n",length_data);
 					for(int i = 0; i < length_data;i++){
-						log_package.ID = 0xaa;
-						log_package.SMP_RTC[0] = i;
-						log_package.SMP_RTC[1] = 0;
+						log_package.ID = 0xD6;
+						log_package.SMP_RTC[0] = 0x75;
+						log_package.SMP_RTC[1] = 0x04;
 						log_package.SMP_RTC[2] = 0;
 						log_package.SMP_RTC[3] = 0;
-						log_package.data[0] = 0x12;
-						log_package.data[1] = 0x34;
-						log_package.sum = 0xa5;
+						log_package.data[0] = 0x00;
+						log_package.data[1] = 0x00;
+						log_package.sum = 0x02;
 						app_flash_page_data_push(log_package,SMP_FIX_MEMORY);
 					}
 				} 

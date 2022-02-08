@@ -52,6 +52,7 @@
 	#define PAGE_SIZE 256 ///byte
 	#define LOG_PACKAGE_SIZE 8 ///byte
 	#define LOG_NUM_IN_PAGE PAGE_SIZE/LOG_PACKAGE_SIZE
+	#define	EVENT_LOG_INI_CHECKSUM			0xA5
 	typedef enum{
 		SMP_REFLASH_MEMORY = 0,
 		SMP_FIX_MEMORY,

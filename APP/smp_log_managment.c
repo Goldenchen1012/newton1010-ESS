@@ -46,19 +46,26 @@ smp_data_load_type data_load_type;
 smp_sector_header_package g_sector_header_package_check;
 uint8_t check_head_buffer[256];
 	
+uint8_t EventLogCheckSum(uint8_t *pBuf)
+{
+	uint8_t		checksum,j;
+	
+	checksum = 0;
+	for(j=0; j<8; j++)
+		checksum ^= pBuf[j];
+	return checksum;
+}
+
+uint8_t isValidEventLog(uint8_t *pBuf)
+{
+	if(EventLogCheckSum(pBuf) == EVENT_LOG_INI_CHECKSUM)
+		return 1;
+	return 0;
+}
+	
 int8_t app_flash_log_managment_init(smp_log_event_t smp_log_event_handle){
 	app_flash_sector_header_load(&g_sector_header_package_init);
-
 	log_evt_cb = smp_log_event_handle;
-
-	g_reflash_page_header_package.package_num = 0;
-	g_reflash_page_header_package.page_usage_size = 0;
-	memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
-	
-	g_fix_page_header_package.package_num = 0;
-	g_fix_page_header_package.page_usage_size = 0;
-	memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
-	
 	return SMP_SUCCESS;
 }
 
@@ -152,10 +159,7 @@ void app_flash_sector_header_get(smp_sector_header_package * sector_header){
 	sector_header->reflash_total_log_cnt += g_reflash_page_header_package.package_num;
 	sector_header->fix_total_log_cnt += g_fix_page_header_package.package_num;
 	if(sector_header->reflash_total_log_cnt > LOG_NUM_IN_PAGE*PAGE_NUM_IN_SECTOR*REFLASH_MEMORY_SECTOR_SIZE){
-		g_sector_header_package.reflash_total_log_cnt -= LOG_NUM_IN_PAGE * PAGE_NUM_IN_SECTOR;
-	}
-	if(sector_header->fix_total_log_cnt > LOG_NUM_IN_PAGE*PAGE_NUM_IN_SECTOR*FIX_MEMORY_SECTOR_SIZE){
-		g_sector_header_package.fix_total_log_cnt -= LOG_NUM_IN_PAGE * PAGE_NUM_IN_SECTOR;
+		sector_header->reflash_total_log_cnt -= LOG_NUM_IN_PAGE * PAGE_NUM_IN_SECTOR;
 	}
 }
 
@@ -184,39 +188,58 @@ int8_t app_flash_check_head(void){
 			LOG_YELLOW("check %x\r\n",g_sector_header_package_check.reflash_memory_current_page);
 			memset(check_head_buffer, 0, 256);
 			smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.reflash_memory_current_page, check_head_buffer, LOG_PACKAGE_SIZE);
+			if(!isValidEventLog(&check_head_buffer[0])){
+				if(g_sector_header_package_check.reflash_memory_current_page == g_sector_header_package_check.reflash_memory_head_page){///empty
+					break;
+				}
+				memset(check_head_buffer, 0, 256);
+				g_sector_header_package_check.reflash_memory_current_page -= 1;
+				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.reflash_memory_current_page, check_head_buffer, PAGE_SIZE);
+				g_sector_header_package_check.reflash_total_log_cnt -= LOG_NUM_IN_PAGE;		
+				for(i = 0; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
+					if(!isValidEventLog(&check_head_buffer[i])){									
+						break;	
+					}else{
+						g_sector_header_package_check.reflash_total_log_cnt++;
+						if(i == PAGE_SIZE - LOG_PACKAGE_SIZE){
+							g_sector_header_package_check.reflash_memory_current_page += 1;													
+							break;	
+						}
+					}
+				}		
+				LOG_YELLOW("reflash check cnt2 %d %d,%x\r\n",g_sector_header_package_check.reflash_total_log_cnt,i,g_sector_header_package_check.reflash_memory_current_page);
+				break;
+			}else{
+				g_sector_header_package_check.reflash_total_log_cnt += LOG_NUM_IN_PAGE;
+			}
+			
 			g_sector_header_package_check.reflash_memory_current_page++;
 			if(g_sector_header_package_check.reflash_memory_current_page >= ((REFLASH_MEMORY_END_SECTOR + 1) * PAGE_NUM_IN_SECTOR)){
 				g_sector_header_package_check.reflash_memory_current_page = REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;
 			}
 			if(g_sector_header_package_check.reflash_memory_current_page == g_sector_header_package_check.reflash_memory_head_page){
 				memset(check_head_buffer, 0, 256);
-				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.reflash_memory_current_page - 1, check_head_buffer, PAGE_SIZE);
-				for(i = LOG_PACKAGE_SIZE - 1; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
-					if(check_head_buffer[i] ==  0xff){
-						g_sector_header_package_check.reflash_total_log_cnt -= LOG_NUM_IN_PAGE;
-						LOG_YELLOW("check cnt %d %d,%x\r\n",g_sector_header_package_check.reflash_total_log_cnt,i,g_sector_header_package_check.reflash_memory_current_page-1);
-						break;	
-					}else if(check_head_buffer[i] ==  0xa5){
-						g_sector_header_package_check.reflash_total_log_cnt++;
-					}
+				if(g_sector_header_package_check.reflash_memory_current_page - 1 < REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR){
+					g_sector_header_package_check.reflash_memory_current_page = ((REFLASH_MEMORY_END_SECTOR + 1) * PAGE_NUM_IN_SECTOR)-1;
+					smp_mx25l_flash_fast_read_data_bytes_page_blocking(((REFLASH_MEMORY_END_SECTOR + 1) * PAGE_NUM_IN_SECTOR)-1, check_head_buffer, PAGE_SIZE);
+				}else{
+					g_sector_header_package_check.reflash_memory_current_page -= 1;
+					smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.reflash_memory_current_page, check_head_buffer, PAGE_SIZE);
 				}
-				break;
-			}
-			if(check_head_buffer[LOG_PACKAGE_SIZE - 1] == 0xff){
-				memset(check_head_buffer, 0, 256);
-				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.reflash_memory_current_page - 2, check_head_buffer, PAGE_SIZE);
-				for(i = LOG_PACKAGE_SIZE - 1; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
-					if(check_head_buffer[i] ==  0xff){
-						g_sector_header_package_check.reflash_total_log_cnt -= LOG_NUM_IN_PAGE;
-						LOG_YELLOW("check cnt %d %d,%x\r\n",g_sector_header_package_check.reflash_total_log_cnt,i,g_sector_header_package_check.reflash_memory_current_page-2);
+				g_sector_header_package_check.reflash_total_log_cnt -= LOG_NUM_IN_PAGE;	
+				for(i = 0; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
+					if(!isValidEventLog(&check_head_buffer[i])){									
 						break;	
-					}else if(check_head_buffer[i] ==  0xa5){
+					}else{
 						g_sector_header_package_check.reflash_total_log_cnt++;
+						if(i == PAGE_SIZE - LOG_PACKAGE_SIZE){
+							g_sector_header_package_check.reflash_memory_current_page += 1;													
+							break;	
+						}
 					}
-				}
+				}		
+				LOG_YELLOW("reflash check cnt1 %d %d,%x\r\n",g_sector_header_package_check.reflash_total_log_cnt,i,g_sector_header_package_check.reflash_memory_current_page);
 				break;
-			}else{
-				g_sector_header_package_check.reflash_total_log_cnt += LOG_NUM_IN_PAGE;
 			}
 		}else{
 			tempcnt++;
@@ -237,34 +260,52 @@ int8_t app_flash_check_head(void){
 			LOG_YELLOW("check %x\r\n",g_sector_header_package_check.fix_memory_current_page);
 			memset(check_head_buffer, 0, 256);
 			smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.fix_memory_current_page, check_head_buffer, LOG_PACKAGE_SIZE);
+			if(!isValidEventLog(&check_head_buffer[0])){
+				if(g_sector_header_package_check.fix_memory_current_page == FIX_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR){
+					break;
+				}
+				memset(check_head_buffer, 0, 256);
+				g_sector_header_package_check.fix_memory_current_page -= 1;
+				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.fix_memory_current_page, check_head_buffer, PAGE_SIZE);
+				g_sector_header_package_check.fix_total_log_cnt -= LOG_NUM_IN_PAGE;
+				for(i = 0; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
+					if(!isValidEventLog(&check_head_buffer[i])){		
+						break;
+					}else{
+						g_sector_header_package_check.fix_total_log_cnt++;
+						if(i == PAGE_SIZE-LOG_PACKAGE_SIZE){
+							g_sector_header_package_check.fix_memory_current_page += 1;
+							break;	
+						}
+					}
+				}					
+				memcpy(&g_sector_header_package,&g_sector_header_package_check,sizeof(g_sector_header_package_check));
+				LOG_YELLOW("fix check cnt2 %d %d,%x\r\n",g_sector_header_package_check.fix_total_log_cnt,i,g_sector_header_package_check.fix_memory_current_page);
+				break;				
+			}else{
+				g_sector_header_package_check.fix_total_log_cnt += LOG_NUM_IN_PAGE;
+			}
+			
 			g_sector_header_package_check.fix_memory_current_page++;
 			if(g_sector_header_package_check.fix_memory_current_page >= ((FIX_MEMORY_END_SECTOR + 1) * PAGE_NUM_IN_SECTOR)){
 				memset(check_head_buffer, 0, 256);
-				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.fix_memory_current_page - 1, check_head_buffer, PAGE_SIZE);
-				for(i = LOG_PACKAGE_SIZE - 1; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
-					if(check_head_buffer[i] ==  0xff){
-						g_sector_header_package_check.fix_total_log_cnt -= LOG_NUM_IN_PAGE;
-						LOG_YELLOW("check cnt %d %d,%x\r\n",g_sector_header_package_check.fix_total_log_cnt,i,g_sector_header_package_check.fix_memory_current_page-1);
-						return SMP_SUCCESS;	
-					}else if(check_head_buffer[i] ==  0xa5){
+				g_sector_header_package_check.fix_memory_current_page -= 1;
+				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.fix_memory_current_page, check_head_buffer, PAGE_SIZE);
+				g_sector_header_package_check.fix_total_log_cnt -= LOG_NUM_IN_PAGE;
+				for(i = 0; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
+					if(!isValidEventLog(&check_head_buffer[i])){		
+						break;
+					}else{
 						g_sector_header_package_check.fix_total_log_cnt++;
+						if(i == PAGE_SIZE-LOG_PACKAGE_SIZE){
+							g_sector_header_package_check.fix_memory_current_page += 1;
+							break;	
+						}
 					}
 				}
-			}
-			if(check_head_buffer[LOG_PACKAGE_SIZE - 1] == 0xff){
-				memset(check_head_buffer, 0, 256);
-				smp_mx25l_flash_fast_read_data_bytes_page_blocking(g_sector_header_package_check.fix_memory_current_page - 2, check_head_buffer, PAGE_SIZE);
-				for(i = LOG_PACKAGE_SIZE - 1; i < PAGE_SIZE;i = i + LOG_PACKAGE_SIZE){
-					if(check_head_buffer[i] ==  0xff){
-						g_sector_header_package_check.fix_total_log_cnt -= LOG_NUM_IN_PAGE;
-						LOG_YELLOW("check cnt %d %d,%x\r\n",g_sector_header_package_check.fix_total_log_cnt,i,g_sector_header_package_check.fix_memory_current_page-2);
-						return SMP_SUCCESS;	
-					}else if(check_head_buffer[i] ==  0xa5){
-						g_sector_header_package_check.fix_total_log_cnt++;
-					}
-				}
-			}else{
-				g_sector_header_package_check.fix_total_log_cnt += LOG_NUM_IN_PAGE;
+				memcpy(&g_sector_header_package,&g_sector_header_package_check,sizeof(g_sector_header_package_check));
+				LOG_YELLOW("fix check cnt1 %d %d,%x\r\n",g_sector_header_package_check.fix_total_log_cnt,i,g_sector_header_package_check.fix_memory_current_page);
+				break;
 			}
 		}else{
 			tempcnt++;
@@ -274,6 +315,7 @@ int8_t app_flash_check_head(void){
 			}
 		}
 	}
+	return SMP_SUCCESS;
 }
 
 void app_flash_page_data_push(smp_log_package log_package,smp_flash_type flash_type){
@@ -355,7 +397,7 @@ void app_flash_page_data_save(smp_flash_type flash_type){
 					g_sector_header_package.reflash_memory_head_page = REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;
 				}
 			}
-			if(g_reflash_page_header_package.package_num < LOG_NUM_IN_PAGE){
+			if(g_reflash_page_header_package.page_usage_size > 0){
 				g_sector_header_package.reflash_total_log_cnt += g_reflash_page_header_package.package_num;
 				app_flash_sector_header_save(&g_sector_header_package);
 				smp_mx25l_flash_page_program(g_sector_header_package.reflash_memory_current_page ,(uint8_t*)log_reflash_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
@@ -368,7 +410,7 @@ void app_flash_page_data_save(smp_flash_type flash_type){
 				app_flash_sector_header_save(&g_sector_header_package);
 				
 				smp_mx25l_flash_page_program(g_sector_header_package.reflash_memory_current_page - 1,(uint8_t*)log_reflash_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
-				LOG_YELLOW("page program %x\r\n",g_sector_header_package.reflash_memory_current_page);
+				LOG_YELLOW("page program %x\r\n",g_sector_header_package.reflash_memory_current_page - 1);
 					
 				memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
 				g_reflash_page_header_package.page_usage_size = 0;
@@ -382,7 +424,7 @@ void app_flash_page_data_save(smp_flash_type flash_type){
 					return;
 				}			
 			}
-			if(g_fix_page_header_package.package_num < LOG_NUM_IN_PAGE){
+			if(g_fix_page_header_package.page_usage_size > 0){
 				g_sector_header_package.fix_total_log_cnt += g_fix_page_header_package.package_num;
 				app_flash_sector_header_save(&g_sector_header_package);		
 				smp_mx25l_flash_page_program(g_sector_header_package.fix_memory_current_page ,(uint8_t*)log_fix_package_buffer,LOG_PACKAGE_BUFFER_SIZE,app_log_event_handler);
@@ -494,6 +536,8 @@ void app_sector_header_event_handler(smp_flash_evt_type p_evt)
 					g_reflash_page_header_package.page_usage_size = (g_sector_header_package.reflash_total_log_cnt % (LOG_PACKAGE_BUFFER_SIZE/LOG_PACKAGE_SIZE)) * LOG_PACKAGE_SIZE;
 					g_fix_page_header_package.package_num = 0;
 					g_fix_page_header_package.page_usage_size = (g_sector_header_package.fix_total_log_cnt % (LOG_PACKAGE_BUFFER_SIZE/LOG_PACKAGE_SIZE)) * LOG_PACKAGE_SIZE;
+					memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
+					memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
 					//log_evt_cb(SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE);///done
 				}		
 			}else{
@@ -524,6 +568,8 @@ void app_sector_header_event_handler(smp_flash_evt_type p_evt)
 				g_reflash_page_header_package.page_usage_size = (g_sector_header_package.reflash_total_log_cnt % (LOG_PACKAGE_BUFFER_SIZE/LOG_PACKAGE_SIZE)) * LOG_PACKAGE_SIZE;
 				g_fix_page_header_package.package_num = 0;
 				g_fix_page_header_package.page_usage_size = (g_sector_header_package.fix_total_log_cnt % (LOG_PACKAGE_BUFFER_SIZE/LOG_PACKAGE_SIZE)) * LOG_PACKAGE_SIZE;
+				memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
+				memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
 				//log_evt_cb(SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE);///done
 			}
 		
