@@ -30,7 +30,6 @@ extern "C" {
 /* Public function prototypes -----------------------------------------------*/
 void DavinciCanParameterRdWrite(smp_can_package_t *pCanPkg);
 
-
 #ifdef __cplusplus
 }
 #endif

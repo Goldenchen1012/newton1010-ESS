@@ -25,7 +25,7 @@ extern "C" {
 
 /* Public define ------------------------------------------------------------*/
 void appSerialUartDavinciOpen(void);
-
+void appSerialUartSendMessage(uint8_t *str);
 
 /* Public macro -------------------------------------------------------------*/
 #ifdef __cplusplus

@@ -70,15 +70,15 @@ extern bq796xx_data_t bq796xx_data;
 
 /* Private variables ---------------------------------------------------------*/
 #define AFE_PARAM_LOAD_VALUE    {                                                          \
-							          .ov_threshold         =OV_4175MV,                      \
+                                    .ov_threshold         =OV_4175MV,                      \
 	                                  .ov_step_threshold    =OV_STEP_100MV,                  \
 	                                  .uv_threshold         =UV_2800MV,                      \
 	                                  .ot_threshold         =OT_10_PCT,                      \
 	                                  .ut_threshold         =UT_80_PCT,                      \
 	                                  .ov_enable            =BQ_ENABLE,                      \
 	                                  .uv_enable            =BQ_ENABLE,                      \
-		                                .ot_enable            =BQ_DISABLE,                      \
-	                                  .ut_enable            =BQ_DISABLE,                      \
+		                                .ot_enable            =BQ_DISABLE,                     \
+	                                  .ut_enable            =BQ_DISABLE,                     \
 		                                .cb_cycle_time        =CB_CYC_T_10S,                   \
                                 }	
 

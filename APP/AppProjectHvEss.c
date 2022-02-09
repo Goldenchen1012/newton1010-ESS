@@ -710,9 +710,14 @@ void appProjectOpen(void){
 
 	sprintf(str,"Par Len = %d", len);
 	appProjectDebugMsg(str);
-	appBalanceOpen(appProjectDavinciBalanceEventHandler);
+  
+	#if 0
+  appBalanceOpen(appProjectDavinciBalanceEventHandler);
+  #endif
+	
 	apiSignalFeedbackOpen(0);//signalFeedbackEventHandler);
-  	LibSwTimerOpen(appProjectSwTimerHandler, 0);
+  
+	LibSwTimerOpen(appProjectSwTimerHandler, 0);
   	releaseOCP(); 
   	apiRelayControlOpen();
   	appBmsOpen();

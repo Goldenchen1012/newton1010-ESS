@@ -119,6 +119,11 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
+          <Key>DLGUARM</Key>
+          <Name>d</Name>
+        </SetRegEntry>
+        <SetRegEntry>
+          <Number>0</Number>
           <Key>DLGDARM</Key>
           <Name>(1010=-1,-1,-1,-1,0)(1007=-1,-1,-1,-1,0)(1008=-1,-1,-1,-1,0)(1009=-1,-1,-1,-1,0)(1012=-1,-1,-1,-1,0)</Name>
         </SetRegEntry>
@@ -136,11 +141,6 @@
           <Number>0</Number>
           <Key>ARMDBGFLAGS</Key>
           <Name>-T0</Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
-          <Key>DLGUARM</Key>
-          <Name></Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -289,6 +289,11 @@
           <count>25</count>
           <WinNumber>1</WinNumber>
           <ItemText>\\HVESS_Norman_Vxx\../../../User/main.c\bmu_is_ring,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>26</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>unit_testonly_afe_load_data</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -1114,7 +1119,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>43</FileNumber>
       <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\..\BSP\DavinciBsp_Rev1.c</PathWithFileName>
@@ -1126,7 +1131,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>44</FileNumber>
       <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\..\..\BSP\DavinciBsp_Rev2.c</PathWithFileName>

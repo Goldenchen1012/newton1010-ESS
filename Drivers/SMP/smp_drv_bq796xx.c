@@ -1596,7 +1596,7 @@ uint8_t drv_bq796xx_Init_Steps(bq796xx_wake_tone_switch wake_tone_sw, bq796xx_in
 				          drv_bq796xx_Set_AFE_GPIO_type(STACK,0,GPIO_ADC_OTUT,AFE_GPIO1,0);
 	                break;
 							case 1:
-								  drv_bq796xx_Set_AFE_GPIO_type(STACK,0,GPIO_ADC_OTUT,AFE_GPIO2,0);
+								  drv_bq796xx_Set_AFE_GPIO_type(STACK,0,GPIO_ADC,AFE_GPIO2,0);
 	                break;
 							case 2:
 								  drv_bq796xx_Set_AFE_GPIO_type(STACK,0,GPIO_OUT_L,AFE_GPIO3,0);	

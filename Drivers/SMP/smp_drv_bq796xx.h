@@ -342,7 +342,7 @@ typedef enum{
 }bq796xx_dir_set_steps_enum;
 
 /* Exported constants --------------------------------------------------------*/ 
-#define BMU_TOTAL_BOARDS															16
+#define BMU_TOTAL_BOARDS															2
 #define BMU_CELL_SERIES             									16
 
 #define BQ796XX_TX_BUFFER_SIZE												1024
@@ -788,8 +788,9 @@ int8_t drv_bq796xx_init_default_load(bq796xx_init_default_t in_load_data);
 
 uint8_t drv_bq796xx_CellBalance_1to8_set(uint8_t bmu_id, uint8_t cell_d_en, bq796xx_cellbalance_time cb_time, uint32_t delays);
 uint8_t drv_bq796xx_CellBalance_9to16_set(uint8_t bmu_id, uint8_t cell_d_en, bq796xx_cellbalance_time cb_time, uint32_t delays);
-uint8_t drv_bq796xx_Stack_CellBalance_1to8_clear(bq796xx_AFE_GPIO_stack is_stack, uint8_t dev_id, uint32_t delays);
-uint8_t drv_bq796xx_Stack_CellBalance_9to16_clear(bq796xx_AFE_GPIO_stack is_stack, uint8_t dev_id, uint32_t delays);
+uint8_t drv_bq796xx_CellBalance_1to8_clear(bq796xx_AFE_GPIO_stack is_stack, uint8_t dev_id, uint32_t delays);
+uint8_t drv_bq796xx_CellBalance_9to16_clear(bq796xx_AFE_GPIO_stack is_stack, uint8_t dev_id, uint32_t delays);
+
 uint8_t drv_bq796xx_direction_set_steps(uint8_t ns_dir_bmu_cnt,bq796xx_dir_set_steps_enum *afe_phase,uint8_t maxcnt, uint8_t dir, uint8_t *step_complete_f, uint8_t *before_delay_ms);
 
 void fill_data4_payload(uint8_t *payload,uint8_t b1,uint8_t b2,uint8_t b3,uint8_t b4);
