@@ -43,6 +43,7 @@
 #include "ApiSysPar.h"
 #include "ApiRelayControl.h"
 #include "AppBms.h"
+#include "AppScuIdAssign.h"
 #include "ApiScuTemp.h"
 #include "ApiSystemFlag.h"
 #include "HalAfeADS7946.h"
@@ -1009,6 +1010,7 @@ void appProjectOpen(void){
   	releaseOCP(); 
   	apiRelayControlOpen();
   	appBmsOpen();
+  	appScuIdAssignOpen();
   	apiScuTempOpen();
   	apiSystemFlagOpen();
   	apiEventLogOpen();

@@ -473,6 +473,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\AppLed.c</FilePath>
             </File>
+            <File>
+              <FileName>AppScuIdAssign.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppScuIdAssign.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2892,6 +2897,11 @@
               <FileName>AppLed.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\AppLed.c</FilePath>
+            </File>
+            <File>
+              <FileName>AppScuIdAssign.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppScuIdAssign.c</FilePath>
             </File>
           </Files>
         </Group>

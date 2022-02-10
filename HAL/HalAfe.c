@@ -21,6 +21,8 @@
 #include "LibNtc.h"
 #include "HalAfeBq796xx.h"
 #include "ApiSysPar.h"
+#include "AppBms.h"
+#include "AppScuIdAssign.h"
 
 /* Private define ------------------------------------------------------------*/
 #define		afeCellNumber()		apiSysParGetCellNumber()
@@ -167,21 +169,41 @@ void halAfeSetVBatAdcValue(uint8_t VbIndex, int32_t adcvalue)
 
 void halAfeSetCellVoltage(uint16_t cell, tCellVoltage voltage)
 {
-	AfeBuffer.CellVoltage[cell] = voltage;
+	uint8_t	scuid;
+	scuid = appBmsGetScuId();
+	appBmsSetCellVoltage(scuid, cell, voltage);
+	//AfeBuffer.CellVoltage[cell] = voltage;
 }
 void halAfeSetNtcVoltage(uint16_t ntcs, tNtcVoltage voltage)
 {
-	AfeBuffer.NtcVoltage[ntcs] = voltage;
+	uint8_t	scuid;
+	scuid = appBmsGetScuId();
+	appBmsSetNtcVoltage(scuid, ntcs, voltage);
+//	AfeBuffer.NtcVoltage[ntcs] = voltage;
 }
 
 tCellVoltage halAfeGetCellVoltage(uint16_t CellIndex)
 {
-	return AfeBuffer.CellVoltage[CellIndex];	
+	uint16_t	voltage;
+	uint8_t		scuid;
+	scuid = appBmsGetScuId();
+	
+	appBmsGetCellVoltage(scuid, CellIndex, &voltage);
+	return voltage;
+//	return AfeBuffer.CellVoltage[CellIndex];	
 }
 
 tNtcVoltage HalAfeGetNtcVoltage(uint16_t NtcIndex)
 {
-	return AfeBuffer.NtcVoltage[NtcIndex];	
+	uint16_t	voltage;
+	uint8_t		scuid;
+	
+	scuid = appBmsGetScuId();
+	
+	appBmsGetNtcVoltage(scuid, NtcIndex, &voltage);
+	return voltage;
+
+	//return AfeBuffer.NtcVoltage[NtcIndex];	
 }
 
 tCurrent halAfeGetCurrentValue(uint8_t index)

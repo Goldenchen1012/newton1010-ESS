@@ -27,6 +27,7 @@
 #include "LibSwTimer.h"
 #include "AppSerialCanDavinci.h"
 #include "AppBms.h"
+#include "AppScuIdAssign.h"
 
 void appSerialUartSendMessage(uint8_t *str);
 #define	canCommonDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)

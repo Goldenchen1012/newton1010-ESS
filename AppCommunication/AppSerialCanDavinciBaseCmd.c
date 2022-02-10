@@ -55,9 +55,9 @@ static void scuSystemFlag(smp_can_package_t *pCanPkg)
 	scuid = SMP_CAN_GET_SCU_ID(pCanPkg->id);
 	subindex = SMP_CAN_GET_SUB_INDEX(pCanPkg->id);
 	if(subindex == 0)
-		appBmsSetScuSystemFlag1(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
+		appBmsSetScuSystemFlag1_2(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
 	else if(subindex ==1)
-		appBmsSetScuSystemFlag3(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
+		appBmsSetScuSystemFlag3_4(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
 		
 }
 static void scuCurrent(smp_can_package_t *pCanPkg)
