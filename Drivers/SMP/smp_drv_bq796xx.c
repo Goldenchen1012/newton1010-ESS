@@ -441,7 +441,7 @@ uint8_t drv_bq796xx_start_setting(uint8_t maxcnt, uint8_t dir){
 uint8_t drv_bq796xx_Read_AFE_ALL_VCELL(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,uint32_t delays){
   uint8_t    d_payload[4] = {0};
   
-  fill_data4_payload(d_payload,(BMU_CELL_SERIES*2)-1,0,0,0); //read 32 bytes 
+  fill_data4_payload(d_payload,(BMU_CELL_SERIES*2)+BQ796XX_READ_BUSBAR_BYTE_NUM-1,0,0,0); //read 32+2(busbar data) bytes 
   
   if(is_stack == STACK)  
       drv_bq796xx_command_framing(STACK_READ, 0, BQ79600_VCELL16_H, 1, d_payload, delays);
@@ -889,6 +889,7 @@ uint8_t drv_bq796xx_data_frame_parser(void)
   static uint16_t read_reg_adr = 0;
   static uint8_t device_id = 0;
   static uint8_t data_len=0;
+	static uint8_t data_len_temp=0;
   static uint16_t  crc,rcv_crc;
 	static int8_t fifo_res;
   
@@ -968,9 +969,15 @@ uint8_t drv_bq796xx_data_frame_parser(void)
 	
   switch(read_reg_adr){
     case BQ79600_VCELL16_H:
-      for( i=0 ;i < (data_len+1)/2; i++){
+		  data_len_temp = (data_len+1)-(BQ796XX_READ_BUSBAR_BYTE_NUM);	
+		
+		  //Read VCell 16~01 data.
+      for( i=0 ;i < (data_len_temp)/2; i++){
           bq796xx_data.vcell_data[device_id-1][15-i]=bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+(i*2)] * 256.0f + bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+(i*2+1)];
       }
+			
+			//Read busbar data.
+			bq796xx_data.busbar_data[device_id-1] = bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+(i*2)] * 256.0f + bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+(i*2+1)];
 			
 			bq_event_type = BQ_EVENT_VCELL;
 			
@@ -1588,7 +1595,7 @@ uint8_t drv_bq796xx_Init_Steps(bq796xx_wake_tone_switch wake_tone_sw, bq796xx_in
 						    *step_complete_f = 1;
 					   }						
 					   break;
-		  case AFE_INIT_SET_GPIO_FUNC:	//Setting ALL BMU ,GPIO1~GPIO3 ADC input.   GPIO4~GPIO8 Output Hi/Lo.	 
+		  case AFE_INIT_SET_GPIO_FUNC:	//Setting ALL BMU ,GPIO1 ADC OUT function, GPIO2 ADC input, GPIO4~GPIO8 Output Hi/Lo.	 
 				    *before_delay_ms = 1; 
 			 
 	          switch(sub_step){				 

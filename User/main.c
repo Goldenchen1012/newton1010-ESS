@@ -84,16 +84,18 @@
 
 #if 1
 #define G_TEST_BQ796XX_CELL_BALANCE_FUNC 
-#define G_TEST_BQ796XX_CELL_BALANCE_FUNC_TEST_CYCLE_NUM                        1000
+#define G_TEST_BQ796XX_CELL_BALANCE_FUNC_TEST_CYCLE_NUM                        100
 #endif
 
 #if 1
 #define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
-#define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM   5
+#define G_TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC_TEST_CYCLE_NUM                5
 #endif
 
 #if 1
 #define G_TEST_IRM_FUNCTION
+#define G_TEST_IRM_FUNCTION_TEST_CYCLE_NUM                                     50
+#define G_TEST_IRM_FUNCTION_TEST_CYCLE_DELAY_TIME                              100
 #endif 
 
 #if 1
@@ -1449,14 +1451,14 @@ void G_Test_BQ796XX_Setting_Init_With_Step(void){
    	  GPIOD->ODR |= GPIO_PIN_14;
 
 			if(dir_state == DIR_NORTH){
-			    north_res = res & 0x7F;
+			    north_res = res & (~BQ796XX_BMU_RING_MASK);
 			}else{
-			    south_res = res & 0x7F;
+			    south_res = res & (~BQ796XX_BMU_RING_MASK);
 			}
 			
-			test_init_rec_bmu_num[dir_state][res & 0x7F]++;
+			test_init_rec_bmu_num[dir_state][res & (~BQ796XX_BMU_RING_MASK)]++;
 			
-			bmu_is_ring = ((res & 0x80)>> 7);                                        //Results MSB is  0 = Non Ring, 1= Ring. 
+			bmu_is_ring = ((res & BQ796XX_BMU_RING_MASK)>> BQ796XX_BMU_COUNT_BITS);                                        //Results MSB is  0 = Non Ring, 1= Ring. 
 
 			SEGGER_RTT_printf(0,"BMU Init#%04d N=%d,S=%d\r\n", k, north_res, south_res);
 			
@@ -1672,14 +1674,14 @@ void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step(void){
 	    }
 			
 			if(dir_state == DIR_NORTH){
-			    north_res = dir_res & 0x7F;
+			    north_res = dir_res & (~BQ796XX_BMU_RING_MASK);
 				  test_bmu_statistics_num[0][north_res]++;
 			}else{
-			    south_res = dir_res & 0x7F;
+			    south_res = dir_res & (~BQ796XX_BMU_RING_MASK);
 				  test_bmu_statistics_num[1][south_res]++;
 			}
 			
-			bmu_is_ring = ((dir_res & 0x80)>> 7);                                       //Results MSB is  0 = Non Ring, 1= Ring. 
+			bmu_is_ring = ((dir_res & BQ796XX_BMU_RING_MASK)>> BQ796XX_BMU_COUNT_BITS);                //Results MSB is  0 = Non Ring, 1= Ring. 
 			
 			test_bmu_ring_total_count += bmu_is_ring;
 			
@@ -1733,6 +1735,12 @@ void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_MeasureData(void){
 			    LOG_GREEN("%04d,", ((int)((float)(bq796xx_data.vcell_data[ki][15])*BQ79656_RESOLUTION_CELL_MAIN)));
 			}
       LOG_GREEN("mV  "); 
+			
+			LOG_GREEN("VBusBar=");
+			for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){
+			    LOG_GREEN("%04d,", ((int)((float)(bq796xx_data.busbar_data[ki])*BQ79656_RESOLUTION_BB)));
+			}
+      LOG_GREEN("mV  "); 			
 			
 			LOG_GREEN("GPIO1 ADC=");
 		  for(int ki =0; ki<BMU_TOTAL_BOARDS; ki++){ 
@@ -1925,17 +1933,16 @@ void G_Test_IRM_Function(void){
 	app_irm_event_cb.DataReady_cb = irm_data_ready_cb;
 	
 	//Open IRM function, Setting 5s= IRM detection period, 200ms = IRM switch SW1~Sw3 waitting time. 
-	res = apiIRMonitoringOpen(5, 200, app_irm_event_cb);
+	res = apiIRMonitoringOpen(ITRM_TESTPARAM_DET_CYCLE_TIME, ITRM_TESTPARAM_RELAY_WAIT_TIME, app_irm_event_cb);
 	
 	//Get current Vstack, IRM use callback notification Vstack.
-	while(test_get_vatck_cnt <10){
+	while(test_get_vatck_cnt < G_TEST_IRM_FUNCTION_TEST_CYCLE_NUM){
 		  test_get_vatck_cnt++;
 		
 	    LOG_BLUE("IRM Get Vstack...\r\n");
 	    apiIRMonitoringGetVstack();
 		  LibSwTimerHandle();
-		
-		  HAL_Delay(100); 
+		  HAL_Delay(G_TEST_IRM_FUNCTION_TEST_CYCLE_DELAY_TIME); 
 	}
 }
 #endif

@@ -677,6 +677,11 @@ typedef enum{
 #define BQ796XX_UV_STEP_MV														50  		//mV
 
 #define BQ796XX_CHECK_ID_CMD_RETRY                    0
+
+#define BQ796XX_BMU_RING_MASK                         0x80
+#define BQ796XX_BMU_COUNT_BITS                        7
+
+#define BQ796XX_READ_BUSBAR_BYTE_NUM                  2       //unit: 2 bytes
 /* Exported defines --------------------------------------------------------*/
 
 
@@ -697,6 +702,7 @@ typedef enum{
 
 typedef struct{ 
 	uint16_t vcell_data[MAX_AFE_CNT][BMU_CELL_SERIES];
+	uint16_t busbar_data[MAX_AFE_CNT];
 	uint16_t gpio_data[MAX_AFE_CNT][BQ79616_GPIO_NUM];  
 	uint8_t  fault_summary[MAX_AFE_CNT];
 	uint16_t fault_ov[MAX_AFE_CNT];
