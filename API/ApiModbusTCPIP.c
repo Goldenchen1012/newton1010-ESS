@@ -2,8 +2,8 @@
 ******************************************************************************
 * @file    ApiModbusTCPIP.c
 * @author  Steve Cheng
-* @version V0.0.2
-* @date    2022/01/24
+* @version V0.0.3
+* @date    2022/02/10
 * @brief   
 ******************************************************************************
 * @attention
@@ -64,7 +64,9 @@
 
 //========== Project protocol ==========
 #define BMS_SLAVE_ID_OFFSET	0x80
-#define	MAX_SCU_SLAVE_ADDR		127
+#define MAX_SCU_CNT			0x20
+
+#define MAX_SLAVE_ID		(BMS_SLAVE_ID_OFFSET+MAX_SCU_CNT)
 
 #define SCU_INF_LAST_ADDR  0x0027
 #define SCU_CELL_V_START_ADDR 0x0101
@@ -77,9 +79,9 @@
 #define SCU_BMU_T_LAST_ADDR 0x081E
 
 #define BMS_RACK_V_START_ADDR 0x0101
-#define BMS_RACK_V_LAST_ADDR (BMS_RACK_V_START_ADDR+MAX_SCU_SLAVE_ADDR)
+#define BMS_RACK_V_LAST_ADDR (BMS_RACK_V_START_ADDR+MAX_SCU_CNT)
 #define BMS_RACK_T_START_ADDR 0x0201
-#define BMS_RACK_T_LAST_ADDR (BMS_RACK_T_START_ADDR+MAX_SCU_SLAVE_ADDR)
+#define BMS_RACK_T_LAST_ADDR (BMS_RACK_T_START_ADDR+MAX_SCU_CNT)
 
 #define MAX_CELL_CNT 320
 #define MAX_BMU_CNT 30	
@@ -140,7 +142,7 @@ uint8_t ResponseLength;
 W5500_Socket_parm Socket_ModbusTCPIP = SOCKET_EMS;	
 
 static uint16_t reg_addr=0;				
-static uint16_t reg_cnt;
+static uint16_t reg_cnt = 0;
 static uint8_t slave_id = 0;
 static uint8_t* Ptr_response;
 /********** Byte Word Convert **********/
@@ -195,112 +197,133 @@ void Modbus_TCPIP_Socket_Open(void){
 
 
 static uint8_t (*modbus_data_handle)(uint8_t* ptr);			
-typedef void (*modbus_tcp_get_data_table)(void);
+typedef uint8_t (*modbus_tcp_get_data_table)(void);
 //----------Get SCU DATA ----------
 static uint16_t scu_get_data_index = 0;
 
-static void space_function(void){
+static uint8_t unsupport_reg_addr(void){
+	return Illegal_DataAddr;
+}
 
+static uint8_t space_function(void){
+	return Normal;
 }
 
 static void increase_get_data_index(uint16_t wordlen){
 	scu_get_data_index += wordlen;
+	
 	sprintf(str,"SCU_GET_INDEX : %x",scu_get_data_index);
 	modbus_tcp_debug(str);
+	
 	*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) += (uint8_t)(wordlen*2); 
+	
 	Ptr_response+=(wordlen*2);
 	ResponseLength += wordlen*2;
 	reg_cnt--;
 }
 
-static void scu_get_protect_flag_1(void){
+static uint8_t scu_get_protect_flag_1(void){
 	/*Get Data*/
 	modbus_tcp_debug("Protect flag_1");
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_protect_flag_2(void){
+static uint8_t scu_get_protect_flag_2(void){
 	/*Get Data*/
 	modbus_tcp_debug("Protect flag_2");
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_protect_flag_3(void){
+static uint8_t scu_get_protect_flag_3(void){
 	/*Get Data*/
 	modbus_tcp_debug("Protect flag_3");
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_status(void){
+static uint8_t scu_get_status(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_module_parm(void){
+static uint8_t scu_get_module_parm(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_cell_voltage(void){
+static uint8_t scu_get_max_cell_voltage(void){
 	/*Get Data*/
 	*Ptr_response = get_data(data_index);
 	*(Ptr_response+1) = get_data(data_index);
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_min_cell_voltage(void){
+static uint8_t scu_get_min_cell_voltage(void){
 	/*Get Data*/
 	*Ptr_response = get_data(data_index);
 	*(Ptr_response+1) = get_data(data_index);
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_cell_deltav(void){
+static uint8_t scu_get_max_cell_deltav(void){
 	/*Get Data*/
 	*Ptr_response = get_data(data_index);
 	*(Ptr_response+1) = get_data(data_index);
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_bmu_voltage(void){
+static uint8_t scu_get_max_bmu_voltage(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_min_bmu_voltage(void){
+static uint8_t scu_get_min_bmu_voltage(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_bmu_deltav(void){
+static uint8_t scu_get_max_bmu_deltav(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_cell_v_index(void){
+static uint8_t scu_get_max_cell_v_index(void){
 	/*Get Data*/
 	*Ptr_response = get_data(data_index);
 	*(Ptr_response+1) = get_data(data_index);
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_min_cell_v_index(void){
+static uint8_t scu_get_min_cell_v_index(void){
 	/*Get Data*/
 	*Ptr_response = get_data(data_index);
 	*(Ptr_response+1) = get_data(data_index);
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_extreme_bmu_v_index(void){
+static uint8_t scu_get_extreme_bmu_v_index(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_cell_temp(void){
+static uint8_t scu_get_max_cell_temp(void){
 	uint16_t temp;
 	
 	temp = get_data(data_index);
@@ -309,8 +332,9 @@ static void scu_get_max_cell_temp(void){
 	*Ptr_response = (uint8_t)(temp>>8);
 	*(Ptr_response+1) = (uint8_t)temp;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_min_cell_temp(void){
+static uint8_t scu_get_min_cell_temp(void){
 	uint16_t temp;
 	
 	temp = get_data(data_index);
@@ -319,8 +343,9 @@ static void scu_get_min_cell_temp(void){
 	*Ptr_response = (uint8_t)(temp>>8);
 	*(Ptr_response+1) = (uint8_t)temp;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_cell_deltat(void){
+static uint8_t scu_get_max_cell_deltat(void){
 	uint16_t temp;
 	
 	temp = get_data(data_index);
@@ -329,57 +354,66 @@ static void scu_get_max_cell_deltat(void){
 	*Ptr_response = (uint8_t)(temp>>8);
 	*(Ptr_response+1) = (uint8_t)temp;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_bmu_temp(void){
+static uint8_t scu_get_max_bmu_temp(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_min_bmu_temp(void){
+static uint8_t scu_get_min_bmu_temp(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_bmu_deltat(void){
+static uint8_t scu_get_max_bmu_deltat(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_max_cell_t_index(void){
+static uint8_t scu_get_max_cell_t_index(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_min_cell_t_index(void){
+static uint8_t scu_get_min_cell_t_index(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_extreme_bmu_t_index(void){
+static uint8_t scu_get_extreme_bmu_t_index(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_soc(void){
+static uint8_t scu_get_soc(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
-static void scu_get_soh(void){
+static uint8_t scu_get_soh(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_get_data_index(1);
+	return Normal;
 }
 
-static void scu_get_current(void){
+static uint8_t scu_get_current(void){
 	sprintf(str, "Get Current %x ",get_data(data_index));
 	modbus_tcp_debug(str);
 	/*Get Data*/
@@ -388,48 +422,54 @@ static void scu_get_current(void){
 	*(Ptr_response+2) = get_data(data_index);
 	*(Ptr_response+3) = get_data(data_index);
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_power(void){
+static uint8_t scu_get_power(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_sug_chgpower(void){
+static uint8_t scu_get_sug_chgpower(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_sug_dhgpower(void){
+static uint8_t scu_get_sug_dhgpower(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_total_chgpower(void){
+static uint8_t scu_get_total_chgpower(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_total_dhgpower(void){
+static uint8_t scu_get_total_dhgpower(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;	
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_fcc(void){
+static uint8_t scu_get_fcc(void){
 	modbus_tcp_debug("FCC");
 	/*Get Data*/
 	*Ptr_response = get_data(data_index);
@@ -437,8 +477,9 @@ static void scu_get_fcc(void){
 	*(Ptr_response+2) = get_data(data_index);
 	*(Ptr_response+3) = get_data(data_index);
 	increase_get_data_index(2);
+	return Normal;
 }
-static void scu_get_rc(void){
+static uint8_t scu_get_rc(void){
 	modbus_tcp_debug("RC");
 	/*Get Data*/
 	*Ptr_response =  get_data(data_index);
@@ -446,7 +487,9 @@ static void scu_get_rc(void){
 	*(Ptr_response+2) = get_data(data_index);
 	*(Ptr_response+3) = get_data(data_index);
 	increase_get_data_index(2);
+	return Normal;
 }
+
 const modbus_tcp_get_data_table scu_get_data_function[]={
 	scu_get_protect_flag_1,				// 0x00
 	scu_get_protect_flag_2,				// 0x01
@@ -489,7 +532,7 @@ const modbus_tcp_get_data_table scu_get_data_function[]={
 	space_function,						
 	scu_get_rc,							// 0X27
 	space_function,
-	space_function,	
+	unsupport_reg_addr,
 };
 static uint8_t get_scu_data(uint8_t* response_first_ptr){
 	static uint16_t i,cell_index,bmu_index,cell_voltage,cell_ntc_vol,temp;
@@ -499,14 +542,15 @@ static uint8_t get_scu_data(uint8_t* response_first_ptr){
 	
 	if((scu_get_data_index+reg_cnt)<=0x21){
 		for(i=reg_cnt;i>0;i--){
-			scu_get_data_function[scu_get_data_index]();
+			if(scu_get_data_function[scu_get_data_index]()== Illegal_DataAddr)
+				return Illegal_DataAddr;
 		}
 	}else if((scu_get_data_index>=SCU_CELL_V_START_ADDR)&&(scu_get_data_index+reg_cnt)<=(SCU_CELL_V_LAST_ADDR+1)){
 		cell_index = scu_get_data_index-SCU_CELL_V_START_ADDR;
 		*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) = (uint8_t)(reg_cnt*2);
 		
-		for(i=reg_cnt;i>0;i--){
-			cell_voltage = get_scu_cellV_data(slave_id, cell_index);
+		for(i=reg_cnt; i>0; i--){
+			cell_voltage = halAfeGetCellVoltage(cell_index);
 			sprintf(str, "Cell %x V %d",cell_index,cell_voltage);
 			modbus_tcp_debug(str);
 			*Ptr_response = (uint8_t)(cell_voltage>>8);
@@ -521,14 +565,18 @@ static uint8_t get_scu_data(uint8_t* response_first_ptr){
 		*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) = (uint8_t)(reg_cnt*2);
 		
 		for(i=reg_cnt;i>0;i--){
-			cell_ntc_vol = get_scu_ntcV_data(slave_id, cell_index);
+			cell_ntc_vol = HalAfeGetNtcVoltage(cell_index);
 			temp = LibNtcVoltageToTemperature(cell_ntc_vol);
 			
+			if(temp/1000>5)
+				temp+=10;
+			temp/=10;
 			sprintf(str, "Cell %x T %d",cell_index,temp);
 			modbus_tcp_debug(str);
 			
 			*Ptr_response = (uint8_t)(temp>>8);
 			*(Ptr_response+1) = (uint8_t)temp;
+			
 			cell_index++;
 			Ptr_response+=2;
 			ResponseLength+=2;
@@ -550,10 +598,10 @@ static uint8_t get_scu_data(uint8_t* response_first_ptr){
 	}else if((scu_get_data_index>=SCU_BMU_T_START_ADDR)&&(scu_get_data_index+reg_cnt)<=(SCU_BMU_T_LAST_ADDR+1)){
 		bmu_index = scu_get_data_index-SCU_BMU_T_START_ADDR;
 		*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) = (uint8_t)(reg_cnt*2);
+		
 		for(i=reg_cnt;i>0;i--){
 			sprintf(str, "BMU_INDEX: %x V:0 ",bmu_index);
 			modbus_tcp_debug(str);
-			
 			
 			*Ptr_response = 0;
 			*(Ptr_response+1) = 0;
@@ -572,167 +620,186 @@ static uint8_t get_scu_data(uint8_t* response_first_ptr){
 static uint16_t bms_get_data_index = 0;
 static void increase_bms_get_data_index(uint16_t wordlen){
 	bms_get_data_index += wordlen;
+	
 	sprintf(str,"BMS_GET_INDEX : %x",bms_get_data_index);
 	modbus_tcp_debug(str);
+	
 	*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) += (uint8_t)(wordlen*2); 
 	Ptr_response+=(wordlen*2);
 	ResponseLength += wordlen*2;
 	reg_cnt--;
 }
 
-static void bms_get_protect_flag_1(void){
+static uint8_t bms_get_protect_flag_1(void){
 	/*Get Data*/
 	modbus_tcp_debug("BMS_Protect flag_1");
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_protect_flag_2(void){
+static uint8_t bms_get_protect_flag_2(void){
 	/*Get Data*/
 	modbus_tcp_debug("BMS_Protect flag_2");
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_protect_flag_3(void){
+static uint8_t bms_get_protect_flag_3(void){
 	/*Get Data*/
 	modbus_tcp_debug("BMS_Protect flag_3");
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_warning_position(void){
+static uint8_t bms_get_warning_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_protect_position(void){
+static uint8_t bms_get_protect_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_total_current(void){
+static uint8_t bms_get_total_current(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_total_power(void){
+static uint8_t bms_get_total_power(void){
+	/*Get Data*/
+	*Ptr_response = 0; 
+	*(Ptr_response+1) = 0;
+	*(Ptr_response+2) = 0;
+	*(Ptr_response+3) = 0;
+	increase_bms_get_data_index(2);
+	return Normal;
+}
+
+static uint8_t bms_get_recommand_chgpower(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_recommand_chgpower(void){
+static uint8_t bms_get_recommand_dhgpower(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_recommand_dhgpower(void){
+static uint8_t bms_get_acc_chg_power(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_acc_chg_power(void){
+static uint8_t bms_get_acc_dhg_power(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	*(Ptr_response+2) = 0;
 	*(Ptr_response+3) = 0;
 	increase_bms_get_data_index(2);
+	return Normal;
 }
 
-static void bms_get_acc_dhg_power(void){
-	/*Get Data*/
-	*Ptr_response = 0;
-	*(Ptr_response+1) = 0;
-	*(Ptr_response+2) = 0;
-	*(Ptr_response+3) = 0;
-	increase_bms_get_data_index(2);
-}
-
-static void bms_get_total_SOC(void){
-	uint16_t soc;
+static uint8_t bms_get_total_SOC(void){
 	
-	soc = appGaugeGetDisplaySoc();
-	/*Get Data*/
-	*Ptr_response = (uint8_t)(soc>>8);
-	*(Ptr_response+1) = (uint8_t)soc;
-	increase_bms_get_data_index(1);
-}
-
-static void bms_get_total_SOH(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_maxV_call_position(void){
+static uint8_t bms_get_total_SOH(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_maxV_bmu_position(void){
+static uint8_t bms_get_maxV_call_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_maxV_rack_position(void){
+static uint8_t bms_get_maxV_bmu_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_minV_call_position(void){
+static uint8_t bms_get_maxV_rack_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_minV_bmu_position(void){
+static uint8_t bms_get_minV_call_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
 }
 
-static void bms_get_minV_rack_position(void){
+static uint8_t bms_get_minV_bmu_position(void){
 	/*Get Data*/
 	*Ptr_response = 0;
 	*(Ptr_response+1) = 0;
 	increase_bms_get_data_index(1);
+	return Normal;
+}
+
+static uint8_t bms_get_minV_rack_position(void){
+	/*Get Data*/
+	*Ptr_response = 0;
+	*(Ptr_response+1) = 0;
+	increase_bms_get_data_index(1);
+	return Normal;
 }
 
 const modbus_tcp_get_data_table bms_get_data_function[]={
@@ -764,7 +831,7 @@ const modbus_tcp_get_data_table bms_get_data_function[]={
 	bms_get_minV_bmu_position,	//0x19
 	bms_get_minV_rack_position,	//0x1A
 	
-	space_function,	
+	unsupport_reg_addr,	
 };
 
 
@@ -774,12 +841,17 @@ static uint8_t get_bms_data(uint8_t* response_first_ptr){
 	Ptr_response = response_first_ptr;
 	ResponseLength+=READ_HOLDING_REG_RES_HEADER_LEN;
 	
-	if((scu_get_data_index+reg_cnt)<=0x1A){
+	sprintf(str,"StartAddr %4x REG_CNT %2x",bms_get_data_index,reg_cnt);
+	modbus_tcp_debug(str);
+	
+	if((bms_get_data_index+reg_cnt)<=0x1A){
 		for(i=reg_cnt;i>0;i--){
-			bms_get_data_function[bms_get_data_index]();
+			if(bms_get_data_function[bms_get_data_index]() == Illegal_DataAddr)
+				
+				return Illegal_DataAddr;
 		}
-	}else if((scu_get_data_index>=BMS_RACK_V_START_ADDR)&&(scu_get_data_index+reg_cnt)<=(BMS_RACK_V_LAST_ADDR+1)){
-		scu_index = scu_get_data_index-BMS_RACK_V_START_ADDR;
+	}else if((bms_get_data_index>=BMS_RACK_V_START_ADDR)&&(bms_get_data_index+reg_cnt)<=(BMS_RACK_V_LAST_ADDR)){
+		scu_index = bms_get_data_index-BMS_RACK_V_START_ADDR;
 		*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) = (uint8_t)(reg_cnt*2);
 		
 		for(i=reg_cnt;i>0;i--){
@@ -790,8 +862,8 @@ static uint8_t get_bms_data(uint8_t* response_first_ptr){
 			Ptr_response+=2;
 			ResponseLength+=2;
 		}	
-	}else if((scu_get_data_index>=BMS_RACK_T_START_ADDR)&&(scu_get_data_index+reg_cnt)<=(BMS_RACK_T_LAST_ADDR+1)){
-		scu_index = scu_get_data_index-BMS_RACK_T_START_ADDR;
+	}else if((bms_get_data_index>=BMS_RACK_T_START_ADDR)&&(bms_get_data_index+reg_cnt)<=(BMS_RACK_T_LAST_ADDR)){
+		scu_index = bms_get_data_index-BMS_RACK_T_START_ADDR;
 		*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) = (uint8_t)(reg_cnt*2);
 		
 		for(i=reg_cnt;i>0;i--){
@@ -828,7 +900,10 @@ static void modbus_tcpip_parser(W5500_Socket_parm Socket, uint16_t DataLen){
 	
 	ResponseLength = 0;
 	TempDataPtr = Socket.Memory.rx_buf_Ptr;
-
+	
+	//========== Get Slave ID ==========
+	slave_id = *(TempDataPtr+6);
+	
 	//========== Get REG count ==========
 	reg_cnt = ByteToWord(*(TempDataPtr+10),*(TempDataPtr+11));
 	
@@ -842,20 +917,20 @@ static void modbus_tcpip_parser(W5500_Socket_parm Socket, uint16_t DataLen){
 	}else if(reg_cnt > MODBUS_TCPIP_READ_WRITE_MAXWORDCNT){
 		lu8ExceptionCode = Memory_Parity_Error;	
 	// ========== Check slave address ==========
-	}else if(*(TempDataPtr+6) > MAX_SCU_SLAVE_ADDR + BMS_SLAVE_ID_OFFSET){
+	//			1.						2.										3.
+	}else if( (slave_id == 0)||(slave_id > MAX_SLAVE_ID )||((slave_id>MAX_SCU_CNT)&&(slave_id<=BMS_SLAVE_ID_OFFSET))){
 		modbus_tcp_debug("Ask illeagle slve address");	
 		lu8ExceptionCode = Memory_Parity_Error;
 	}else{
-		slave_id = *(TempDataPtr+6);
 		//========== Check function code ==========	
 		if(*(TempDataPtr+7) ==  PRESEET_MULTIPLE_REG){
 			modbus_data_handle = write_reg_function;
 		}else if (*(TempDataPtr+7) == READ_HOLDING_REG){
-			if(slave_id<= MAX_SCU_SLAVE_ADDR){
+			if(slave_id<= MAX_SCU_CNT){
 				//========== Get Start REG Addr ==========
 				scu_get_data_index = ByteToWord(*(TempDataPtr+8),*(TempDataPtr+9));
 				modbus_data_handle = get_scu_data;
-			}else if(slave_id > MAX_SCU_SLAVE_ADDR){
+			}else if(slave_id >  BMS_SLAVE_ID_OFFSET){
 				//========== Get Start REG Addr ==========
 				bms_get_data_index = ByteToWord(*(TempDataPtr+8),*(TempDataPtr+9));
 				modbus_data_handle = get_bms_data;
@@ -866,6 +941,7 @@ static void modbus_tcpip_parser(W5500_Socket_parm Socket, uint16_t DataLen){
 	}
 	
 	//========== Get Data ==========
+	*(Socket_ModbusTCPIP.Memory.tx_buf_Ptr + READ_HOLDING_REG_RES_BYTECNT_OFFSET) = 0;
 	lu8ExceptionCode = modbus_data_handle(Socket.Memory.tx_buf_Ptr+9);
 	
 	//========== Fill Response frame ==========
@@ -907,8 +983,7 @@ static void modbus_tcpip_parser(W5500_Socket_parm Socket, uint16_t DataLen){
 }
 
 static void modbus_rtu_parser(W5500_Socket_parm Socket, uint16_t DataLen){
-	
-
+	ResponseLength = 0;
 }
 
 uint16_t Modbus_Parser(W5500_Socket_parm Socket, uint16_t DataLen){
@@ -916,10 +991,11 @@ uint16_t Modbus_Parser(W5500_Socket_parm Socket, uint16_t DataLen){
 	static uint8_t lu8ExceptionCode = Normal,i;
 	ResponseLength = 0;
 	
+	
 	/* Debug print receive data */
 	TempDataPtr = Socket.Memory.rx_buf_Ptr;
 	for(i=0;i<DataLen;i++){
-		sprintf(str," %x",*(TempDataPtr+i));
+		sprintf(str," %x", Socket.Memory.rx_buf_Ptr[i]);
 		modbus_tcp_debug(str);	
 	}
 	switch(Socket.Protocol){
