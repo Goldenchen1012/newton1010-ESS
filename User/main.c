@@ -305,6 +305,8 @@ static uint8_t temp2[4];
 uint8_t temp3[14];
 uint16_t start_package;
 uint16_t length_data;
+uint16_t long_run_error_cnt = 0;
+uint32_t long_run_cnt = 0;
 void test_uart_rx_process(void)
 {
 	static uint8_t rx_data[256];
@@ -316,6 +318,10 @@ void test_uart_rx_process(void)
 		if(fifo_res == SMP_SUCCESS)
 		{	
 				LOG_YELLOW("EVENT_LOG UART %s\r\n", rx_data);
+				if(!strcmp((char *)rx_data, "long run get\r\n")){ 
+					LOG_CYAN("Error %d\r\n",long_run_error_cnt);
+					LOG_CYAN("Error %d\r\n",long_run_cnt);
+				}
 				if(!strcmp((char *)rx_data, "clean all\r\n")){ 
 					LOG_YELLOW("EVENT_LOG Clean ALL Memory\r\n");					
 					app_flash_log_managment_clean_all_memory();
@@ -434,42 +440,66 @@ void test_uart_rx_process(void)
 						app_flash_page_data_push(log_package,SMP_FIX_MEMORY);
 					}
 				} 
+
 				memset(&rx_data[0], 0, sizeof(rx_data));
 		}
 	}
 }
 
+static void smp_flash_log_SwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
+{
+	if(evt == LIB_SW_TIMER_EVT_SW_1S)
+	{
+		smp_log_package log_package;
+		log_package.ID = 0xD6;
+		log_package.SMP_RTC[0] = 0x75;
+		log_package.SMP_RTC[1] = 0x04;
+		log_package.SMP_RTC[2] = 0;
+		log_package.SMP_RTC[3] = 0;
+		log_package.data[0] = 0x00;
+		log_package.data[1] = 0x00;
+		log_package.sum = 0x02;
+		app_flash_page_data_push(log_package,SMP_REFLASH_MEMORY);
+		
+		app_flash_sector_header_get(&header_package);	
+//		LOG_CYAN("header %x\r\n",header_package.header[0]);
+//		LOG_CYAN("header %x\r\n",header_package.header[1]);
+//		LOG_CYAN("header %x\r\n",header_package.header[2]);
+//		LOG_CYAN("header %x\r\n",header_package.header[3]);
+//		LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
+//		LOG_CYAN("reflash current page%x\r\n",header_package.reflash_memory_current_page);
+//		LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
+//		LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
+//		LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);
+		
+		memset(&page_data_buffer[0], 0, 256);
+		app_flash_page_data_load(page_data_buffer,header_package.reflash_total_log_cnt - 1,1,SMP_REFLASH_MEMORY);
+	
+	}
+}
 void app_flash_log_event_handler(smp_log_evt_type p_evt)
 {
 	switch(p_evt){
-		case SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE:
-				LOG_CYAN("load head\r\n");
-				LOG_CYAN("header %x\r\n",header_package.header[0]);
-				LOG_CYAN("header %x\r\n",header_package.header[1]);
-				LOG_CYAN("header %x\r\n",header_package.header[2]);
-				LOG_CYAN("header %x\r\n",header_package.header[3]);
-				LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
-				LOG_CYAN("reflash current page%x\r\n",header_package.reflash_memory_current_page);
-				LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
-				LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
-				LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);
-		break;
-		case SMP_LOG_EVENT_SECTOR_HEADER_SAVE_DONE:
-				LOG_CYAN("save head\r\n");
-				LOG_CYAN("header %x\r\n",header_package.header[0]);
-				LOG_CYAN("header %x\r\n",header_package.header[1]);
-				LOG_CYAN("header %x\r\n",header_package.header[2]);
-				LOG_CYAN("header %x\r\n",header_package.header[3]);
-				LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
-				LOG_CYAN("reflash current page%x\r\n",header_package.reflash_memory_current_page);
-				LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
-				LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
-				LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);
-		break;
+		smp_log_package log_package;
 		case SMP_LOG_EVENT_PAGE_LOAD_DONE:
-				LOG_CYAN("page load\r\n");
-				for(int i = 0; i < 256;i++){				
-					LOG_CYAN("%d,%x\r\n",i,page_data_buffer[i]);
+//				LOG_CYAN("page load\r\n");
+//				for(int i = 0; i < 256;i++){				
+//					LOG_CYAN("%d,%x\r\n",i,page_data_buffer[i]);
+//				}
+				
+				log_package.ID = 0xD6;
+				log_package.SMP_RTC[0] = 0x75;
+				log_package.SMP_RTC[1] = 0x04;
+				log_package.SMP_RTC[2] = 0;
+				log_package.SMP_RTC[3] = 0;
+				log_package.data[0] = 0x00;
+				log_package.data[1] = 0x00;
+				log_package.sum = 0x02;
+				long_run_cnt ++;
+				if(memcmp(&log_package,&page_data_buffer[0],8))
+				{
+					long_run_error_cnt ++;
+					LOG_CYAN("Error\r\n");
 				}
 		break;
 		case SMP_LOG_EVENT_PAGE_SAVE_DONE:
@@ -959,6 +989,7 @@ int main(void)
 
 	smp_mx25l_flash_init();
 	app_flash_log_managment_init(app_flash_log_event_handler);
+	LibSwTimerOpen(smp_flash_log_SwTimerHandler, 0);
 	HAL_Delay(1000);
 
 	#endif
@@ -972,6 +1003,8 @@ int main(void)
 		
 		LibSwTimerHandle();
 		test_uart_rx_process();
+		
+
 		#if 0
 		GPIOD->ODR &= ~GPIO_PIN_13;
 		GPIOD->ODR ^= GPIO_PIN_14;

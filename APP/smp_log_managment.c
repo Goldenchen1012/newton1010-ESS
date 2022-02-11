@@ -72,6 +72,7 @@ int8_t app_flash_log_managment_init(smp_log_event_t smp_log_event_handle){
 void app_flash_log_managment_clean_all_memory(void){
 	app_flash_log_managment_clean_reflash_memory();
 	app_flash_log_managment_clean_fix_memory();
+	app_flash_log_managment_clean_head();
 }
 
 void app_flash_log_managment_clean_head(void){
@@ -109,9 +110,7 @@ void app_flash_log_managment_clean_reflash_memory(void){
 	///page head
 	memset(&log_reflash_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
 	g_reflash_page_header_package.page_usage_size = 0;
-	g_reflash_page_header_package.package_num = 0;		
-	
-	app_flash_log_managment_clean_head();
+	g_reflash_page_header_package.package_num = 0;	
 }
 
 void app_flash_log_managment_clean_fix_memory(void){
@@ -126,8 +125,6 @@ void app_flash_log_managment_clean_fix_memory(void){
 	memset(&log_fix_package_buffer[0], 0xff, LOG_PACKAGE_BUFFER_SIZE);
 	g_fix_page_header_package.page_usage_size = 0;
 	g_fix_page_header_package.package_num = 0;		
-	
-	app_flash_log_managment_clean_head();
 }
 
 void app_flash_sector_header_save(smp_sector_header_package * sector_header){
