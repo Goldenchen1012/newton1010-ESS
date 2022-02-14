@@ -85,6 +85,19 @@
 #include "Test_ApiIRMonitoring.h"
 #endif
 
+
+#if 1
+#define TEST_INT_ADC_FUNCTION
+#include "Test_ADC.h"
+#endif
+
+
+#if 1
+#define TEST_EVENT_LOG_FUNC
+#include "Test_log_managment.h"
+#endif
+
+
 #if 1
 #define TEST_BQ796XX_SETTING_INIT_WITHOUT_STEP
 #endif 
@@ -109,7 +122,6 @@
 #if 1
 #define TEST_BQ796XX_GPIO_SELECT_READ_ADC_FUNC
 #endif
-
 //---------------------------------------------------------------------------------------
 
 #define	Test_appProjectDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
@@ -484,6 +496,11 @@ void Test_main(void){
 	#endif
   //-------------------------------------------
 
+  //Internal ADC Test
+	#ifdef TEST_INT_ADC_FUNCTION
+	Test_Internal_ADC();
+  #endif
+
 	// MX25LXX Flash Test
 	//------------------------------------------
 	#ifdef TEST_MX25LXX_FLASH
@@ -543,6 +560,11 @@ void Test_main(void){
   Test_IRM_Function_Exe();
 	#endif
 	//-------------------------------------------------------------------------------------- 	
+	
+	//Log managment test
+	#ifdef TEST_EVENT_LOG_FUNC
+	Test_Event_Log_FUNC();
+	#endif
 	
   //Test main code while loop
   //-------------------------------------------

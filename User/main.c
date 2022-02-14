@@ -27,13 +27,11 @@
 #include "smp_ADS7946_Driver.h"
 #include "ApiIRMonitoring.h"
 #include "HalAfeADS7946.h"
-
 #include "ApiModbusTCPIP.h"
 #include "AppProjectTest.h"
 #include "AppSerialUartDavinci.h"
 #include "smp_MX25L_Driver.h"
 #include "smp_max7219.h"
-
 #include "smp_log_managment.h"
 #include "SEGGER_RTT.h"
 #include "RTT_Log.h"
@@ -41,19 +39,6 @@
 #if 1
 #define TEST_APP_PROJECT_FUNC
 #include "Test_AppProjectHvEss.h"
-#endif
-
-#if 1
-#define G_TEST_INT_ADC
-#endif
-
-#if 1
-#define G_TEST_AD7946_ADC
-#define G_TEST_INT_ADC_TEST_CYCLE_NUM           50
-#endif
-
-#if 1
-#define G_TEST_EVENT_LOG_FUNC
 #endif
 
 uint16_t app_adc_temp[5]={0};
@@ -75,21 +60,6 @@ void SystemClock_Config_HSE_80MHz(void);
 void SystemClock_Config_24MHz (void);
 
 /* Private functions ---------------------------------------------------------*/
-void G_Test_Internal_ADC(void);
-void G_Test_BQ796XX_Setting_Init_Without_Step(void);
-void G_Test_BQ796XX_Setting_Init_With_Step(void);
-void G_Test_BQ796XX_Gpio_Select_Read_ADC_FUNC(void);
-void G_Test_BQ796XX_Cell_balance_func(void);
-void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step(void);
-void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_MeasureData(void);
-void G_Test_BQ796XX_Direction_Chechk_BMU_with_Step_Print_Statistics(long int k_cnt);
-uint8_t G_Test_BQ796XX_DIRECTION_SET_STEPS_NORTH(void);
-void G_Test_BQ796XX_OVUVOTUT_FUNC(void);
-void G_Test_IRM_Function(void);
-void G_Test_TLC6C5912_FUNC(void);
-void G_Test_Event_Log_FUNC(void);
-
-
 
 static void smp_DMA_Init(void)
 {
@@ -119,209 +89,6 @@ static void smp_DMA_Init(void)
 
 }
 
-#ifdef G_TEST_EVENT_LOG_FUNC
-extern uint16_t Davinci_uart_rx_cnt;
-extern smp_uart_t mDavinci_uart;
-smp_sector_header_package	header_package;
-uint8_t page_data_buffer[256];
-
-//John test event log appcalition, but this test code no use smp_uart, so that Golden modify to "test_uart_rx_process" for test event log.
-//---------------------------------------------------------------------------------------
-#if 0
-uint16_t kk = 0;
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if(huart->Instance == USART2)
-  {
-		if(usart_buf.aRxBuff == '\n'){
-			usart_buf.Rx_end_flag = 1;
-			usart_buf.RxBuff[usart_buf.RxSize] = usart_buf.aRxBuff;
-			printf("UART %s",usart_buf.RxBuff);
-			if(!strcmp((char *)usart_buf.RxBuff, "clean all\r\n")){       
-				app_flash_log_managment_clean_all_memory();
-			} 
-			if(!strcmp((char *)usart_buf.RxBuff, "clean reflash\r\n")){       
-				app_flash_log_managment_clean_reflash_memory();
-			} 
-			if(!strcmp((char *)usart_buf.RxBuff, "clean fix\r\n")){       
-				app_flash_log_managment_clean_fix_memory();
-			} 
-			if(!strcmp((char *)usart_buf.RxBuff, "head clean\r\n")){ 
-				app_flash_log_managment_clean_head();
-			}
-			if(!strcmp((char *)usart_buf.RxBuff, "head save\r\n")){  
-				header_package.header[0] = 'S';
-				header_package.header[1] = 'M';
-				header_package.header[2] = 'P';
-				header_package.header[3] = 'S';//S : sector
-				header_package.reflash_memory_head_page = REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;
-				header_package.reflash_memory_current_page = REFLASH_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;
-				header_package.reflash_total_log_cnt = kk;
-				header_package.fix_memory_current_page = FIX_MEMORY_START_SECTOR * PAGE_NUM_IN_SECTOR;
-				header_package.fix_total_log_cnt = kk;
-				app_flash_sector_header_save(&header_package);
-				kk +=1;
-			} 
-			if(!strcmp((char *)usart_buf.RxBuff, "head load\r\n")){  
-				app_flash_sector_header_load(&header_package);		
-			} 
-			if(!strcmp((char *)usart_buf.RxBuff, "data save reflash\r\n")){  
-				app_flash_page_data_save(SMP_REFLASH_MEMORY);
-			} 
-			if(!strcmp((char *)usart_buf.RxBuff, "data save fix\r\n")){  
-				app_flash_page_data_save(SMP_FIX_MEMORY);
-			} 
-			uint8_t temp[18];
-			uint8_t temp2[4];
-			uint8_t temp4[4];
-			uint16_t start_package;
-			uint16_t length_data;
-			memcpy(temp,&usart_buf.RxBuff[0],18);
-			if(!strcmp((char *)temp, "data load reflash ")){ 	//data load reflash xxxx xxxx
-				memcpy(temp2,&usart_buf.RxBuff[18],4);
-				memcpy(temp4,&usart_buf.RxBuff[23],4);
-				start_package =  a2i((char *)temp2);
-				length_data =  a2i((char *)temp4);
-				memset(&page_data_buffer[0], 0, 256);
-				app_flash_page_data_load(page_data_buffer,start_package,length_data,SMP_REFLASH_MEMORY);
-			} 
-			if(!strcmp((char *)temp, "data push reflash ")){  
-				smp_log_package log_package;
-				memcpy(temp2,&usart_buf.RxBuff[18],4);
-				length_data =  a2i((char *)temp2);
-				for(int i = 0; i < length_data;i++){
-					log_package.ID = 0xaa;
-					log_package.SMP_RTC[0] = i;
-					log_package.SMP_RTC[1] = 0;
-					log_package.SMP_RTC[2] = 0;
-					log_package.SMP_RTC[3] = 0;
-					log_package.data[0] = 0x12;
-					log_package.data[1] = 0x34;
-					log_package.sum = 0xa5;
-					app_flash_page_data_push(log_package,SMP_REFLASH_MEMORY);
-				}
-			} 
-			uint8_t temp3[14];
-			memcpy(temp3,&usart_buf.RxBuff[0],14);
-			if(!strcmp((char *)temp3, "data load fix ")){ 	//data load fix xxxx xxxx
-				memcpy(temp2,&usart_buf.RxBuff[14],4);
-				memcpy(temp4,&usart_buf.RxBuff[19],4);
-				start_package =  a2i((char *)temp2);
-				length_data =  a2i((char *)temp4);
-				memset(&page_data_buffer[0], 0, 256);
-				app_flash_page_data_load(page_data_buffer,start_package,length_data,SMP_FIX_MEMORY);
-			} 
-			if(!strcmp((char *)temp3, "data push fix ")){  
-				smp_log_package log_package;
-				memcpy(temp2,&usart_buf.RxBuff[14],4);
-				length_data =  a2i((char *)temp2);
-				for(int i = 0; i < length_data;i++){
-					log_package.ID = 0xaa;
-					log_package.SMP_RTC[0] = i;
-					log_package.SMP_RTC[1] = 0;
-					log_package.SMP_RTC[2] = 0;
-					log_package.SMP_RTC[3] = 0;
-					log_package.data[0] = 0x12;
-					log_package.data[1] = 0x34;
-					log_package.sum = 0xa5;
-					app_flash_page_data_push(log_package,SMP_FIX_MEMORY);
-				}
-			} 
-			memset(usart_buf.RxBuff,0,256);
-			usart_buf.RxSize = 0;
-			usart_buf.Rx_end_flag = 0;
-			
-		}else{
-			usart_buf.RxBuff[usart_buf.RxSize] = usart_buf.aRxBuff;
-			usart_buf.RxSize++;
-		}
-		HAL_UART_Receive_IT(huart, &usart_buf.aRxBuff, 1);
-	}
-}
-#endif
-//---------------------------------------------------------------------------------------
-
-// MCU UART3 Input char 'A'~'D' to test event log function api.
-uint16_t kk = 0;
-void test_uart_rx_process(void)
-{
-static uint8_t rx_data = 0;
-static int8_t fifo_res;
-	
-	if(Davinci_uart_rx_cnt>0){
-		fifo_res = smp_uart_get(&mDavinci_uart, &rx_data);
-		--Davinci_uart_rx_cnt;
-		if(fifo_res == SMP_SUCCESS)
-		{	
-      switch(rx_data){
-			case 'A':	
-				LOG_YELLOW("EVENT_LOG Clean ALL Memory\r\n");
-				app_flash_log_managment_clean_all_memory();
-			  break; 
-			case 'B':
-				LOG_YELLOW("EVENT_LOG Clean REFLASH Memory\r\n");
-				app_flash_log_managment_clean_reflash_memory();
-			  break;
-			case 'C':		
-				LOG_YELLOW("EVENT_LOG Clean FIX Memory\r\n");
-				app_flash_log_managment_clean_fix_memory();
-			  break;
-			case 'D':
-				LOG_YELLOW("EVENT_LOG Clean HEAD\r\n");
-				app_flash_log_managment_clean_head();
-			  break;
-		  }
-		}
-	}
-}
-
-void app_flash_log_event_handler(smp_log_evt_type p_evt)
-{
-	switch(p_evt){
-		case SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE:
-				LOG_CYAN("load head\r\n");
-				LOG_CYAN("header %x\r\n",header_package.header[0]);
-				LOG_CYAN("header %x\r\n",header_package.header[1]);
-				LOG_CYAN("header %x\r\n",header_package.header[2]);
-				LOG_CYAN("header %x\r\n",header_package.header[3]);
-				LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
-				LOG_CYAN("reflash current page%x\r\n",header_package.reflash_memory_current_page);
-				LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
-				LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
-				LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);
-		break;
-		case SMP_LOG_EVENT_SECTOR_HEADER_SAVE_DONE:
-				LOG_CYAN("save head\r\n");
-				LOG_CYAN("header %x\r\n",header_package.header[0]);
-				LOG_CYAN("header %x\r\n",header_package.header[1]);
-				LOG_CYAN("header %x\r\n",header_package.header[2]);
-				LOG_CYAN("header %x\r\n",header_package.header[3]);
-				LOG_CYAN("reflash head page%x\r\n",header_package.reflash_memory_head_page);
-				LOG_CYAN("reflash cnt%x\r\n",header_package.reflash_memory_current_page);
-				LOG_CYAN("reflash cnt%d\r\n",header_package.reflash_total_log_cnt);
-				LOG_CYAN("fix curent page%x\r\n",header_package.fix_memory_current_page);
-				LOG_CYAN("fix cnt%d\r\n",header_package.fix_total_log_cnt);
-		break;
-		case SMP_LOG_EVENT_PAGE_LOAD_DONE:
-				LOG_CYAN("page load\r\n");
-				for(int i = 0; i < 256;i++){				
-					LOG_CYAN("%d,%x\r\n",i,page_data_buffer[i]);
-				}
-		break;
-		case SMP_LOG_EVENT_PAGE_SAVE_DONE:
-				LOG_CYAN("page save\r\n");
-		break;
-		case SMP_LOG_EVENT_MEMORY_FULL:
-				LOG_CYAN("fix memory full\r\n");
-		break;
-		case SMP_LOG_EVENT_ERROR:
-				LOG_CYAN("Error\r\n");
-		break;
-		default:
-		break;
-	}
-}
-#endif
 
 /**
   * @brief  Main program
@@ -430,12 +197,6 @@ int main(void)
 	LibSwTimerClearCount();
 	#endif
 			
-	//ADC Test
-	//------------------------------------------
-	#ifdef G_TEST_INT_ADC
-  G_Test_Internal_ADC();
-  #endif 
-  //------------------------------------------
   apiFuCheckMagicCode();
 		 
 	//Event log Test (2022/01/04)
@@ -939,55 +700,5 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif
 
-#ifdef G_TEST_INT_ADC
-void G_Test_Internal_ADC(void){	
-    static	uint16_t	app_adc_temp[10];
-    extern bsp_adc_init_io_config bsp_in_adc_ch[5];
-	  static uint32_t test_cont;  
-	
-	  test_cont = 0;
-	  smp_adc_adc_para_init(adc1);                            //Initial ADC 
-	  while(1){
-		    hal_internal_adc_get(&app_adc_temp[0] ,adc1 , bsp_in_adc_ch[0]);
-		    hal_internal_adc_get(&app_adc_temp[1] ,adc1 , bsp_in_adc_ch[1]);
-		    hal_internal_adc_get(&app_adc_temp[2] ,adc1 , bsp_in_adc_ch[2]);
-		    hal_internal_adc_get(&app_adc_temp[3] ,adc1 , bsp_in_adc_ch[3]);
-		    hal_internal_adc_get(&app_adc_temp[4] ,adc1 , bsp_in_adc_ch[4]);
-		
-		    LOG_BLUE("TEST ADC#%04d %04d,%04d,%04d,%04d,%04d\r\n", test_cont,app_adc_temp[0],app_adc_temp[1],app_adc_temp[2],app_adc_temp[3],app_adc_temp[4]);
-		
-		    HAL_Delay(50);
-		
-		    test_cont++;
-		    if(test_cont>=G_TEST_INT_ADC_TEST_CYCLE_NUM) break;
-    }	
-}	
-#endif 
-
-#ifdef G_TEST_EVENT_LOG_FUNC
-void G_Test_Event_Log_FUNC(void){
-  smp_mx25l_status mx251_status;
-	smp_mx25l_flash_init();
-	
-	uint16_t test_event_log_cnt = 0;
-	
-	app_flash_log_managment_init(app_flash_log_event_handler);
-	HAL_Delay(1000);
-	while(test_event_log_cnt<50)
-	{
-		
-	  smp_mx25l_flash_read_status(&mx251_status);
-		if((mx251_status.status1&STATUS_WRITE_IN_PROGRESS)==0){		
-			 MX25L_SPI_send_command();
-		}
-    
-		test_uart_rx_process();
-		
-		test_event_log_cnt++;
-		HAL_Delay(100);
-		LOG_WHITE("Event log#%d transfer\r\n", test_event_log_cnt);
-	}
-}
-#endif
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

@@ -2238,6 +2238,16 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Test\Test_drv_bq796xx.c</FilePath>
             </File>
+            <File>
+              <FileName>Test_ADC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADC.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_log_managment.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_log_managment.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -4494,6 +4504,16 @@
               <FileName>Test_drv_bq796xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Test\Test_drv_bq796xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADC.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_log_managment.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_log_managment.c</FilePath>
             </File>
           </Files>
         </Group>
