@@ -693,10 +693,7 @@ void appProjectOpen(void){
 	appProtectOpen(protectEventHandler);
 	appGaugeOpen(gaugeEventHandler);
 	
-	//Golden 2021/12/16 disable
-	#if 0
-	//halafeOpen(afeEventHandler);
-	#endif
+  halafeOpen(afeEventHandler);
 	
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
@@ -711,19 +708,17 @@ void appProjectOpen(void){
 	sprintf(str,"Par Len = %d", len);
 	appProjectDebugMsg(str);
   
-	#if 0
   appBalanceOpen(appProjectDavinciBalanceEventHandler);
-  #endif
-	
+  	
 	apiSignalFeedbackOpen(0);//signalFeedbackEventHandler);
   
 	LibSwTimerOpen(appProjectSwTimerHandler, 0);
-  	releaseOCP(); 
-  	apiRelayControlOpen();
-  	appBmsOpen();
-  	apiScuTempOpen();
-  	apiSystemFlagOpen();
-  	apiEventLogOpen();
+  releaseOCP(); 
+  apiRelayControlOpen();
+  appBmsOpen();
+  apiScuTempOpen();
+  apiSystemFlagOpen();
+  apiEventLogOpen();
 	appButtonOpen(buttonEventHandler);
 
 //HalBspReleaseCtrl

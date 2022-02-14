@@ -60,7 +60,7 @@ uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonitoring_ev
   }
 	
 	#if 1
-	SEGGER_RTT_printf(0,"IRM EVENT=%d, Vstack=%d, Rn=%d, Rp=%d\r\n", irm_event, (uint16_t)(irm_res_data->V_stack), irm_res_data->Rn_kohm, irm_res_data->Rp_kohm);
+	SEGGER_RTT_printf(0,"IRM EVENT=%d, Vstack=%d, Rn=%d, Rp=%d\r\n", irm_event, (uint32_t)(irm_res_data->V_stack), irm_res_data->Rn_kohm, irm_res_data->Rp_kohm);
 	#endif
 	
 	return 0;
@@ -224,11 +224,12 @@ void Test_IRM_Function_Exe(void){
 	res = apiIRMonitoringOpen(ITRM_TESTPARAM_DET_CYCLE_TIME, ITRM_TESTPARAM_RELAY_WAIT_TIME, app_irm_event_cb);
 	
 	//Get current Vstack, IRM use callback notification Vstack.
+	apiIRMonitoringGetVstack();
+	
 	while(test_get_vatck_cnt < TEST_IRM_FUNCTION_TEST_CYCLE_NUM){
 		  test_get_vatck_cnt++;
 		
 	    LOG_BLUE("IRM Get Vstack...\r\n");
-	    apiIRMonitoringGetVstack();
 		  LibSwTimerHandle();
 		  HAL_Delay(TEST_IRM_FUNCTION_TEST_CYCLE_DELAY_TIME); 
 	}

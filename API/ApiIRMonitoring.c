@@ -160,7 +160,7 @@ static void IRMonitoring_CtrlSW(IRMonitoring_SW_enum sw1, IRMonitoring_SW_enum s
 
 }
 
-static uint16_t  IRM_Balance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
+static uint32_t  IRM_Balance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
 	
 	ra = ((float)IRM_RA)*1.0f;
 	rb = ((float)IRM_RB)*1.0f;
@@ -169,13 +169,13 @@ static uint16_t  IRM_Balance_formula(IRMonitoring_Data_t data, IRMonitoring_Resi
 	temp_rp = (((data.Vn / data.Vn_l) * (data.Vp_l / data.Vp))-1.0f)*ra;
 	temp_rn = 1.0f/(((data.Vp_l / data.Vn_l)*(1.0f/temp_rp))-(1.0f/(rb + rc)));
 	
-	res_out->Rp_kohm = (uint16_t)(temp_rp / 1000.0f);
-	res_out->Rn_kohm = (uint16_t)(temp_rn / 1000.0f);
+	res_out->Rp_kohm = (uint32_t)(temp_rp / 1000.0f);
+	res_out->Rn_kohm = (uint32_t)(temp_rn / 1000.0f);
 	
 	return 0;
 }
 
-static uint16_t  IRM_Unbalance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
+static uint32_t  IRM_Unbalance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
 	
 	ra = ((float)IRM_RA)*1.0f;
 	rb = ((float)IRM_RB)*1.0f;
@@ -194,8 +194,8 @@ static uint16_t  IRM_Unbalance_formula(IRMonitoring_Data_t data, IRMonitoring_Re
 	temp_d = 1.0f/(rb + rc + rd);
   temp_rp = 1.0f/((data.Vn_l/data.Vp_l)*(temp_d + (1.0f/temp_rn)));
 	
-	res_out->Rp_kohm = (uint16_t)(temp_rp / 1000.0f);
-	res_out->Rn_kohm = (uint16_t)(temp_rn / 1000.0f);
+	res_out->Rp_kohm = (uint32_t)(temp_rp / 1000.0f);
+	res_out->Rn_kohm = (uint32_t)(temp_rn / 1000.0f);
 	
 	return 0;
 }

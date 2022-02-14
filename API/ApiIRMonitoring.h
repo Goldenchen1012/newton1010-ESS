@@ -40,8 +40,8 @@ typedef struct{
 }IRMonitoring_Data_t;
 
 typedef struct{ 
-	uint16_t Rp_kohm;
-	uint16_t Rn_kohm;
+	uint32_t Rp_kohm;
+	uint32_t Rn_kohm;
 	float V_stack;   
 }IRMonitoring_Resistor_t;		
 
@@ -139,8 +139,8 @@ typedef struct{
 #define IRM_READ_TIMEOUT                       10                                                   //Uint: ms
 #define IRM_DATA_READY_TIMEOUT                 5                                                    //Uint: ms
 
-#define ITRM_TESTPARAM_DET_CYCLE_TIME          2                                                    //Uint: second               
-#define ITRM_TESTPARAM_RELAY_WAIT_TIME         100                                                  //Uint: ms      
+#define ITRM_TESTPARAM_DET_CYCLE_TIME          5                                                    //Uint: second               
+#define ITRM_TESTPARAM_RELAY_WAIT_TIME         200                                                  //Uint: ms      
 /* Public macro -------------------------------------------------------------*/
 
 /* Public function prototypes -----------------------------------------------*/
