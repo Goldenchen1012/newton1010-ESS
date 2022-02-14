@@ -43,6 +43,7 @@ enum{
 	APP_SIGNAL_ID_DOCP,
 	APP_SIGNAL_ID_COCP,
 	APP_SIGNAL_ID_OD_IN,
+	APP_SIGNAL_NFAULT,
 };	
 
 enum{
@@ -76,6 +77,8 @@ enum{
 	APP_SIGNAL_FB_EVT_COCP_LO,
 	APP_SIGNAL_FB_EVT_OD_IN_HI,
 	APP_SIGNAL_FB_EVT_OD_IN_LO,
+	APP_SIGNAL_FB_EVT_NFAULT_HI,
+	APP_SIGNAL_FB_EVT_NFAULT_LO,
 };
 
 /* Public variables ---------------------------------------------------------*/

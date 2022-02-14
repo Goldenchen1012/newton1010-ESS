@@ -206,7 +206,10 @@ void apiEventLogSaveLogData(uint8_t EventType, uint16_t Par)
 	tHalEeProm	mHalEeProm;
 	uint8_t	checksum,i;
 	tLbyte	Lbyte;
-	
+//	return;
+	if(mEventLog.LastAddress >= FLASHROM_EVENT_LOG_END_ADDR)
+		return;
+			
 	Lbyte.l = HalRtcGetSmpUnixTime();
 
 	buf[0] = EventType;

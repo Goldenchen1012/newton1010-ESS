@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * @file        AppProjectHvEss.h
+  * @file        ApiCanbusPkgFu.h
   * @author      Johnny
-  * @version     v0.0
-  * @date        2021/9/7
+  * @version     v0.0.1
+  * @date        2021/12/27
   * @brief       
   ******************************************************************************
   * @attention
@@ -14,8 +14,8 @@
   ******************************************************************************
   */
 
-#ifndef _APP_PROJECT_HV_ESS_H_
-#define _APP_PROJECT_HV_ESS_H_
+#ifndef _API_CANBUS_PKG_FU_H_
+#define _API_CANBUS_PKG_FU_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
@@ -23,15 +23,15 @@
 extern "C" {
 #endif
 
-
 /* Public define ------------------------------------------------------------*/
-uint8_t appProjectGetSystemReadyFlag(void);
-uint8_t appProjectGetRelayOnFlag(void);
 
-uint16_t appProjectGetTimerCount(void);
-
-void appProjectOpen(void);
 /* Public macro -------------------------------------------------------------*/
+
+/* Public function prototypes -----------------------------------------------*/
+void apiCanbusPkgFuDecodeInfoPackage(smp_can_package_t *pCanPkg, tApiFuCallbackFunction CbFunction);
+void apiCanbusPkgFuDecodeDataPackage(smp_can_package_t *pCanPkg);
+
+
 #ifdef __cplusplus
 }
 #endif
@@ -39,8 +39,11 @@ void appProjectOpen(void);
 
 	
 
-#endif /* _APP_PROJECT_HV_ESS_H_ */
+#endif /* _API_CANBUS_PKG_FU_H_ */
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
+
+
+
 
 

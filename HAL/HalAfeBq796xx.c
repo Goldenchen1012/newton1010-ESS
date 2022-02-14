@@ -46,7 +46,8 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 
 #define	afeBmuNumber()					11//apiSysParGetBmuNumber()
 
-#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01,GPIOD->ODR ^= GPIO_PIN_13;}
+//#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01,GPIOD->ODR ^= GPIO_PIN_13;}
+#define	CHANGE_BRIDGE_DIRECTION()		{BridgeDirection ^= 0x01;}
 
 #define	AFE_COMM_FLAG_L1		0x01
 #define	AFE_COMM_FLAG_L2		0x02
@@ -57,7 +58,7 @@ tAfeEvtHandler afeEvtHandler;
 
 typedef void (* tAfeFunctionTable)(void);
 
-tAfeFunctionTable	sunFunctionPointer;
+tAfeFunctionTable	subFunctionPointer;
 void (*AfeTimerHandlerProcessor)(uint16_t evt) = {0};
 
 void (*AfeFunctionProcessor)(void) = {0};
@@ -113,6 +114,13 @@ static uint16_t	ReaAfeCycleCount10Ms = AFE_READ_CYCLE_COUNT_10MS;
 static uint8_t	MainFunIndex = 0;
 static uint8_t	IsRingDaisyChain;
 bq796xx_wake_tone_switch wake_sw = WAKE_TONE_ENABLE;
+
+//static uint
+static uint32_t	ReadCount = 0;
+static uint32_t	NortnResponseCount = 0;
+static uint32_t	SouthResponseCount = 0;
+static uint32_t	AfeIniCount = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 uint8_t drv_bq796xx_clean_fifo(void);
 
@@ -139,14 +147,8 @@ static void getNextMainFunctionPointer(void)
 }
 static void getNextSubFunctionPointer(void)
 {
-//	uint32_t	addr;
-//	addr = (uint32_t)sunFunctionPointer;
-//	addr += 4;
-	sunFunctionPointer =(tAfeFunctionTable)((uint32_t)sunFunctionPointer+4);
-//	sunFunctionPointer =(tAfeFunctionTable)addr;
-//	(uint32_t)sunFunctionPointer += 4U;
-//	sprintf(str,"Sub Fun Pointer=%.8lX",*(uint32_t *)((uint32_t)sunFunctionPointer+4));
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer =(tAfeFunctionTable)((uint32_t)subFunctionPointer+4);
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 } 
 
 static void afeFunNone(void)
@@ -164,6 +166,8 @@ const tAfeFunctionTable	stopBalanceFunctionTable[]={
 
 static void mainFunStopBalance(void)
 {
+	ReadCount++;
+
 	/*
 	if(IsBalanceEnable == 0)
 	{
@@ -172,8 +176,8 @@ static void mainFunStopBalance(void)
 	}
 	*/
 	//halAfeBq796xxDebugMsg("mainFunStopBalance");
-	sunFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 static uint8_t	ntcIoIndex = 0;
 static uint8_t	ntcChannelStartIndex = 0;
@@ -255,10 +259,10 @@ static void paserAfeResponse(void)
 	}
 	for(i=0; i<PaserCountPerOneTimes; i++)
 	{
-		GPIOD->ODR |= GPIO_PIN_15;
+//		GPIOD->ODR |= GPIO_PIN_15;
 		//GPIOD->ODR ^= GPIO_PIN_14;
 		res = drv_bq796xx_data_frame_parser();
-		GPIOD->ODR &= ~GPIO_PIN_15;
+//		GPIOD->ODR &= ~GPIO_PIN_15;
 
 		if(res == BQ796XX_RES_OK)
 		{
@@ -318,8 +322,8 @@ static void mainFunGetNtc(void)
 {
 	ntcIoIndex = 0;
 	//halAfeBq796xxDebugMsg("mainFunGetNtc");
-	sunFunctionPointer = (tAfeFunctionTable )getNtcFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )getNtcFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 static void sendOutReadCellVoltageCommand(void)
@@ -346,8 +350,8 @@ const tAfeFunctionTable	getCellVoltageFunctionTable[]={
 static void mainFunGetCellVoltage(void)
 {
 	//halAfeBq796xxDebugMsg("mainFunGetCellVoltage");
-	sunFunctionPointer = (tAfeFunctionTable )getCellVoltageFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )getCellVoltageFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 static void sendOutReadSummaryCommand(void)
@@ -374,8 +378,8 @@ const tAfeFunctionTable	getSummaryFunctionTable[]={
 static void mainFunGetSummary(void)
 {
 	//halAfeBq796xxDebugMsg("mainFunGetSummary");
-	sunFunctionPointer = (tAfeFunctionTable )getSummaryFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )getSummaryFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 
@@ -402,8 +406,8 @@ const tAfeFunctionTable	getOvUvFlagFunctionTable[]={
 static void mainFunGetOvUvFlag(void)
 {
 	//halAfeBq796xxDebugMsg("mainFunGetOvUvFlag");
-	sunFunctionPointer = (tAfeFunctionTable )getOvUvFlagFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )getOvUvFlagFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 static void sendOutReadOtUtFlagCommand(void)
@@ -430,8 +434,8 @@ const tAfeFunctionTable	getOtUtFlagFunctionTable[]={
 static void mainFunGetOtUtFlag(void)
 {
 	//halAfeBq796xxDebugMsg("mainFunGetOtUtFlag");
-	sunFunctionPointer = (tAfeFunctionTable )getOtUtFlagFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )getOtUtFlagFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 const tAfeFunctionTable	changeDirectionFunctionTable[]={
@@ -445,8 +449,8 @@ const tAfeFunctionTable	changeDirectionFunctionTable[]={
 static void mainFunFinishAfeRead(void)
 {
 	//halAfeBq796xxDebugMsg("mainFunFinishAfeRead");
-	sunFunctionPointer = (tAfeFunctionTable )changeDirectionFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )changeDirectionFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 
@@ -593,8 +597,8 @@ static void mainFunStartBalance(void)
 	BalanceBmuIndex = 0;
 	
 	//halAfeBq796xxDebugMsg("mainFunStartBalance");
-	sunFunctionPointer = (tAfeFunctionTable )startBalanceFunctionTable;	
-	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)sunFunctionPointer));
+	subFunctionPointer = (tAfeFunctionTable )startBalanceFunctionTable;	
+	AfeFunctionProcessor = (tAfeFunctionTable )(*((uint32_t *)subFunctionPointer));
 }
 
 
@@ -709,7 +713,7 @@ uint8_t app_afe_cb(bq796xx_data_t *bq_data, bq796xx_event_cb_type bq_event){
 //	uint8_t		temp_ch;
 
 //	halAfeBq796xxDebugMsg("Bq796xx CB");
-
+//	GPIOD->ODR ^= GPIO_PIN_14;
  	switch(bq_event)
  	{
  	case BQ_EVENT_VCELL:
@@ -727,9 +731,9 @@ uint8_t app_afe_cb(bq796xx_data_t *bq_data, bq796xx_event_cb_type bq_event){
 //		halAfeBq796xxDebugMsg("Bq796xx CB Gpio");
 		break;
  	case BQ_EVENT_FAULT:
- 		sprintf(str,"Fault Flag = %.4X %.4X", 
- 				bq_data->fault_summary[0],
- 				bq_data->fault_summary[1]);
+ 	//	sprintf(str,"Fault Flag = %.4X %.4X", 
+ 	//			bq_data->fault_summary[0],
+ 	//			bq_data->fault_summary[1]);
 		//halAfeBq796xxDebugMsg(str);
 //		halAfeBq796xxDebugMsg("Bq796xx CB Fault");
 		break;
@@ -823,6 +827,16 @@ static void finishAfeReadProcessor(void)
 		}
 		else
 		{
+			if(BridgeDirection == DIR_NORTH)
+			{
+				if(RealPaserCount[DIR_NORTH] == StackCountForIni[DIR_NORTH])
+					NortnResponseCount++;					
+			}
+			else
+			{
+				if(RealPaserCount[DIR_SOUTH] == StackCountForIni[DIR_SOUTH])
+					SouthResponseCount++;
+			}				
 			AfeCommTimeOutCount = 0;
 			fail_count = 0;
 			run_count = 0;
@@ -886,6 +900,10 @@ static void finishAfeReadProcessor(void)
 		}
 		else
 		{
+			if(BridgeDirection == DIR_NORTH)
+				NortnResponseCount++;
+			else
+				SouthResponseCount++;
 			AfeCommTimeOutCount = 0;
 			getNextMainFunctionPointer();
 			
@@ -910,11 +928,13 @@ static void changeBmuDirForDataReadProcessor(void)
 	}
 	if(afe_steps == 0)
 	{
+		drv_bq796xx_clean_fifo();
+		
 		sprintf(str,"Dir = %d,初始化數量= %d", 
 					BridgeDirection,
 					StackCountForIni[BridgeDirection]);
 		halAfeBq796xxDebugMsg(str);
-		GPIOD->ODR |= GPIO_PIN_14;
+//		GPIOD->ODR |= GPIO_PIN_14;
 		ChangeDirCount++;
 		if(ChangeDirCount >= 10)
 		{
@@ -953,7 +973,7 @@ static void changeBmuDirForDataReadProcessor(void)
 		}
 		res &= 0x7f;
 				
-		GPIOD->ODR &= ~GPIO_PIN_14;
+//		GPIOD->ODR &= ~GPIO_PIN_14;
 		StackCountForIni[BridgeDirection] = res;
 
 #ifdef AFE_DEBUG_MODE
@@ -1095,18 +1115,34 @@ static void changeToBq796xxIniHandler(void)
 	wake_sw = WAKE_TONE_ENABLE;
 	AfeTimerHandlerProcessor = AfeBq796xxIniHandler;
 }
+
+static uint32_t IniCountForTest[2][40] = {0};
+
+
 static void AfeBq796xxIniHandler(uint16_t evt)
 {
 	char	str[100];
 	uint8_t res;
-	//wake_sw
-	//WAKE_TONE_DISABLE
+
+	if((appProjectIsInSimuMode() || appProjectIsInEngMode()) &&
+	   afe_steps == AFE_INIT_IDLE)
+	{
+		return;
+	}
+	HalBspRelayPsCtrl(0);
+	
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{  
-		GPIOD->ODR ^= GPIO_PIN_14;
+//		GPIOD->ODR ^= GPIO_PIN_14;
 		
 		if(cnt_delay <= 1)
 		{
+			if(afe_steps == AFE_INIT_IDLE)
+			{
+				drv_bq796xx_clean_fifo();
+				AfeIniCount++;
+			}
+			
 	        res = drv_bq796xx_Init_Steps(wake_sw,
 	        							 &afe_steps, 
 	        							 afeBmuNumber() + 1, 
@@ -1137,6 +1173,10 @@ static void AfeBq796xxIniHandler(uint16_t evt)
 					
 				res &= 0x7f;
 			
+				IniCountForTest[BridgeDirection][res]++;
+				
+	//			if(res > 12)
+//					GPIOD->ODR ^= GPIO_PIN_15;
 				StackCountForIni[BridgeDirection] = res; 
 				if(res == afeBmuNumber())
 					wake_sw = WAKE_TONE_DISABLE;
@@ -1254,6 +1294,30 @@ static void AfeBq796xxIniHandler(uint16_t evt)
 		else 
 			cnt_delay--;		
 	}
+	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
+	{
+		static uint8_t	cnt = 0;
+		cnt++;
+		//if(cnt >= 5)
+		{
+		//	cnt = 0;
+			uint8_t	n;
+			
+			for(n=0; n< 40; n++)
+			{
+				if(IniCountForTest[0][n])
+				{
+					sprintf(str,"N: %d = %d", n, IniCountForTest[0][n]);
+					halAfeBq796xxDebugMsg(str);
+				}
+				if(IniCountForTest[1][n])
+				{
+					sprintf(str,"S: %d = %d", n, IniCountForTest[1][n]);
+					halAfeBq796xxDebugMsg(str);
+				}
+			}
+		}
+	}
 }
 
 static void afeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
@@ -1302,6 +1366,13 @@ static void afeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 			}
 		}
 		sprintf(str,"Afe IDLE TIME : %d", AfeCommTimeOutCount);
+		halAfeBq796xxDebugMsg(str);
+	
+		sprintf(str, "N=%d S=%d Read=%d AFEIni=%d",	
+				NortnResponseCount, SouthResponseCount,
+				ReadCount,
+				AfeIniCount
+				);
 		halAfeBq796xxDebugMsg(str);
 	}
 	
@@ -1453,6 +1524,14 @@ uint8_t halAfeGetState(void)
 	return AfeState;
 }
 
+void halAfeClearTestCount(void)
+{
+	ReadCount = 0;
+	NortnResponseCount = 0;
+	SouthResponseCount = 0;
+	AfeIniCount = 0;
+}
+
 void halafeOpen(tAfeEvtHandler evtHandler)
 {
 	afeEvtHandler = evtHandler;
@@ -1489,15 +1568,15 @@ void halafeOpen(tAfeEvtHandler evtHandler)
 	LibSwTimerOpen(afeSwTimerHandler, 0);
 	{	
 		char	str[100];
-		sunFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable;			
-		sprintf(str,"Sub Fun Pointer=%.8lX",(uint32_t)sunFunctionPointer);
+		subFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable;			
+		sprintf(str,"Sub Fun Pointer=%.8lX",(uint32_t)subFunctionPointer);
 		halAfeBq796xxDebugMsg(str);
 		
-		sprintf(str,"Sub Fun Pointer=%.8lX",*(uint32_t *)((uint32_t)sunFunctionPointer+4));
+		sprintf(str,"Sub Fun Pointer=%.8lX",*(uint32_t *)((uint32_t)subFunctionPointer+4));
 		halAfeBq796xxDebugMsg(str);
 		
-		sunFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable[0];		
-		sprintf(str,"Sub Fun Pointer=%.8lX",(uint32_t)sunFunctionPointer);
+		subFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable[0];		
+		sprintf(str,"Sub Fun Pointer=%.8lX",(uint32_t)subFunctionPointer);
 		halAfeBq796xxDebugMsg(str);
 	}
 }

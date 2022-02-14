@@ -249,6 +249,43 @@ int8_t smp_uart_get(smp_uart_t *p_uart, uint8_t *p_byte)
 	
 	return(bdata);
 }
+uint16_t datacnt = 0;
+
+int8_t smp_uart_get_string(smp_uart_t *p_uart, uint8_t *p_byte)
+{
+	int8_t bdata;
+	if(p_uart->num == UART0){
+			bdata = smp_fifo_pop(&uart0_rx_fifo, (char *)&p_byte[datacnt]);
+			datacnt++;
+			if(datacnt >= 256){
+				datacnt = 0;
+				return SMP_ERROR_INVALID_LENGTH;
+			}		
+			if(p_byte[datacnt - 1] == '\n')
+			{
+				datacnt = 0;
+				return SMP_SUCCESS;
+			}else{			
+				return SMP_ERROR_INVALID_DATA;
+			}    
+	}else if(p_uart->num == UART1){
+			bdata = smp_fifo_pop(&uart1_rx_fifo, (char *)&p_byte[datacnt]);
+			datacnt++;
+			if(datacnt >= 256){
+				datacnt = 0;
+				return SMP_ERROR_INVALID_LENGTH;
+			}		
+			if(p_byte[datacnt - 1] == '\n')
+			{
+				datacnt = 0;
+				return SMP_SUCCESS;
+			}else{			
+				return SMP_ERROR_INVALID_DATA;
+			}		
+	}
+	
+	return SMP_ERROR_INVALID_DATA;
+}
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -329,7 +366,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		}else{
 			flag = 0;
 		}		
-			
 		if(HAL_UART_Receive_IT(huart, uart1_rx_buffer, UART1_RX_BUFFER_SIZE) != HAL_OK){
 			return;
 		}

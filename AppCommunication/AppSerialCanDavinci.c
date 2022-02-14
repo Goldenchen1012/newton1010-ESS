@@ -35,6 +35,8 @@
 #include "HalRtc.h"
 #include "AppBms.h"
 
+#define	BOARD_REV2
+
 #define	appSerialCanDavinciDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,8 +55,9 @@ smp_can_package_t  Davinci_can_rx_buffer[CAN_RX_BUF_SIZE] = {0};
                                 .buffers.tx_buf             = Davinci_can_tx_buffer,              \
                                 .buffers.tx_buf_size        = CAN_RX_BUF_SIZE                               \
                           }  
+smp_can_t mDavinci_can0 = DAVINCI_CAN0;
 
-
+#ifdef BOARD_REV1
 #define DAVINCI_CAN		{                                                                      \
                                 .num                        = __CAN1,                            \
                                 .baud_rate                  = 500000,                          \
@@ -63,10 +66,10 @@ smp_can_package_t  Davinci_can_rx_buffer[CAN_RX_BUF_SIZE] = {0};
                                 .buffers.tx_buf             = Davinci_can_tx_buffer,              \
                                 .buffers.tx_buf_size        = CAN_RX_BUF_SIZE                               \
                           }  
-
-
-smp_can_t mDavinci_can0 = DAVINCI_CAN0;
 smp_can_t mDavinci_can = DAVINCI_CAN;
+
+#endif
+						  
 
 	
 /* Private define ------------------------------------------------------------*/
@@ -172,7 +175,7 @@ static void canDavinciPaserCanPackage(void)
 	char	str1[100];
 	for(i=0; i<6; i++)
 	{
-		if(smp_can_get(&mDavinci_can, &CanPkg) != SMP_SUCCESS)
+		if(smp_can_get(&mDavinci_can0, &CanPkg) != SMP_SUCCESS)
 			break;
 		dump_danpackage(&CanPkg);	
 	 	cmdIndex = 0;
@@ -209,7 +212,7 @@ void appSerialCanDavinciPutPkgToCanFifo(smp_can_package_t *pCanPkg)
 //	SMP_CAN_GET_SCU_ID(id)		((id>>18)&0x7f)
 //	appSerialCanDavinciPutPkgToCanFifo
 	
-	smp_can_put(&mDavinci_can, pCanPkg);
+	smp_can_put(&mDavinci_can0, pCanPkg);
 }
 
 
@@ -286,14 +289,14 @@ void appSerialCanDavinciOpen(void)
 	sprintf(str,"Can0 ini %d", res);
 	appSerialCanDavinciDebugMsg(str);
 
+#ifdef BOARD_REV1	
 	
-	#if 0
 	if(smp_can_init(&mDavinci_can, DavinciCan_cb)==SMP_SUCCESS){
-	    appSerialCanDavinciDebugMsg("Can 1 ini success");
+		appSerialCanDavinciDebugMsg("Can 1 ini success");
 	 }else{
-	    appSerialCanDavinciDebugMsg("Can 1 ini fail");
-  }  
-  #endif
+		appSerialCanDavinciDebugMsg("Can 1 ini fail");
+  	}  
+#endif
 	
 	#endif
   	LibSwTimerOpen(appSerialCanDavinciTimerHandler, 0);
@@ -302,7 +305,9 @@ void appSerialCanDavinciOpen(void)
 void appSerialCanDavinciClose(void)
 {
 	smp_can_deinit(&mDavinci_can0);
+#ifdef BOARD_REV1
 	smp_can_deinit(&mDavinci_can);
+#endif	
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

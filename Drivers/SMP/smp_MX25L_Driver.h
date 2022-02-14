@@ -1,3 +1,12 @@
+/**
+  ******************************************************************************
+  * @file    smp_MX25L_Driver.h 
+  * @author  John Chen
+  * @version V0.0.1
+  * @date    2021/12/13
+  * @brief
+  ******************************************************************************
+  */
 #ifndef __SMP_FLASH_DRIVER_H
 #define __SMP_FLASH_DRIVER_H
 
@@ -51,9 +60,10 @@ int8_t smp_mx25l_flash_read_ID(smp_mx25l_ID *mx251_ID);
 int8_t smp_mx25l_flash_read_status(smp_mx25l_status *mx251_status);
 int8_t smp_mx25l_flash_read_configuration(smp_mx25l_config *mx251_config);
 int8_t smp_mx25l_flash_write_status(smp_mx25l_status *mx251_status,smp_mx25l_config *mx251_config);
-int8_t smp_mx25l_flash_read_data_bytes(uint8_t *flash_addr,uint16_t read_byte_num,smp_flash_event_t smp_flash_event_handle);
+int8_t smp_mx25l_flash_read_data_bytes(uint8_t *flash_addr,uint8_t *buffer,uint16_t read_byte_num,smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_fast_read_data_bytes_addr(uint8_t *flash_addr ,uint8_t *buffer, uint16_t read_byte_num , smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_fast_read_data_bytes_page(uint16_t page, uint8_t *buffer,uint16_t read_byte_num , smp_flash_event_t smp_flash_event_handle);
+int8_t smp_mx25l_flash_fast_read_data_bytes_page_blocking(uint16_t page , uint8_t *buffer , uint16_t read_byte_num);
 int8_t smp_mx25l_flash_sector_erase(uint8_t *flash_addr,smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_sector_erase_sectornum(uint16_t sector_num , smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_block_erase(uint8_t *flash_addr,smp_flash_event_t smp_flash_event_handle);
@@ -61,6 +71,7 @@ int8_t smp_mx25l_flash_chip_erase(smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_page_program(uint16_t page,uint8_t *buffer,uint16_t write_byte_num,smp_flash_event_t smp_flash_event_handle);
 int8_t smp_mx25l_flash_deep_power_down(void);
 int8_t smp_mx25l_flash_release_deep_power_down(void);
+uint16_t MX25L_SPI_get_command_size(void);
 void MX25L_SPI_send_command(void);
 #endif /* __SPI_FLASH_H */
 

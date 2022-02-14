@@ -42,11 +42,22 @@
 #include "Bsp.h"
 #include "stm32l4xx_Davinci.h"
 #include "smp_gpio.h"
+#include "smp_w5500_DMA.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == SMP_GPIO_PIN(BSP_W5500_INT_PIN))
+  {
+    //Flag_W5500_INT = true;
+	W5500_INT_Cnt++;
+	W5500_Read_SnIR_End = false;  
+  }
+}
+
 
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

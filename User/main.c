@@ -651,27 +651,6 @@ void HAL_SYSTICK_Callback(void)
   }
 }
 
-
-/**
-  * @brief EXTI line detection callbacks
-  * @param GPIO_Pin: Specifies the pins connected EXTI line
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if (GPIO_Pin == USER_BUTTON_PIN)
-  {
-    /* Reconfigure LED1 */
-    BSP_LED_Init(LED1); 
-    /* Switch on LED1 */
-    BSP_LED_On(LED1);
-    
-    /**/
-    button_pressed = 1;
-    
-  }
-}
-
 #ifdef  USE_FULL_ASSERT
 
 /**

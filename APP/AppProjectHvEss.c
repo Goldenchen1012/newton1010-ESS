@@ -50,6 +50,9 @@
 #include "SmpEventType.h"
 #include "AppButton.h"
 #include "smp_w5500_DMA.h"
+#include "AppTcpipSmp.h"
+#include "HalSpirom.h"
+#include "AppProjectHvEss_IR.h"
 
 void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
@@ -71,8 +74,10 @@ static uint8_t	SystemReadyFlag = 0;
 static uint8_t	RelayOnFlag = 0;
 
 /* Private function prototypes -----------------------------------------------*/
+static void releaseOCP(void);
+
 static void relayOff(void)
-{
+{	
 	apiRelayControlMainRelayOff();
 	RelayOnFlag = 0;
 }
@@ -88,7 +93,7 @@ static void protectEventHandler(void *pDest, uint16_t evt, void *pData)
 		break;
 	case APP_PROTECT_OVP_L3_SET:
 		relayOff();
-		appProjectDebugMsg("OVP L3 set");
+		//appProjectDebugMsg("OVP L3 set");
 		saveEventLog(EVENT_TYPE_OVP_L3_SET, libGetUint16((uint8_t *)pData));
 		break;
 	case APP_PROTECT_OVP_L1_RELEASE:
@@ -350,16 +355,16 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 		relayOff();
 		break;
 	case APP_SIGNAL_FB_EVT_SP_HI:
-	//	appProjectDebugMsg("SP Hi");
+		//appProjectDebugMsg("SP Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_SP_LO:
-	//	appProjectDebugMsg("SP Low");
+		//appProjectDebugMsg("SP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_HI:
-	//	appProjectDebugMsg("PS1 Hi");
+		//appProjectDebugMsg("PS1 Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_PS1_LO:
-	//	appProjectDebugMsg("PS1 Low");
+		//appProjectDebugMsg("PS1 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_PS2_HI:
 	//	appProjectDebugMsg("PS2 Hi");
@@ -405,22 +410,30 @@ static void signalFeedbackEventHandler(void *pDest, uint16_t evt, void *pData)
 	//	appProjectDebugMsg("K4 Low");
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_HI:
-	//	appProjectDebugMsg("DOCP Hi");
+		//appProjectDebugMsg("DOCP Hi");
+		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_DOCP_LO:
-	//	appProjectDebugMsg("DOCP Lo");
+		//appProjectDebugMsg("DOCP Lo");
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_HI:
-	//	appProjectDebugMsg("COCP Hi");
+		//appProjectDebugMsg("COCP Hi");
+		//releaseOCP();
 		break;
 	case APP_SIGNAL_FB_EVT_COCP_LO:
-	//	appProjectDebugMsg("COCP Low");
+		//appProjectDebugMsg("COCP Low");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_HI:
 		//appProjectDebugMsg("OD IN Hi");
 		break;
 	case APP_SIGNAL_FB_EVT_OD_IN_LO:
 		//appProjectDebugMsg("OD IN Low");
+		break;
+	case APP_SIGNAL_FB_EVT_NFAULT_HI:
+		//appProjectDebugMsg("Nfault Hi");
+		break;
+	case APP_SIGNAL_FB_EVT_NFAULT_LO:
+		//appProjectDebugMsg("Nfault Lo");
 		break;
 	}
 }
@@ -481,6 +494,7 @@ static void appProjectSwTimerHandler(__far void *dest, uint16_t evt, void *vData
 
     if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
+//		GPIOD->ODR ^= GPIO_PIN_14;
 			;
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
@@ -676,6 +690,11 @@ uint8_t	appProjectIsRtcValid(void)
 	return RtcValid;
 }
 
+uint16_t appProjectGetTimerCount(void)
+{
+	return halTimerGetCountValue(&mHalTimer3);
+}
+
 void appProjectOpen(void){
 	char	str[100];
 	uint32_t	len;
@@ -685,19 +704,21 @@ void appProjectOpen(void){
 	HalTimerOpen(&mHalTimer3, appProjectHwTimerHandler);
 	appSerialUartDavinciOpen();
 	appSerialCanDavinciOpen();
-	
+	appTcpipSmpOpen();
   	//------------------------------------------
 	appProjectDebugMsg("--------- Start Run -----------...9");
 	len = apiSysParOpen();
 	
 	appProtectOpen(protectEventHandler);
 	appGaugeOpen(gaugeEventHandler);
-	
+
   halafeOpen(afeEventHandler);
 	
 	halAfeCurrentOpen();
 	Hal_W5500_Open();
-  	
+
+	halSpiromOpen();
+	
   	//------------------------------------------
 	//appProjectDebugMsg("Start Run !!");
 
@@ -707,7 +728,7 @@ void appProjectOpen(void){
 
 	sprintf(str,"Par Len = %d", len);
 	appProjectDebugMsg(str);
-  
+
   appBalanceOpen(appProjectDavinciBalanceEventHandler);
   	
 	apiSignalFeedbackOpen(0);//signalFeedbackEventHandler);
@@ -720,7 +741,10 @@ void appProjectOpen(void){
   apiSystemFlagOpen();
   apiEventLogOpen();
 	appButtonOpen(buttonEventHandler);
-
+	
+	appTcpipSmpOpen();
+	IrFunctionOpen();
+	
 //HalBspReleaseCtrl
 //	NtcTest();
 	{

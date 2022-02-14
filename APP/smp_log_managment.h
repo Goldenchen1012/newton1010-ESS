@@ -52,6 +52,7 @@
 	#define PAGE_SIZE 256 ///byte
 	#define LOG_PACKAGE_SIZE 8 ///byte
 	#define LOG_NUM_IN_PAGE PAGE_SIZE/LOG_PACKAGE_SIZE
+	#define	EVENT_LOG_INI_CHECKSUM			0xA5
 	typedef enum{
 		SMP_REFLASH_MEMORY = 0,
 		SMP_FIX_MEMORY,
@@ -64,7 +65,7 @@
 		uint16_t reflash_total_log_cnt;
 		uint16_t fix_memory_current_page;
 		uint16_t fix_total_log_cnt;
-		uint8_t dummy[2];
+		uint16_t sum;
 	}smp_sector_header_package;
 	
 	typedef struct{
@@ -98,6 +99,8 @@
 	void app_flash_log_managment_clean_fix_memory(void);
 	void app_flash_sector_header_save(smp_sector_header_package * sector_header);
 	void app_flash_sector_header_load(smp_sector_header_package * sector_header);
+	void app_flash_sector_header_get(smp_sector_header_package * sector_header);
+	int8_t app_flash_check_head(void);
 	void app_flash_page_data_push(smp_log_package log_package,smp_flash_type flash_type);
 	void app_flash_page_data_save(smp_flash_type flash_type);
 	void app_flash_page_data_load(uint8_t * RX_buffer , uint16_t log_start_position, uint16_t log_length,smp_flash_type flash_type);

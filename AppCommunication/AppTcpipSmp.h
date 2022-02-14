@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * @file        appTaskManagemente.h
+  * @file        AppTcpipSmp.h
   * @author      Johnny
-  * @version     v0.0
-  * @date        2021/10/12
+  * @version     v0.0.1
+  * @date        2021/12/23
   * @brief       
   ******************************************************************************
   * @attention
@@ -14,34 +14,33 @@
   ******************************************************************************
   */
 
-#ifndef _APP_TASK_MANAGEMENT_H_
-#define _APP_TASK_MANAGEMENT_H_
+#ifndef _APP_TCPIP_SMP_H_
+#define _APP_TCPIP_SMP_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Public typedef -----------------------------------------------------------*/
 
 /* Public define ------------------------------------------------------------*/
-#define	APP_TASK_EVT_T1MS	1
-#define	APP_TASK_EVT_T10MS	10
-#define	APP_TASK_EVT_T1SEC	100
-
-void appTaskTimerHanlder(void *pin, uint16_t evt, void *pData);
-void appTaskManagementHanlder(void);
-void appTaskOpen(void);
-
 
 /* Public macro -------------------------------------------------------------*/
+
+/* Public function prototypes -----------------------------------------------*/
+
+void appTcpipSmpOpen(void);
+
+
+
 #ifdef __cplusplus
 }
 #endif
 
-
 	
 
-#endif /* _APP_TASK_MANAGEMENT_H_ */
+#endif /* _APP_TCPIP_SMP_H_ */
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    
 

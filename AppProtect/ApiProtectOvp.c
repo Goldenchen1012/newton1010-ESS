@@ -85,7 +85,7 @@ uint8_t apiProtectOvpHandler(uint8_t ProtectLevel)
 		//sprintf(str,"C%d = %d",OvpCellIndex, CellVoltage);
 		//appProtectOvpDebugMsg(str);
 		
-		if(CellVoltage > ProtectPar.SetValue.l)
+		if(CellVoltage > ProtectPar.SetValue.l && ProtectPar.STime.l)
 		{
 			if((mOvpProtect.Flag[OvpCellIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -115,7 +115,7 @@ uint8_t apiProtectOvpHandler(uint8_t ProtectLevel)
 		}
 		//-------------------------------------------
 		//release 
-		if(CellVoltage < ProtectPar.RelValue.l)
+		if(CellVoltage < ProtectPar.RelValue.l && ProtectPar.RTime.l)
 		{
 			if((mOvpProtect.Flag[OvpCellIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

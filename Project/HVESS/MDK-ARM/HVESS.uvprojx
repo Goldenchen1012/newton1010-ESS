@@ -463,6 +463,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\smp_log_managment.c</FilePath>
             </File>
+            <File>
+              <FileName>AppProjectHvEss_IR.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppProjectHvEss_IR.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -563,6 +568,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\AppCommunication\AppSerialCanDavinciFirmwareUpgrade.c</FilePath>
             </File>
+            <File>
+              <FileName>AppTcpipSmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppCommunication\AppTcpipSmp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -622,6 +632,11 @@
               <FileName>ApiModbusTCPIP.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiModbusTCPIP.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiCanbusPkgFu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiCanbusPkgFu.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -738,6 +753,11 @@
               <FileName>HalRamSTM32L4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\HAL\HalRamSTM32L4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>HalSpirom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\HAL\HalSpirom.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2781,6 +2801,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\APP\smp_log_managment.c</FilePath>
             </File>
+            <File>
+              <FileName>AppProjectHvEss_IR.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\APP\AppProjectHvEss_IR.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2881,6 +2906,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\AppCommunication\AppSerialCanDavinciFirmwareUpgrade.c</FilePath>
             </File>
+            <File>
+              <FileName>AppTcpipSmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppCommunication\AppTcpipSmp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2940,6 +2970,11 @@
               <FileName>ApiModbusTCPIP.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiModbusTCPIP.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiCanbusPkgFu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiCanbusPkgFu.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -3005,6 +3040,11 @@
               <FileName>HalRamSTM32L4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\HAL\HalRamSTM32L4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>HalSpirom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\HAL\HalSpirom.c</FilePath>
             </File>
           </Files>
         </Group>

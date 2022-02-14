@@ -29,7 +29,7 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 
 
 /* Private define ------------------------------------------------------------*/
-#define	LEVEL_CHANGE_COUNT	2
+#define	LEVEL_CHANGE_COUNT	1
 enum{
 	SIGNAL_STATUS_UNKNOW = 0,
 	SIGNAL_STATUS_CHANGING,
@@ -98,7 +98,12 @@ static tSignalCheckTable	mSignalCheckTable[]={
 	{HalBspGetOdInStatus,	SIGNAL_STATUS_UNKNOW,	0,
 		APP_SIGNAL_ID_OD_IN,
 		APP_SIGNAL_FB_EVT_OD_IN_HI,	APP_SIGNAL_FB_EVT_OD_IN_LO},
-	
+	{halBspGetNfaultStatus,	SIGNAL_STATUS_UNKNOW,	0,
+		APP_SIGNAL_NFAULT,
+		APP_SIGNAL_FB_EVT_NFAULT_HI,	APP_SIGNAL_FB_EVT_NFAULT_LO},
+		
+		//BSP_NFAULT_READ
+		
 	{0,0,0,0}
 };
 	

@@ -305,7 +305,15 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_TLC6C5912_RCK_PIN                  GPIO_PIN_12
 #define BSP_TLC6C5912_RCK_PORT                 GPIOE																								 
 #endif	
-																							 																			 
+																							 																			 					
+#define	BSP_TERMLR_GPIO                       	GPIOB
+#define	BSP_TERMLR_PIN                           GPIO_PIN_5
+#define BSP_TERMLR_OPEN()                      {HalBspSetGpio(	BSP_TERMLR_GPIO, BSP_TERMLR_PIN, \
+                                               GPIO_MODE_OUTPUT_PP, GPIO_PULLUP, \
+                                               GPIO_SPEED_FREQ_HIGH);}
+#define BSP_TERMLR_HI()                        (BSP_TERMLR_GPIO->BSRR = BSP_TERMLR_PIN)
+#define BSP_TERMLR_LO()                        (BSP_TERMLR_GPIO->BRR = BSP_TERMLR_PIN)
+																							 
 /********************************* BSP_BQ79600 I/O Pin define(please use "smp_gpio.h") *************/
 #ifdef BSP_BQ7600																							 
 #define BSP_BQ796XX_NCS_PIN                    PIN4
@@ -340,11 +348,20 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 					
 /*********************************BSP_W5500 (SPI to TCPIP)I/O Pin define ***/
 #ifdef BSP_W5500
-#define BSP_W5500_RST_PORT                     GPIOB
-#define BSP_W5500_RST_PIN                      GPIO_PIN_6
+#define BSP_W5500_RST_PORT                     SMP_GPIOB
+#define BSP_W5500_RST_PIN                      PIN6
 
-#define BSP_W5500_INT_PORT                     GPIOD
-#define BSP_W5500_INT_PIN                      GPIO_PIN_8
+#define BSP_W5500_INT_PORT                     SMP_GPIOD
+#define BSP_W5500_INT_PIN                      PIN8
+//Add By Steve at 2022/1/10
+#define	BSP_W5500_INT_PIN_IRQn				   EXTI9_5_IRQn 
+
+#define BSP_W5500_SPI_SCS_PORT				   SMP_GPIOB
+#define BSP_W5500_SPI_SCS_PIN				   PIN12
+
+#define BSP_W5500_RST_GPIO_CLK_ENABLE()		   __HAL_RCC_GPIOB_CLK_ENABLE();
+#define BSP_W5500_INT_GPIO_CLK_ENABLE()		   __HAL_RCC_GPIOD_CLK_ENABLE();
+
 #endif
 
 /********************************* BSP_IRM I/O Pin define ****************************************/
@@ -365,12 +382,13 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_IRM_SW2_PIN                        BSP_IRM_SW_E_R_PIN
 #define BSP_IRM_SW3_PORT                       BSP_IRM_SW_E_PORT        
 #define BSP_IRM_SW3_PIN                        BSP_IRM_SW_E_PIN
-#define BSP_IRM_SW1_ON()                       (BSP_IRM_SW1_PORT->ODR |= BSP_IRM_SW1_PIN) 
-#define BSP_IRM_SW1_OFF()                      (BSP_IRM_SW1_PORT->ODR &= ~BSP_IRM_SW1_PIN) 
-#define BSP_IRM_SW2_ON()                       (BSP_IRM_SW2_PORT->ODR |= BSP_IRM_SW2_PIN) 
-#define BSP_IRM_SW2_OFF()                      (BSP_IRM_SW2_PORT->ODR &= ~BSP_IRM_SW2_PIN)
-#define BSP_IRM_SW3_ON()                       (BSP_IRM_SW3_PORT->ODR |= BSP_IRM_SW3_PIN) 
-#define BSP_IRM_SW3_OFF()                      (BSP_IRM_SW3_PORT->ODR &= ~BSP_IRM_SW3_PIN)
+#define BSP_IRM_SW1_ON()                       (BSP_IRM_SW1_PORT->BSRR = BSP_IRM_SW1_PIN) 
+#define BSP_IRM_SW1_OFF()                      (BSP_IRM_SW1_PORT->BRR = BSP_IRM_SW1_PIN) 
+#define BSP_IRM_SW2_ON()                       (BSP_IRM_SW2_PORT->BSRR = BSP_IRM_SW2_PIN) 
+#define BSP_IRM_SW2_OFF()                      (BSP_IRM_SW2_PORT->BRR = BSP_IRM_SW2_PIN)
+#define BSP_IRM_SW3_ON()                       (BSP_IRM_SW3_PORT->BSRR = BSP_IRM_SW3_PIN) 
+#define BSP_IRM_SW3_OFF()                      (BSP_IRM_SW3_PORT->BRR = BSP_IRM_SW3_PIN)
+
 #endif
 
 /********************************* BSP_UART0 I/O Pin define ****************************************/

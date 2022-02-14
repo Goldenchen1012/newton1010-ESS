@@ -85,7 +85,7 @@ uint8_t apiProtectUvpHandler(uint8_t ProtectLevel)
 	{			
 		CellVoltage = halAfeGetCellVoltage(UvpCellIndex);
 
-		if(CellVoltage < ProtectPar.SetValue.l)
+		if(CellVoltage < ProtectPar.SetValue.l && ProtectPar.STime.l)
 		{
 			if((mUvpProtect.Flag[UvpCellIndex] & ProtectFlagValue.Mask) == 0)
 			{
@@ -114,7 +114,7 @@ uint8_t apiProtectUvpHandler(uint8_t ProtectLevel)
 		}
 		//-------------------------------------------
 		//release 
-		if(CellVoltage > ProtectPar.RelValue.l)
+		if(CellVoltage > ProtectPar.RelValue.l && ProtectPar.RTime.l)
 		{
 			if((mUvpProtect.Flag[UvpCellIndex] & ProtectFlagValue.Mask) == ProtectFlagValue.Setted)
 			{

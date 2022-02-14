@@ -77,7 +77,7 @@ int8_t smp_gpio_init(smp_gpio_t *p_gpio);
 int8_t smp_gpio_deinit(smp_gpio_t *p_gpio);
 int8_t smp_gpio_set_state(smp_gpio_t *p_gpio, smp_gpio_state state);
 int8_t smp_gpio_get_state(smp_gpio_t *p_gpio, smp_gpio_state *state);
-
+uint16_t SMP_GPIO_PIN(gpio_pin pin);
 
 #endif /* __SMP_GPIO_H */
 
