@@ -15,7 +15,7 @@
   */
 
 #ifndef _APP_SERIAL_UART_DAVINCI_H_
-#define _APP_SERIAL_UART_DANVICI_H_
+#define _APP_SERIAL_UART_DAVINCI_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 

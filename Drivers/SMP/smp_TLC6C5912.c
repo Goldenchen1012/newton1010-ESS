@@ -204,3 +204,4 @@ void smp_TLC6C5912_Comm_LED(bsp_tlc6c5912_led_type led_status){
 		
 	smp_TLC6C5912_SendData(Led_display.w);
 }
+//--------FILE END------------------------------------------------------------------------------------------

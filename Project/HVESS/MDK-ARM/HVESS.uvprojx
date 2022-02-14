@@ -339,7 +339,7 @@
               <MiscControls>--C99</MiscControls>
               <Define>STM32L496xx,USE_HAL_DRIVER,USE_STM32L4XX_NUCLEO_144,BSPSMPS,USE_STM32L4XX_NUCLEO_144_SMPS,USE_ADP5301ACBZ</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../../../Drivers/CMSIS/Include;../../../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../../../Drivers/STM32L4xx_HAL_Driver/Inc;../../../Drivers/BSP/STM32L4xx_Nucleo_144;..\..\..\User;..\..\..\HAL;..\..\..\Lib;..\..\..\Config_Common;..\..\..\AppProtect;..\..\..\APP;..\..\..\Lib\SMP;..\..\..\Drivers\SMP;..\..\..\BSP;..\..\..\Drivers\BSP\STM32L496V_Davinci;..\..\..\API;..\..\..\AppCommunication;..\..\..\Drivers\W5500;..\..\..\RTT</IncludePath>
+              <IncludePath>../Inc;../../../Drivers/CMSIS/Include;../../../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../../../Drivers/STM32L4xx_HAL_Driver/Inc;../../../Drivers/BSP/STM32L4xx_Nucleo_144;..\..\..\User;..\..\..\HAL;..\..\..\Lib;..\..\..\Config_Common;..\..\..\AppProtect;..\..\..\APP;..\..\..\Lib\SMP;..\..\..\Drivers\SMP;..\..\..\BSP;..\..\..\Drivers\BSP\STM32L496V_Davinci;..\..\..\API;..\..\..\AppCommunication;..\..\..\Drivers\W5500;..\..\..\RTT;..\..\..\Test</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -2197,6 +2197,46 @@
               <FileName>SEGGER_RTT_printf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\RTT\SEGGER_RTT_printf.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Test</GroupName>
+          <Files>
+            <File>
+              <FileName>Test_TLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_TLC6C5912.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_max7219.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_max7219.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_AppProjectHvEss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_AppProjectHvEss.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_MX25L_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_MX25L_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADS7946_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADS7946_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ApiIRMonitoring.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ApiIRMonitoring.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_drv_bq796xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_drv_bq796xx.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -4414,6 +4454,46 @@
               <FileName>SEGGER_RTT_printf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\RTT\SEGGER_RTT_printf.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Test</GroupName>
+          <Files>
+            <File>
+              <FileName>Test_TLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_TLC6C5912.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_max7219.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_max7219.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_AppProjectHvEss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_AppProjectHvEss.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_MX25L_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_MX25L_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADS7946_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADS7946_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ApiIRMonitoring.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ApiIRMonitoring.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_drv_bq796xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_drv_bq796xx.c</FilePath>
             </File>
           </Files>
         </Group>

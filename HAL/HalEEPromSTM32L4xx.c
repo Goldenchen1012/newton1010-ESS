@@ -23,7 +23,6 @@
 void appSerialUartSendMessage(uint8_t *str);
 #define	HalRtcDebugMsg(str)	//appSerialUartSendMessage(str)
 
-
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
