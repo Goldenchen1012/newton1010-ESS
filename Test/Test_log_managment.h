@@ -12,6 +12,8 @@
 #define __TEST_LOG_MANAGMENT__
 #include <stdint.h>
 
+#define TEST_EVENT_LOG_CYCLE_CNT               100
+
 void Test_Event_Log_FUNC(void);
 
 #endif // __TEST_LOG_MANAGMENT__
