@@ -661,6 +661,10 @@ static void checkDtp(void)
 	systemFlagNextFunction();
 }
 
+static void checkModuleVoltage(void)
+{
+	systemFlagNextFunction();
+}
 
 static void systemFlagIni(void)
 {
@@ -700,6 +704,7 @@ const tSystemFlagCheckFunTable mSystemFlagCheckFunTable[]={
 		checkScuOt,
 		checkDvp,
 		checkDtp,
+		checkModuleVoltage,
 		
 		systemFlagCheckFinish
 };

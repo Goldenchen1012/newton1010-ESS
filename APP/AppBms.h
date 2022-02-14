@@ -69,6 +69,10 @@ uint8_t appBmsIsValidScuid(uint8_t scuid);
 void putSelfDataToBmsBuffer(void);
 uint8_t appBmsIsScuRelayOn(uint8_t scuid);
 
+uint8_t	appBmsGetMinBroadcastScuId(void);
+uint8_t	appBmsGetOnLineScuNumber(void);
+uint8_t	appBmsGetNextBroadcastScuId(uint8_t lastBrocastScuId);
+
 
 void appBmsOpen(void);
 

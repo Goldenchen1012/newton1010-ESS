@@ -36,7 +36,7 @@
 #define	AFE_DEBUG_S_NUM		2
 
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	halAfeBq796xxDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
+#define	halAfeBq796xxDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	afeCommL1Time()					5

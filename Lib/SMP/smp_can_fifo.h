@@ -24,8 +24,8 @@ typedef struct{
 typedef struct{
 	smp_can_package_t	*buffer_addr;	             /* FIFO queue buffer start address */
 	uint16_t	buffer_size;	                     /* FIFO queue buffer size */
-	uint32_t	in;				                         /* FIFO queue buffer push in address */
-	uint32_t	out;			                        /* FIFO queue buffer pop out address */
+	uint16_t	in;				                         /* FIFO queue buffer push in address */
+	uint16_t	out;			                        /* FIFO queue buffer pop out address */
 }smp_can_fifo_t;
 
 /* Exported constants --------------------------------------------------------*/ 

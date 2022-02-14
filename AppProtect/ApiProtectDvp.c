@@ -63,7 +63,7 @@ uint8_t apiProtectDvpHandler(void)
 	{
 		apiSysParGetDvpPar(ProtectLevel, &ProtectPar);
 		appProtectGetLevelMask(ProtectLevel, &ProtectFlagValue);
-		
+#if 0		
 		sprintf(str,"DVP %d %d %d %d %.2X %.2X",ProtectLevel,
 			 dV,
 			 ProtectPar.SetValue.l,
@@ -72,7 +72,7 @@ uint8_t apiProtectDvpHandler(void)
 			 ProtectFlagValue.ClearMask
 			 );
 		appProtectDvpDebugMsg(str);
-
+#endif
 		if(dV > ProtectPar.SetValue.l && ProtectPar.STime.l)
 		{
 			if((mDvpProtect.Flag & ProtectFlagValue.Mask) == 0)

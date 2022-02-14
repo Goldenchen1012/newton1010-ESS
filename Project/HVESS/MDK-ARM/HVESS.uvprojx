@@ -598,6 +598,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\AppCommunication\AppTcpipSmp.c</FilePath>
             </File>
+            <File>
+              <FileName>AppSerialCanDavinciDetail.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppCommunication\AppSerialCanDavinciDetail.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -3022,6 +3027,11 @@
               <FileName>AppTcpipSmp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\AppCommunication\AppTcpipSmp.c</FilePath>
+            </File>
+            <File>
+              <FileName>AppSerialCanDavinciDetail.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppCommunication\AppSerialCanDavinciDetail.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -345,9 +345,6 @@ static void masterProcessor(void)
 		return;
 		
 	checkWhichScuRelayOn();
-	//apiRelayControlSetMasterTurnOnFlag();
-	
-	//SMP_RELAY_CTRL_OBJ_INDEX
 }
 
 static uint8_t getOdInMode(void)
@@ -534,9 +531,7 @@ static void assignSlaveIdSwTimerHandler(__far void *dest, uint16_t evt, void *vD
 	{
 		appScuIdAssignDebugMsg("Out assign id signal");	
 	}
-
 }
-
 
 static void masterSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {

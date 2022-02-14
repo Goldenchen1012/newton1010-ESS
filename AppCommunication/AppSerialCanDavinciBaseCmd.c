@@ -29,6 +29,8 @@
 #include "AppSerialCanDavinci.h"
 #include "AppSerialCanDavinciCmd.h"
 #include "AppSerialCanDavinciParameter.h"
+#include "AppSerialCanDavinciNotification.h"
+
 #include "AppBms.h"
 
 void appSerialCanDavinciSendTextMessage(char *str);
@@ -103,6 +105,28 @@ static void scuMinMaxValue(smp_can_package_t *pCanPkg)
 //	appBmsSetScuVbat(scuid, GET_DWORD(&pCanPkg->dat[0]), GET_DWORD(&pCanPkg->dat[4]));
 }
 
+static void scuDetailMsgEndFinish(smp_can_package_t *pCanPkg)
+{
+	uint8_t	scuid;
+	
+	scuid = SMP_CAN_GET_SCU_ID(pCanPkg->id);
+	appSerialCanDavinciNotificationSetLastBroadcastScuId(scuid);
+#if 1 //for test only !!	
+	{		
+		smp_can_package_t	CanPkg;
+					
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, appProjectGetScuId(),
+								SMP_BASE_DETAIL_MSG_SEND_END_OBJ_INDEX + 1,		
+							   0);							   						   
+		CanPkg.dlc = 0;
+		appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+	}
+#endif	
+}
+
+
+
+//-------------------------------------------------------------------
 SMP_CAN_DECODE_CMD_START(mDavinciCanBaseRxTxTab)
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, 0,
 									SMP_BASE_SCU_ID_OBJ_INDEX,
@@ -134,6 +158,11 @@ SMP_CAN_DECODE_CMD_START(mDavinciCanBaseRxTxTab)
 								CHECK_SMP_CAN_OBJ,
 								scuMinMaxValue)
 
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, 0,
+									SMP_BASE_DETAIL_MSG_SEND_END_OBJ_INDEX,
+									0),
+								CHECK_SMP_CAN_OBJ,
+								scuDetailMsgEndFinish)
 
 
 SMP_CAN_DECODE_CMD_END();

@@ -62,7 +62,7 @@ extern "C" {
 #define	SMP_BASE_QPASS_RPASS_OBJ_INDEX				0x0C
 #define	SMP_BASE_CYCLE_COUNT_OBJ_INDEX				0x0D
 
-
+#define	SMP_BASE_DETAIL_MSG_SEND_END_OBJ_INDEX		0x10
 
 //----------------------------------------------
 //	SMP_CAN_FUN_CMD_RX
@@ -149,7 +149,6 @@ extern "C" {
 #define	SMP_DETAIL_CUTP_FLAG_OBJ_INDEX				0x06
 #define	SMP_DETAIL_DOTP_FLAG_OBJ_INDEX				0x07
 #define	SMP_DETAIL_DUTP_FLAG_OBJ_INDEX				0x08
-
 
 //SMP_CAN_FUN_FU_RX
 #define	SMP_FU_INFO_OBJ_INDEX						0x00

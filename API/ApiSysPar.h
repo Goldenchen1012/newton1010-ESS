@@ -123,6 +123,18 @@ void apiSysParSetMinChargeCurrentValue(uint16_t current);
 uint32_t apiSysParGetDesignedCapacity(void);
 void apiSysParSetDesignedCapacity(uint32_t dc);
 
+uint32_t apiSysParGetRelayActiveFlag(void);
+void apiSysParSetRelayActiveFlag(uint32_t flag);
+
+void apiSysParGetMaxCurrentValue(tScuProtectPar *pPar);
+void apiSysParSetMaxCurrentValue(tScuProtectPar *pPar);
+
+void apiSysParGetMaxPeakCurrentValue(tScuProtectPar *pPar);
+void apiSysParSetMaxPeakCurrentValue(tScuProtectPar *pPar);
+
+void apiSysParGetRateVoltage(tScuProtectPar *pPar);
+void apiSysParSetRateVoltage(tScuProtectPar *pPar);
+
 void apiSysParGetFullChargeCondition(tScuProtectPar *pPar);
 void apiSysParSetFullChargeCondition(tScuProtectPar *pPar);
 
@@ -173,6 +185,9 @@ void apiSysParSetUvpPar(uint8_t level, tScuProtectPar *pPar);
 void apiSysParGetDvpPar(uint8_t level, tScuProtectPar *pPar);
 void apiSysParSetDvpPar(uint8_t level, tScuProtectPar *pPar);
 
+void apiSysParGetModuleDvpPar(uint8_t level, tScuProtectPar *pPar);
+void apiSysParSetModuleDvpPar(uint8_t level, tScuProtectPar *pPar);
+
 void apiSysParGet2ndOtProtectPar(tScuProtectPar *pPar);
 void apiSysParSet2ndOtProtectPar(tScuProtectPar *pPar);
 void apiSysParGet2ndUtProtectPar(tScuProtectPar *pPar);
@@ -196,6 +211,9 @@ void apiSysParSetDutpPar(uint8_t level, tScuProtectPar *pPar);
 
 void apiSysParGetDtpPar(uint8_t level, tScuProtectPar *pPar);
 void apiSysParSetDtpPar(uint8_t level, tScuProtectPar *pPar);
+
+void apiSysParGetModuleDtpPar(uint8_t level, tScuProtectPar *pPar);
+void apiSysParSetModuleDtpPar(uint8_t level, tScuProtectPar *pPar);
 
 void apiSysParGetCocpPar(uint8_t level, tScuProtectPar *pPar);
 void apiSysParSetCocpPar(uint8_t level, tScuProtectPar *pPar);

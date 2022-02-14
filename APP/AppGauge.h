@@ -84,7 +84,7 @@ uint16_t appGaugeGetRSoc(void);
 uint16_t appGaugeGetRamSoc(void);
 uint16_t appGaugeGetEndOfSoc(void);
 uint16_t appGaugeGetDisplaySoc(void);
-uint16_t appGaugeGetCyleCount(void);
+uint16_t appGaugeGetCycleCount(void);
 
 
 /* Public macro -------------------------------------------------------------*/

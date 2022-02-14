@@ -63,6 +63,10 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
+#if 1
+#define	SIM_MODE
+#endif
+
 #if 0 
 #define	RTC_DEBUG
 #endif
@@ -971,6 +975,39 @@ uint16_t appProjectGetTimerCount(void)
 	return halTimerGetCountValue(&mHalTimer3);
 }
 
+#ifdef SIM_MODE
+void SimuModeIni(void)
+{
+	uint16_t	cells;
+	uint16_t	voltage;
+	uint8_t		scuid;
+
+	scuid = appBmsGetScuId();
+	
+	if(appBmsIsValidScuid(scuid) == false)
+		return;
+	appProjectEnableSimuMode();
+	voltage = 3000 + (uint16_t)(scuid - 1) * 400;
+	for(cells=0; cells<MAX_CELL_NUMBER; cells++)	
+	{
+		appBmsSetCellVoltage(scuid, cells, voltage);	
+		voltage++;
+	}
+	//voltage = 2200;
+	voltage = 2000 + (uint16_t)(scuid - 1) * 400;
+	for(cells=0; cells<MAX_NTC_NUMBER; cells++)	
+	{
+		appBmsSetNtcVoltage(scuid, cells, voltage);	
+		voltage++;
+	}
+//uint8_t (uint8_t scuid, uint16_t cells, uint16_t voltage);
+//uint8_t appBmsGetCellVoltage(uint8_t scuid, uint16_t cells, uint16_t *voltage);
+//uint8_t appBmsSetNtcVoltage(uint8_t scuid, uint16_t ntcs, uint16_t voltage);
+//uint8_t appBmsGetNtcVoltage(uint8_t scuid, uint16_t ntcs, uint16_t *voltage);
+	
+}	
+#endif
+
 void appProjectOpen(void){
 	
 	
@@ -1072,6 +1109,9 @@ void appProjectOpen(void){
 //	appTestProjectOpen();
 	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.25...0");
 	changeProjectState(projectPowerOnState);
+#ifdef SIM_MODE
+	SimuModeIni();
+#endif	
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

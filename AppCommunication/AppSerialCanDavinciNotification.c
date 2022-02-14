@@ -41,8 +41,10 @@
 #include "AppGauge.h"
 #include "AppBms.h"
 
+#define	WAIT_LAST_SCU_BROCAST_FINISH
+
 void appSerialCanDavinciSendTextMessage(char *str);
-#define	notiDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
+#define	notiDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private typedef -----------------------------------------------------------*/
 typedef void (* tNotificationRunTable)(void);
@@ -54,6 +56,7 @@ typedef void (* tNotificationRunTable)(void);
 
 /* Private macro -------------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
+static uint8_t	LastBroadcastBmuId = 0xff;
 /* Private variables ---------------------------------------------------------*/
 static	uint8_t CanDavinciNotificationFunIndex = 0;
 static 	uint16_t	NotificationSubIndex = 0;
@@ -408,7 +411,7 @@ static void notifyBaseCycleCount(void)
 									0);
 	CanPkg.dlc = 2;
 	
-	Ibyte.i = appGaugeGetCyleCount();
+	Ibyte.i = appGaugeGetCycleCount();
 	CanPkg.dat[0] = Ibyte.b[0];
 	CanPkg.dat[1] = Ibyte.b[1];
 	
@@ -429,7 +432,7 @@ static void notifyBaseInfoPackage(void)
 	notifyBasePassCharge();
 	notifyBaseCycleCount();
 	
-	notifyNextFunction();
+//	notifyNextFunction();
 }
 
 
@@ -757,9 +760,17 @@ static void appSerialCanDavinciNotificationDutpFlag(void)
 	}
 }
 
+
 static void appSerialCanDavinciNotificationEnd(void)
 {
-	//appSerialCanDavinciSendTextMessage("Notification End");
+	smp_can_package_t	CanPkg;
+	CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_BASE_TX, notifyScuId(),
+								SMP_BASE_DETAIL_MSG_SEND_END_OBJ_INDEX,
+							   0);
+	CanPkg.dlc = 0;
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+
+	LastBroadcastBmuId = notifyScuId();
 
 	CanDavinciNotificationFunIndex = 0;
 	NotificationSubIndex = 0;
@@ -769,7 +780,7 @@ static void appSerialCanDavinciNotificationEnd(void)
 const tNotificationRunTable	NotificationFunctionTable[]={
 	notifyFunNone,
 	
-	notifyBaseInfoPackage,
+//	notifyBaseInfoPackage,
 	appSerialCanDavinciNotificationCellVoltage,
 	appSerialCanDavinciNotificationNtcVoltage,
 	
@@ -784,7 +795,118 @@ const tNotificationRunTable	NotificationFunctionTable[]={
 	
 };
 
+static void StartBroadcastDetailMessage(void)
+{
+	CanDavinciNotificationFunIndex = 1;
+	NotificationSubIndex = 0;
+}
+static uint16_t	T1secCount = 0;
+static uint8_t	AutoSendCount = 0;
+
+void canNotiHwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
+{
+	static uint8_t T1msCount =0;
+	T1msCount++;
+	if(T1msCount >= 10)
+	{ 
+		T1msCount = 0;
+		if(T1secCount < 0xfff0)
+			T1secCount++;
+		if(AutoSendCount < 250)
+			AutoSendCount++;		
+	}
+}
+
+static void CheckBroadcastDetailMessage(void)
+{
+	char	str[200];
+	uint8_t		NextId;
+	uint8_t		MinId;
+	static uint8_t	OldLastBroadcastBmuId = 0;
+	
+	if(notifyScuId() == 0xff)
+		return;
+	
+	if(OldLastBroadcastBmuId != LastBroadcastBmuId)
+	{
+		OldLastBroadcastBmuId = LastBroadcastBmuId;	
+		AutoSendCount = 0;
+	}
+	if(AutoSendCount >= 150)
+	{
+		MinId = appBmsGetMinBroadcastScuId();
+		if(MinId == notifyScuId())
+		{
+		#if 0
+			notiDebugMsg("CheckBroadcastDetailMessage:Auto Send");
+		#endif
+			StartBroadcastDetailMessage();				
+			AutoSendCount =0;
+			T1secCount = 0;
+			return;
+		}
+	}
+	
+	if(appBmsGetOnLineScuNumber() <= 1)
+	{
+		if(T1secCount >= 100)
+		{
+		#if 0			
+			notiDebugMsg("CheckBroadcastDetailMessage:send 1");
+		#endif
+			StartBroadcastDetailMessage();
+			T1secCount = 0;
+			AutoSendCount =0;
+		}
+	}
+	else
+	{
+		MinId = appBmsGetMinBroadcastScuId();	//1
+		NextId = appBmsGetNextBroadcastScuId(LastBroadcastBmuId);	//2
+		
+		if(NextId == notifyScuId())
+		{
+			if(NextId > MinId)
+			{
+			#if 0
+				sprintf(str, "CheckBroadcastDetailMessage:send 2 %d Min=%d Next=%d %d",
+					T1secCount,
+					MinId,
+					NextId,
+					LastBroadcastBmuId
+					); 
+				notiDebugMsg(str);
+			#endif
+				StartBroadcastDetailMessage();
+				T1secCount = 0;
+				AutoSendCount =0;
+			}
+			else if(NextId == MinId && T1secCount >=100)
+			{
+			#if 0				
+				sprintf(str, "CheckBroadcastDetailMessage:send 3 %d %d",
+						T1secCount,
+						LastBroadcastBmuId
+						); 
+				notiDebugMsg(str);
+			#endif				
+				StartBroadcastDetailMessage();
+				T1secCount = 0;
+				AutoSendCount =0;
+			}
+		}
+	}
+}
+
 /* Public function prototypes -----------------------------------------------*/
+uint8_t appSerialCanDavinciNotificationGetLastBroadcastScuId(void)
+{
+	return LastBroadcastBmuId;
+}
+void appSerialCanDavinciNotificationSetLastBroadcastScuId(uint8_t scuid)
+{
+	LastBroadcastBmuId = scuid;
+}
 
 void appSerialCanDavinciNotificationHandler(uint16_t evt)
 {
@@ -795,19 +917,31 @@ void appSerialCanDavinciNotificationHandler(uint16_t evt)
 	
 	if(CanDavinciNotificationFunIndex)
 		NotificationFunctionTable[CanDavinciNotificationFunIndex]();
+	else
+	{
+#ifdef WAIT_LAST_SCU_BROCAST_FINISH		
+		CheckBroadcastDetailMessage();
+#endif		
+	}
 	
 	count++;
 	if(count >= 100)
 	{
 		count = 0;
-	//	appSerialCanDavinciSendTextMessage("Notification Start");
+		if(notifyScuId() != 0xff)
+		{
+			notifyBaseInfoPackage();
+		}
+#ifndef WAIT_LAST_SCU_BROCAST_FINISH		
 		if(!CanDavinciNotificationFunIndex)
 		{
 			if(notifyScuId() == 0xff)
-				return;			
-			CanDavinciNotificationFunIndex = 1;
-			NotificationSubIndex = 0;
+				return;		
+			StartBroadcastDetailMessage();	
+			//CanDavinciNotificationFunIndex = 1;
+			//NotificationSubIndex = 0;
 		}
+#endif		
 	}
 }
 

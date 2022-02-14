@@ -83,12 +83,13 @@ int8_t smp_can_fifo_check(smp_can_fifo_t *p_fifo, char *val, uint32_t index)
 #endif
 int8_t smp_can_fifo_get_size(smp_can_fifo_t *p_fifo, uint16_t *size)
 {
-    if(p_fifo->in==p_fifo->out){
+    if(p_fifo->in == p_fifo->out){
+		*size = 0;
 		return SMP_ERROR_RESOURCES; //Buf empty
-	}else if(p_fifo->in>p_fifo->out){
-		*size = p_fifo->in-p_fifo->out;
+	}else if(p_fifo->in > p_fifo->out){
+		*size = p_fifo->in - p_fifo->out;
 	}else{
-		*size = (p_fifo->buffer_size-p_fifo->out)+(p_fifo->in);
+		*size = (p_fifo->buffer_size - p_fifo->out) + (p_fifo->in);
 	}	
 	return SMP_SUCCESS;
 }

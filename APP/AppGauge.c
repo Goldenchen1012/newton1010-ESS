@@ -1466,7 +1466,7 @@ void appGaugeCleanCycleCount(void)
 	apiRamSaveTotalDisChargeCount(0);
 }
 
-uint16_t appGaugeGetCyleCount(void)
+uint16_t appGaugeGetCycleCount(void)
 {
 	return mAppScuGauage.CycleCount.i;
 }

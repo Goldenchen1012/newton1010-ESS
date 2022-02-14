@@ -28,10 +28,13 @@
 #include "AppSerialCanDavinci.h"
 
 #include "AppSerialCanDavinciDebug.h"
+#include "AppSerialCanDavinciDetail.h"
 #include "AppSerialCanDavinciCommon.h"
 #include "AppSerialCanDavinciCmd.h"
 #include "AppSerialCanDavinciBaseCmd.h"
 #include "AppSerialCanDavinciFirmwareUpgrade.h"
+#include "AppSerialCanDavinciNotification.h"
+
 #include "HalRtc.h"
 #include "AppBms.h"
 
@@ -123,6 +126,11 @@ SMP_CAN_DECODE_CMD_START(mDavinciCanFunDecodeTab)
 									0),
 								CHECK_SMP_CAN_FUN,
 								DavinciCanFunFuRx)								
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_DETAIL_TX, 0,
+									0,
+									0),
+								CHECK_SMP_CAN_FUN,
+								DavinciCanFunDetailTx)								
 
 SMP_CAN_DECODE_CMD_END();
 
@@ -281,6 +289,7 @@ void appSerialCanDavinciTimerHandler(__far void *dest, uint16_t evt, void *vData
 }
 
 //void Gpio13Debug(uint16_t num)
+void canNotiHwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr);
 
 void appSerialCanDavinciOpen(void)
 {
@@ -305,6 +314,7 @@ void appSerialCanDavinciOpen(void)
 	
 	#endif
   	LibSwTimerOpen(appSerialCanDavinciTimerHandler, 0);
+	LibHwTimerOpen(canNotiHwTimerHandler, 0);
 }
 
 void appSerialCanDavinciClose(void)

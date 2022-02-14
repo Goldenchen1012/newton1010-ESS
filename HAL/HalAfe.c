@@ -23,6 +23,7 @@
 #include "ApiSysPar.h"
 #include "AppBms.h"
 #include "AppScuIdAssign.h"
+#include "AppProject.h"
 
 /* Private define ------------------------------------------------------------*/
 #define		afeCellNumber()		apiSysParGetCellNumber()
@@ -30,14 +31,15 @@
 #define		afeBmuNumber()		apiSysParGetBmuNumber()
 #define		afeCellFlag(bmu)	apiSysParGetCellFlag(bmu)
 #define		afeNtcFlag(bmu)		apiSysParGetNtcFlag(bmu)
+#define		afeBmuNumPerModule()	apiSysParGetBmuNumInModule()
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private typedef -----------------------------------------------------------*/
 
 typedef struct{
-	tCellVoltage	CellVoltage[MAX_CELL_NUMBER + 4];
-	tNtcVoltage		NtcVoltage[MAX_NTC_NUMBER + 4];
+//	tCellVoltage	CellVoltage[MAX_CELL_NUMBER + 4];
+//	tNtcVoltage		NtcVoltage[MAX_NTC_NUMBER + 4];
 	tCurrent		CurrentValue[2];
 	int32_t			CurrentAdcValue[2];
 	uint32_t		VBat[2];
@@ -295,7 +297,7 @@ void halAfeUpdateMinMaxCellVoltage(void)
 	logicalCellPositionToPhysicalPosition(MinPosition,
 						&AfeBuffer.MinVPosition.Bmu,
 						&AfeBuffer.MinVPosition.Channel);
-#if 1
+#if 0
 	{						
 		char	str[100];
 		
@@ -347,7 +349,7 @@ void halAfeUpdateMinMaxNtcTempVoltage(void)
 	AfeBuffer.MaxNtcTemp = LibNtcVoltageToTemperature(AfeBuffer.MaxTempNtcVoltage);
 	AfeBuffer.MinNtcTemp = LibNtcVoltageToTemperature(AfeBuffer.MinTempNtcVoltage);
 	
-#if 1
+#if 0
 	{
 		char	str[100];
 		sprintf(str,"MaxT = %d %d %d, MinT=%d %d %d",
@@ -361,6 +363,28 @@ void halAfeUpdateMinMaxNtcTempVoltage(void)
 		appSerialCanDavinciSendTextMessage(str);
 	}
 #endif	
+}
+
+uint8_t halAfeUpdateModuleVoltage(void)
+{
+#if	0	
+	uint8_t		BmuNumOfPack;
+	uint8_t		bmuindex;
+	uint8_t		u8;
+	
+	BmuNumOfPack = afeBmuNumPerModule();
+	
+	for(bmuindex=0; bmuindex<afeBmuNumber(); bmuindex+=afeBmuNumPerModule())
+	{
+		
+		
+	}
+	ui
+	uint8_t apiSysParGetBmuNumInModule(void)
+{
+	return SystemParemater.RomPar.BmuNumInModule;	
+}
+#endif
 }
 
 

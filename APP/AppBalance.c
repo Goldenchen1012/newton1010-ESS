@@ -212,11 +212,13 @@ static void appBalanceCheckSet(uint16_t MinCellVoltage, uint16_t DeltaSet)
 			B = cell/8;
 			b = cell & 0x07;
 			BalanceFlag[B] |= BitsTab[b];
+#if	0			
 			if(cell == 10)
 			{					
 				sprintf(str,"Set Balance %d %d %d",cell+1, CellVoltage, MinCellVoltage);
-				//appBalanceDebugMsg(str);
+				appBalanceDebugMsg(str);
 			}
+#endif			
 		}		
 	}
 }
@@ -308,7 +310,7 @@ static void appBalanceCheck(void)
 	MinCellVoltage = halAfeGetMinCellVoltage(0,0);
 	MaxCellVoltage = halAfeGetMaxCellVoltage(0,0);
 
-
+#if	0
 	sprintf(str,"%d %d %d %d %d %d %d %d %d %d %d",
 			SetVoltage,
 			ReleaseVoltage,
@@ -322,7 +324,8 @@ static void appBalanceCheck(void)
 			MinCellVoltage,
 			MaxCellVoltage
 			);
-	//appBalanceDebugMsg(str);
+	appBalanceDebugMsg(str);
+#endif	
 	//---------------------------------------------
 	//
 	if(MinCellVoltage <= SetVoltage || 

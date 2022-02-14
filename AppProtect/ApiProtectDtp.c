@@ -63,13 +63,12 @@ uint8_t apiProtectDtpHandler(void)
 	{
 		apiSysParGetDtpPar(ProtectLevel, &ProtectPar);
 		appProtectGetLevelMask(ProtectLevel, &ProtectFlagValue);
-		
+#if 0		
 		sprintf(str,"DTP %d %d %d %d",ProtectLevel,
 			 dT,ProtectPar.SetValue.l,
 			 ProtectPar.RelValue.l);
-		
-		
 		appProtectDtpDebugMsg(str);
+#endif		
 		if(dT > ProtectPar.SetValue.l && ProtectPar.STime.l)
 		{
 			if((mDtpProtect.Flag & ProtectFlagValue.Mask) == 0)

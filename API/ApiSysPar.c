@@ -67,7 +67,7 @@ typedef struct{
 	uint16_t		MaxFlatVoltage;
 	uint32_t		CellFlag[MAX_BMU_NUM];
 	uint32_t		NtcFlag[MAX_BMU_NUM];
-	uint8_t			BmuNumInModule;
+	uint8_t			BmuNumInModule;	
 	uint8_t			BmuNumber;
 	uint16_t		TerminateVoltage;
 	
@@ -133,6 +133,13 @@ typedef struct{
 		uint8_t		SetTime;
 		uint16_t	ReleaseValue;
 		uint8_t		ReleaseTime;
+	}ModuleDvp[3];
+	
+	struct{
+		uint16_t	SetValue;
+		uint8_t		SetTime;
+		uint16_t	ReleaseValue;
+		uint8_t		ReleaseTime;
 	}Cotp[3];
 	
 	struct{
@@ -162,6 +169,13 @@ typedef struct{
 		uint8_t		ReleaseTime;
 	}Dtp[3];
 
+	struct{
+		uint16_t	SetValue;
+		uint8_t		SetTime;
+		uint16_t	ReleaseValue;
+		uint8_t		ReleaseTime;
+	}ModuleDtp[3];
+	
 	struct{
 		uint16_t	SetValue;
 		uint8_t		SetTime;
@@ -220,6 +234,21 @@ typedef struct{
 		uint8_t		ReleaseTime;
 	}ScuOt[5][3];
 	
+	struct{
+		uint16_t	ChgCurrent;
+		uint16_t	DsgCurrent;
+		uint16_t	ChgPeakCurrent;
+		uint16_t	DsgPeakCurrent;
+		uint8_t		ChgPeakSecond;
+		uint8_t		DsgPeakSecond;
+	}MaxCurrent;
+	
+	struct{
+		uint16_t	Voltage;
+		uint16_t	MaxVoltage;
+		uint16_t	MinVoltage;
+	}Rate;	
+	
 	uint32_t	RelayActiveFlag;
 	uint32_t	W5500_IpAddress;
 	uint8_t		NoteMessage[MAX_NOTE_MESSAGE_STRING_ITEM + 2];
@@ -228,6 +257,7 @@ typedef struct{
 typedef struct{
 	uint16_t		CellNumber;
 	uint16_t		NtcNumber;
+	uint8_t			CellNumberOfModule[MAX_BMU_NUM];
 
 	struct{
 		uint16_t	SetAdcValue;
@@ -1363,6 +1393,8 @@ static void updateCellNumber(void)
 			flag >>= 1;
 		}
 	}	
+	if(SystemParemater.RamPar.CellNumber >= MAX_CELL_NUMBER)
+		SystemParemater.RamPar.CellNumber = MAX_CELL_NUMBER;
 }
 static void updateNtcNumber(void)
 {
@@ -1381,7 +1413,45 @@ static void updateNtcNumber(void)
 			}
 			flag >>= 1;
 		}
-	}	
+	}
+	if(SystemParemater.RamPar.NtcNumber >= MAX_NTC_NUMBER)
+		SystemParemater.RamPar.NtcNumber = MAX_NTC_NUMBER;
+}
+
+static void updateCellNumOfModule(void)
+{
+	uint32_t	flag;
+	uint8_t		bmuindex,b;
+	uint8_t		module = 0;
+	uint8_t		num;
+	uint8_t		m;
+	
+	for(bmuindex=0; bmuindex<SystemParemater.RomPar.BmuNumber; )
+	{
+		num = 0;
+		
+		for(m=0; m<SystemParemater.RomPar.BmuNumInModule; m++)
+		{
+			flag = SystemParemater.RomPar.CellFlag[bmuindex++];
+			for(b=0; b<32; b++)
+			{
+				if(flag & 0x01)
+				{
+					num++;
+				}
+				flag >>= 1;
+			}
+		}
+		SystemParemater.RamPar.CellNumberOfModule[module++] = num;
+#if 1	
+		{			
+			char	str[100];
+			sprintf(str,"Cell Num Of Module%d -%d",
+					module, num);			
+			sysParDebugMsg(str);
+		}
+#endif		
+	}
 }
 
 /* Public function prototypes -----------------------------------------------*/
@@ -1635,6 +1705,57 @@ void apiSysParSetDesignedCapacity(uint32_t dc)
 	resetSysParIdleCount();
 }
 
+uint32_t apiSysParGetRelayActiveFlag(void)
+{
+	return SystemParemater.RomPar.RelayActiveFlag;
+}
+void apiSysParSetRelayActiveFlag(uint32_t flag)
+{
+	SystemParemater.RomPar.RelayActiveFlag = flag;
+	resetSysParIdleCount();
+}
+
+void apiSysParGetMaxCurrentValue(tScuProtectPar *pPar)
+{
+	pPar->SetValue.l = SystemParemater.RomPar.MaxCurrent.ChgCurrent;
+	pPar->RelValue.l = SystemParemater.RomPar.MaxCurrent.DsgCurrent;
+}
+void apiSysParSetMaxCurrentValue(tScuProtectPar *pPar)
+{
+	SystemParemater.RomPar.MaxCurrent.ChgCurrent = pPar->SetValue.l;
+	SystemParemater.RomPar.MaxCurrent.DsgCurrent = pPar->RelValue.l;
+	resetSysParIdleCount();
+}
+
+void apiSysParGetMaxPeakCurrentValue(tScuProtectPar *pPar)
+{
+	pPar->SetValue.l = SystemParemater.RomPar.MaxCurrent.ChgPeakCurrent;
+	pPar->STime.l = SystemParemater.RomPar.MaxCurrent.ChgPeakSecond;
+	pPar->RelValue.l = SystemParemater.RomPar.MaxCurrent.DsgPeakCurrent;
+	pPar->RTime.l = SystemParemater.RomPar.MaxCurrent.DsgPeakSecond;
+}
+void apiSysParSetMaxPeakCurrentValue(tScuProtectPar *pPar)
+{
+	SystemParemater.RomPar.MaxCurrent.ChgPeakCurrent = pPar->SetValue.l;
+	SystemParemater.RomPar.MaxCurrent.ChgPeakSecond = pPar->STime.l;
+	SystemParemater.RomPar.MaxCurrent.DsgPeakCurrent = pPar->RelValue.l;
+	SystemParemater.RomPar.MaxCurrent.DsgPeakSecond = pPar->RTime.l;
+	resetSysParIdleCount();
+}
+
+void apiSysParGetRateVoltage(tScuProtectPar *pPar)
+{
+	pPar->SetValue.l = SystemParemater.RomPar.Rate.Voltage;
+	pPar->STime.l = SystemParemater.RomPar.Rate.MaxVoltage;
+	pPar->RelValue.l = SystemParemater.RomPar.Rate.MinVoltage;
+}
+void apiSysParSetRateVoltage(tScuProtectPar *pPar)
+{
+	SystemParemater.RomPar.Rate.Voltage = pPar->SetValue.l;
+	SystemParemater.RomPar.Rate.MaxVoltage = pPar->STime.l;
+	SystemParemater.RomPar.Rate.MinVoltage = pPar->RelValue.l;
+	resetSysParIdleCount();
+}
 uint16_t apiSysParGetMinFlatVoltage(void)
 {
 	return SystemParemater.RomPar.MinFlatVoltage;
@@ -1883,6 +2004,36 @@ void apiSysParSetDvpPar(uint8_t level, tScuProtectPar *pPar)
 	resetSysParIdleCount();
 }
 //---------------------------------------------------------------
+//	Module DVP
+void apiSysParGetModuleDvpPar(uint8_t level, tScuProtectPar *pPar)
+{
+	if(level >= 3)
+	{
+		pPar->SetValue.l = 0;
+		pPar->STime.l = 0;
+		pPar->RelValue.l = 0;
+		pPar->RTime.l = 0;
+		return;
+	}
+	pPar->SetValue.l = SystemParemater.RomPar.ModuleDvp[level].SetValue;
+	pPar->STime.l = SystemParemater.RomPar.ModuleDvp[level].SetTime; 
+	pPar->RelValue.l = SystemParemater.RomPar.ModuleDvp[level].ReleaseValue;
+	pPar->RTime.l = SystemParemater.RomPar.ModuleDvp[level].ReleaseTime;
+}
+
+void apiSysParSetModuleDvpPar(uint8_t level, tScuProtectPar *pPar)
+{	
+	if(level >= 3)
+	{
+		return;
+	}
+	SystemParemater.RomPar.ModuleDvp[level].SetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.ModuleDvp[level].SetTime = pPar->STime.l;
+	SystemParemater.RomPar.ModuleDvp[level].ReleaseValue = pPar->RelValue.l;
+	SystemParemater.RomPar.ModuleDvp[level].ReleaseTime = pPar->RTime.l;
+	resetSysParIdleCount();
+}
+//---------------------------------------------------------------
 void apiSysParGet2ndOtProtectPar(tScuProtectPar *pPar)
 {
 	pPar->SetValue.l = SystemParemater.RomPar.OtHwSetValue.SetValue;
@@ -1984,6 +2135,26 @@ void apiSysParSetDtpPar(uint8_t level, tScuProtectPar *pPar)
 	SystemParemater.RomPar.Dtp[level].SetTime = pPar->STime.l;
 	SystemParemater.RomPar.Dtp[level].ReleaseValue = pPar->RelValue.l;
 	SystemParemater.RomPar.Dtp[level].ReleaseTime = pPar->RTime.l;	
+	resetSysParIdleCount();
+}
+//-----------Module DTP ---------------------------
+void apiSysParGetModuleDtpPar(uint8_t level, tScuProtectPar *pPar)
+{
+	if(level >= 3)
+		return;
+	pPar->SetValue.l = SystemParemater.RomPar.ModuleDtp[level].SetValue;
+	pPar->STime.l = SystemParemater.RomPar.ModuleDtp[level].SetTime; 
+	pPar->RelValue.l = SystemParemater.RomPar.ModuleDtp[level].ReleaseValue;
+	pPar->RTime.l = SystemParemater.RomPar.ModuleDtp[level].ReleaseTime;
+}
+void apiSysParSetModuleDtpPar(uint8_t level, tScuProtectPar *pPar)
+{
+	if(level >= 3)
+		return;
+	SystemParemater.RomPar.ModuleDtp[level].SetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.ModuleDtp[level].SetTime = pPar->STime.l;
+	SystemParemater.RomPar.ModuleDtp[level].ReleaseValue = pPar->RelValue.l;
+	SystemParemater.RomPar.ModuleDtp[level].ReleaseTime = pPar->RTime.l;	
 	resetSysParIdleCount();
 }
 //------------------------------------------------------
@@ -2264,6 +2435,9 @@ uint32_t apiSysParGetChecksum(void)
 {
 	return SystemParemater.RomPar.Checksum;
 }
+
+
+
 //----------------------------------------------------------------
 
 uint16_t apiSysParOpen(void)
@@ -2281,6 +2455,8 @@ uint16_t apiSysParOpen(void)
 	
 	updateCellNumber();
 	updateNtcNumber();
+	updateCellNumOfModule();
+
 	setSysParRamValue();
 	return sizeof(tSysRomPar);
 	

@@ -29,10 +29,10 @@
 #include "ApiRelayControl.h"
 #include "AppSerialCanDavinci.h"
 #include "ApiSignalFeedback.h"
-
+#include "AppGauge.h"
 
 void appSerialCanDavinciSendTextMessage(char *str);
-#define	appBmsDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
+#define	appBmsDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	BMS_DATA_VALID_DATA_VB				0x0001
@@ -46,32 +46,38 @@ void appSerialCanDavinciSendTextMessage(char *str);
 /* Private typedef -----------------------------------------------------------*/
 #define	BMS_IDLE_COUNT			5
 typedef struct{
-	uint8_t		IdleCount;
-	uint16_t	DataValidFlag;
 	uint32_t	VbInt;
 	uint32_t	VbExt;
 	int32_t		CurrentP;
 	int32_t		CurrentN;
 	uint32_t	RM;					//mAh	甧秖 RM
 	uint32_t	FCC;				//mAh	骸甧秖
-	uint16_t	MaxVoltage;			//cell 程筿溃 1mV
-	uint8_t		MaxVoltageBmu;		
-	uint8_t		MaxVoltagePosition;
-	uint16_t	MinVoltage;			//cell 程筿溃 1mV
-	uint8_t		MinVoltageBmu;
-	uint8_t		MinVoltagePosition;	
-	uint16_t	MaxNtcTemp;		//Ntcs 程蔼放
-	uint8_t		MaxNtcBmu;
-	uint8_t		MaxNtcPosition;
-	uint16_t	MinNtcTemp;
-	uint8_t		MinNtcBmu;
-	uint8_t		MinNtcPosition;
 	uint32_t	SystemFlag1;		//SCU1 & SCU2
 	uint32_t	SystemFlag2;
 	uint32_t	SystemFlag3;
 	uint32_t	SystemFlag4;
+
+	uint16_t	DataValidFlag;
+	uint16_t	RSoc;
+	uint16_t	Soh;
+	uint16_t	CycleCount;
+	uint16_t	MaxVoltage;			//cell 程筿溃 1mV
+	uint16_t	MinVoltage;			//cell 程筿溃 1mV
+	uint16_t	MaxNtcTemp;		//Ntcs 程蔼放
+	uint16_t	MinNtcTemp;
 	uint16_t	CellVoltage[MAX_CELL_NUMBER];
 	uint16_t	NtcVoltage[MAX_NTC_NUMBER];
+	
+	uint8_t		IdleCount;
+	uint8_t		MinVoltageBmu;
+	uint8_t		MinVoltagePosition;	
+	uint8_t		MaxVoltageBmu;		
+	uint8_t		MaxVoltagePosition;
+	uint8_t		MaxNtcBmu;
+	uint8_t		MaxNtcPosition;
+	uint8_t		MinNtcBmu;
+	uint8_t		MinNtcPosition;
+	
 }tBmsBuf;
 
 static tBmsBuf	mBmsBuf[SYSTEM_MAX_SCU_NUM];
@@ -102,9 +108,10 @@ static uint8_t isScuProtect(tBmsBuf *pBmsBuf)
 
 	return 0;
 }
-
+extern uint16_t	MaxCanRxFifiNum;
 static void bmsSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
+	static	uint8_t count = 0;
 	uint8_t		ScuIndex;
 
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
@@ -124,12 +131,72 @@ static void bmsSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 				}
 			}
 		}
-		putSelfDataToBmsBuffer();	//jjjjjj
+		putSelfDataToBmsBuffer();
+		
+		{	
+			char str[100];
+			sprintf(str,"CAN Fifo Num = %d %d", MaxCanRxFifiNum,
+				mBmsBuf[1].CellVoltage[0]
+				);
+			appBmsDebugMsg(str);
+			count++;
+			if(count >=5)
+			{
+				MaxCanRxFifiNum = 0;
+				count = 0;
+			}
+		}
 	}
 }
 
 /* Public function prototypes -----------------------------------------------*/
+//BYTE GetNextBroadcastBmuId(void)
+uint8_t	appBmsGetNextBroadcastScuId(uint8_t lastBrocastScuId)
+{
+	uint8_t	id, i;
+	
+	id = lastBrocastScuId + 1;
+	if(id >= SYSTEM_MAX_SCU_NUM)
+		id = 1;
+	for(i=0; i<SYSTEM_MAX_SCU_NUM; i++)
+	{
+		if(mBmsBuf[id-1].IdleCount)
+		{
+			return id;
+		}
+		id ++;
+		if(id >= SYSTEM_MAX_SCU_NUM)
+			id = 1;
+	}
+	return 0xf0;
+}
 
+uint8_t	appBmsGetOnLineScuNumber(void)
+{
+	uint8_t		i;
+	uint8_t		number = 0;
+
+	for(i=0; i<SYSTEM_MAX_SCU_NUM; i++)
+	{
+		if(mBmsBuf[i].IdleCount)
+			number++;
+	}
+	return number;
+}
+
+uint8_t	appBmsGetMinBroadcastScuId(void)
+{
+	uint8_t		i;
+	
+	for(i=0; i<SYSTEM_MAX_SCU_NUM; i++)
+	{
+		if(mBmsBuf[i].IdleCount)
+		{
+			return i+1;
+		}
+	}
+	return 0xf0;
+}
 
 uint8_t appBmsIsScuDataValid(uint8_t scuid)
 {
@@ -229,21 +296,27 @@ void putSelfDataToBmsBuffer(void)
 	pBmsBuf->MinNtcTemp = HalAfeGetMinNtcTemp(&bmu, &posi);
 	pBmsBuf->MinNtcBmu = bmu;
 	pBmsBuf->MinNtcPosition = posi;
+	pBmsBuf->RM = appGaugeGetRM();
+	pBmsBuf->FCC = appGaugeGetFCC();
+	pBmsBuf->RSoc = appGaugeGetRSoc();
+	pBmsBuf->Soh = appGaugeGetSOH();
+	pBmsBuf->CycleCount = appGaugeGetCycleCount();
 
 	pBmsBuf->VbInt = halAfeGetVBatVoltage(0);
 }
 
 uint8_t appBmsSetScuSystemFlag1_2(uint8_t scuid, uint32_t flag1, uint32_t flag2)
 {
-//	appBmsDebugMsg("Rcv system flag..0");
+	char	str[100];
 	if(appBmsIsValidScuid(scuid) == 0)
 		return false;
+	updateScuIdleCount(scuid);
 	scuid--;
 	mBmsBuf[scuid].SystemFlag1 = flag1;
 	mBmsBuf[scuid].SystemFlag2 = flag2;
-	mBmsBuf[scuid].DataValidFlag |= BMS_DATA_VALIE_DATA_SYS_FLAG1_2;
-	updateScuIdleCount(scuid);
-//	appBmsDebugMsg("Rcv system flag");
+	mBmsBuf[scuid].DataValidFlag |= BMS_DATA_VALIE_DATA_SYS_FLAG1_2;	
+//	sprintf(str,"Rcv system flag 1 2 : %d", scuid + 1);
+//	appBmsDebugMsg(str);
 	return true;
 }
 uint8_t appBmsGetScuSystemFlag1_2(uint8_t scuid, uint32_t *flag1, uint32_t *flag2)
@@ -258,15 +331,17 @@ uint8_t appBmsGetScuSystemFlag1_2(uint8_t scuid, uint32_t *flag1, uint32_t *flag
 
 uint8_t appBmsSetScuSystemFlag3_4(uint8_t scuid, uint32_t flag3, uint32_t flag4)
 {
-//	appBmsDebugMsg("Rcv system flag..0");
+	char	str[100];
+	
 	if(appBmsIsValidScuid(scuid) == 0)
 		return false;
+	updateScuIdleCount(scuid);
 	scuid--;
 	mBmsBuf[scuid].SystemFlag3 = flag3;
 	mBmsBuf[scuid].SystemFlag4 = flag4;
 	mBmsBuf[scuid].DataValidFlag |= BMS_DATA_VALIE_DATA_SYS_FLAG3_4;
-	updateScuIdleCount(scuid);
-//	appBmsDebugMsg("Rcv system flag");
+//	sprintf(str,"Rcv system flag 3 4 : %d", scuid + 1);
+//	appBmsDebugMsg(str);
 	return true;
 }
 
@@ -288,8 +363,8 @@ uint8_t appBmsSetScuCurrent(uint8_t scuid, int32_t CurrentP, int32_t CurrentN)
 	mBmsBuf[scuid].CurrentP = CurrentP;
 	mBmsBuf[scuid].CurrentN = CurrentN;
 	mBmsBuf[scuid].DataValidFlag |= BMS_DATA_VALID_DATA_CURRENT;
-	updateScuIdleCount(scuid);
-//	appBmsDebugMsg("Rcv current");
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv current");
 	return true;
 }
 
@@ -311,8 +386,8 @@ uint8_t appBmsSetScuVbat(uint8_t scuid, uint32_t VbInt, uint32_t VbExt)
 	mBmsBuf[scuid].VbInt = VbInt;
 	mBmsBuf[scuid].VbExt = VbExt;
 	mBmsBuf[scuid].DataValidFlag |= BMS_DATA_VALID_DATA_VB;
-	updateScuIdleCount(scuid);
-//	appBmsDebugMsg("Rcv Vb");
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv Vb");
 	return true;
 }
 uint8_t appBmsGetScuVbat(uint8_t scuid, uint32_t *VbInt, uint32_t *VbExt)
@@ -333,6 +408,8 @@ uint8_t appBmsSetMinCellVoltage(uint8_t scuid, uint16_t MinV, uint8_t bmu, uint8
 	mBmsBuf[scuid].MinVoltage = MinV;
 	mBmsBuf[scuid].MinVoltageBmu = bmu;
 	mBmsBuf[scuid].MinVoltagePosition = posi;
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv Min CV");
 	return true;
 }
 uint8_t appBmsGetMinCellVoltage(uint8_t scuid, uint16_t *MinV, uint8_t *bmu, uint8_t *posi)
@@ -354,6 +431,8 @@ uint8_t appBmsSetMaxCellVoltage(uint8_t scuid, uint16_t MaxV, uint8_t bmu, uint8
 	mBmsBuf[scuid].MaxVoltage = MaxV;
 	mBmsBuf[scuid].MaxVoltageBmu = bmu;
 	mBmsBuf[scuid].MaxVoltagePosition = posi;
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv Max CV");
 	return true;
 }
 
@@ -375,6 +454,8 @@ uint8_t appBmsSetMinNtcTemp(uint8_t scuid, uint16_t MinT, uint8_t bmu, uint8_t p
 	mBmsBuf[scuid].MinNtcTemp = MinT;
 	mBmsBuf[scuid].MinNtcBmu = bmu;
 	mBmsBuf[scuid].MinNtcPosition = posi;
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv Min CT");
 	return true;
 }
 uint8_t appBmsGetMinNtcTemp(uint8_t scuid, uint16_t *MinT, uint8_t *bmu, uint8_t *posi)
@@ -396,6 +477,8 @@ uint8_t appBmsSetMaxNtcTemp(uint8_t scuid, uint16_t MaxT, uint8_t bmu, uint8_t p
 	mBmsBuf[scuid].MaxNtcTemp = MaxT;
 	mBmsBuf[scuid].MaxNtcBmu = bmu;
 	mBmsBuf[scuid].MaxNtcPosition = posi;		
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv Max CT");
 	return true;
 }
 
@@ -418,6 +501,8 @@ uint8_t appBmsSetCellVoltage(uint8_t scuid, uint16_t cells, uint16_t voltage)
 		return false;
 	scuid--;
 	mBmsBuf[scuid].CellVoltage[cells] = voltage;
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv CV");
 	return true;
 }
 
@@ -441,6 +526,8 @@ uint8_t appBmsSetNtcVoltage(uint8_t scuid, uint16_t ntcs, uint16_t voltage)
 		return false;
 	scuid--;
 	mBmsBuf[scuid].NtcVoltage[ntcs] = voltage;
+	//updateScuIdleCount(scuid);
+	//appBmsDebugMsg("Rcv CT");
 	return true;
 }
 

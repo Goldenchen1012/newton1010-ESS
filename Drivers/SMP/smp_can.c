@@ -395,13 +395,14 @@ void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan)
 {
 	PutCanDataToMailBox(hcan);
 }
-
+uint16_t	MaxCanRxFifiNum = 0;
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	uint8_t flag=0;
 	CAN_RxHeaderTypeDef   RxHeader;
 	uint8_t               RxData[8];
 	smp_can_package_t	CanPkg;
+	
 
 	
 	if(hcan->Instance == BSP_CAN0){
@@ -432,6 +433,17 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 		
 		if(smp_can_fifo_push(&can0_rx_fifo, &CanPkg) == SMP_SUCCESS)
 		{
+#if 1
+			{
+				uint16_t	size;
+				smp_can_fifo_get_size(&can0_rx_fifo, &size);
+				if(size > MaxCanRxFifiNum)
+				{
+					MaxCanRxFifiNum = size;
+				}
+			
+			}
+#endif			
 			if(can0_evt_cb)
 				can0_evt_cb(CAN_DATA_READY);
 		}else{
