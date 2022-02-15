@@ -1866,6 +1866,69 @@ static void DavinciCanParameterModuleDtp(smp_can_package_t *pCanPkg)
 		return;
 	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
 }
+
+static void DavinciCanParameterIrUrp(smp_can_package_t *pCanPkg)
+{
+	smp_can_package_t	CanPkg;
+	tScuProtectPar		ProtectPar;
+
+	if(SMP_CAN_GET_OBJ_INDEX(pCanPkg->id) == SMP_CMD_PAR_RD_OBJ_INDEX)
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_RD_OBJ_INDEX,
+									SMP_PAR_ID_IR_URP_PROTECT);
+	
+		CanPkg.dlc = 7;
+		CanPkg.dat[0] = pCanPkg->dat[0];		
+		CanPkg.dat[1] = pCanPkg->dat[1];		
+		if((CanPkg.dat[1]&0x01) == 0)	//0,2,4,
+		{
+			apiSysParGetIrUrpSetPar(pCanPkg->dat[0], pCanPkg->dat[1]/2, &ProtectPar);
+			CanPkg.dat[2] = ProtectPar.SetValue.b[0];
+			CanPkg.dat[3] = ProtectPar.SetValue.b[1];
+			CanPkg.dat[4] = ProtectPar.SetValue.b[2];
+			CanPkg.dat[5] = ProtectPar.SetValue.b[3];	
+			CanPkg.dat[6] = ProtectPar.STime.b[0];
+		}		
+		else		//1,3,5
+		{
+			apiSysParGetIrUrpRlxPar(pCanPkg->dat[0], pCanPkg->dat[1]/2, &ProtectPar);
+			CanPkg.dat[2] = ProtectPar.RelValue.b[0];
+			CanPkg.dat[3] = ProtectPar.RelValue.b[1];
+			CanPkg.dat[4] = ProtectPar.RelValue.b[2];
+			CanPkg.dat[5] = ProtectPar.RelValue.b[3];	
+			CanPkg.dat[6] = ProtectPar.RTime.b[0];
+		}
+
+		appSerialCanDavinciParDebugMsg("Read IR Urp");
+	}
+	else if(isParWritable())
+	{
+		CanPkg.id = MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_TX, canParScuId(),
+									SMP_CMD_PAR_WR_OBJ_INDEX,
+									SMP_PAR_ID_IR_URP_PROTECT);
+									
+		CanPkg.dlc = 2;
+		CanPkg.dat[0] = pCanPkg->dat[0];		
+		CanPkg.dat[1] = pCanPkg->dat[1];
+		if((pCanPkg->dat[1] & 0x01) == 0)
+		{
+			ProtectPar.SetValue.l = GET_DWORD(&pCanPkg->dat[2]);
+			ProtectPar.STime.l = pCanPkg->dat[6];
+			apiSysParSetIrUrpSetPar(pCanPkg->dat[0], pCanPkg->dat[1]/2, &ProtectPar);
+		}
+		else
+		{
+			ProtectPar.RelValue.l = GET_DWORD(&pCanPkg->dat[2]);
+			ProtectPar.RTime.l = pCanPkg->dat[6];
+			apiSysParSetIrUrpRlxPar(pCanPkg->dat[0], pCanPkg->dat[1]/2, &ProtectPar);
+		}
+		appSerialCanDavinciParDebugMsg("Write IR Urp");
+	}
+	else
+		return;
+	appSerialCanDavinciPutPkgToCanFifo(&CanPkg);
+}
 //----------------------------------------------------------
 SMP_CAN_DECODE_CMD_START(mDavinciParameterCanDecodeTab)
 	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
@@ -2153,6 +2216,11 @@ SMP_CAN_DECODE_CMD_START(mDavinciParameterCanDecodeTab)
 								CHECK_SMP_CAN_SUB,
 								DavinciCanParameterModuleDtp)
 
+	SMP_CAN_DECODE_CMD_CONTENT(	MAKE_SMP_CAN_ID(SMP_CAN_FUN_CMD_RX, 0,
+									0,
+									SMP_PAR_ID_IR_URP_PROTECT),
+								CHECK_SMP_CAN_SUB,
+								DavinciCanParameterIrUrp)
 
 SMP_CAN_DECODE_CMD_END();
 

@@ -249,6 +249,13 @@ typedef struct{
 		uint16_t	MinVoltage;
 	}Rate;	
 	
+	struct{
+		uint32_t	SetValue;
+		uint8_t		SetTime;
+		uint32_t	ReleaseValue;
+		uint8_t		ReleaseTime;	
+	}Urp[2][3];
+	
 	uint32_t	RelayActiveFlag;
 	uint32_t	W5500_IpAddress;
 	uint8_t		NoteMessage[MAX_NOTE_MESSAGE_STRING_ITEM + 2];
@@ -2437,7 +2444,40 @@ uint32_t apiSysParGetChecksum(void)
 }
 
 
+//-----------------------------------------------------
+//	ID URP
+void apiSysParGetIrUrpSetPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar)
+{
+	if(IrIndex >= 2 || level >= 3)
+		return;
+	pPar->SetValue.l = SystemParemater.RomPar.Urp[IrIndex][level].SetValue;
+	pPar->STime.l = SystemParemater.RomPar.Urp[IrIndex][level].SetTime; 
+}
 
+void apiSysParSetIrUrpSetPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar)
+{
+	if(IrIndex >= 2 || level >= 3)
+		return;
+	SystemParemater.RomPar.Urp[IrIndex][level].SetValue = pPar->SetValue.l;
+	SystemParemater.RomPar.Urp[IrIndex][level].SetTime = pPar->STime.l;
+	resetSysParIdleCount();
+}
+void apiSysParGetIrUrpRlxPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar)
+{
+	if(IrIndex >= 2 || level >= 3)
+		return;
+	pPar->RelValue.l = SystemParemater.RomPar.Urp[IrIndex][level].ReleaseValue;
+	pPar->RTime.l = SystemParemater.RomPar.Urp[IrIndex][level].ReleaseTime;
+}
+
+void apiSysParSetIrUrpRlxPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar)
+{
+	if(IrIndex >= 2 || level >= 3)
+		return;
+	SystemParemater.RomPar.Urp[IrIndex][level].ReleaseValue = pPar->RelValue.l;
+	SystemParemater.RomPar.Urp[IrIndex][level].ReleaseTime = pPar->RTime.l;	
+	resetSysParIdleCount();
+}
 //----------------------------------------------------------------
 
 uint16_t apiSysParOpen(void)

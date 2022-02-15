@@ -20,8 +20,8 @@
 #include "LibDebug.h"
 #include "halEeProm.h"
 
-void appSerialUartSendMessage(uint8_t *str);
-#define	HalRtcDebugMsg(str)	//appSerialUartSendMessage(str)
+void appSerialCanDavinciSendTextMessage(uint8_t *str);
+#define	HalRtcDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 
 /* Private typedef -----------------------------------------------------------*/

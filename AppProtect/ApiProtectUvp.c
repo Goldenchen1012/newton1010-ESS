@@ -24,8 +24,8 @@
 #include "ApiProtectUvp.h"
 #include "ApiSysPar.h"
 
-void appSerialUartSendMessage(uint8_t *str);
-#define	appProtectUvpDebugMsg(str)	//appSerialUartSendMessage(str)
+void appSerialCanDavinciSendTextMessage(char *str);
+#define	appProtectUvpDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 
 /* Private define ------------------------------------------------------------*/

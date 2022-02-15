@@ -63,7 +63,7 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 #define	appProjectDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
-#if 1
+#if 0
 #define	SIM_MODE
 #endif
 

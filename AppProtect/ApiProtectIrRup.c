@@ -1,14 +1,14 @@
 /**
   ******************************************************************************
-  * @file        ApiProtechDutp.c
+  * @file        ApiProtechIrRup.c
   * @author      Johnny
   * @version     v0.0.1
-  * @date        2021/11/23
+  * @date        2022/02/15
   * @brief       
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2021 Johnny</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2022 Johnny</center></h2>
   *
   *
   ******************************************************************************
@@ -23,7 +23,7 @@
 #include "ApiSysPar.h"
 
 void appSerialCanDavinciSendTextMessage(char *str);
-#define	appProtectDutpDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
+#define	apiProtectRupDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
 #define	DUTP_CHECK_COUNT	20

@@ -31,7 +31,6 @@
 #include "ApiSignalFeedback.h"
 #include "smp_adc.h"
 
-void appSerialUartSendMessage(char *str);
 void appSerialCanDavinciSendTextMessage(char *str);
 
 #define	appScuTempDebugMsg(str)		appSerialCanDavinciSendTextMessage(str);

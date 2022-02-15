@@ -29,7 +29,7 @@
 #include "AppBms.h"
 #include "AppScuIdAssign.h"
 
-void appSerialUartSendMessage(uint8_t *str);
+void appSerialCanDavinciSendTextMessage(char *str);
 #define	canCommonDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private typedef -----------------------------------------------------------*/

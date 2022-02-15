@@ -28,7 +28,6 @@
 #include "ApiIRMonitoring.h"
 
 
-void appSerialUartSendMessage(char *str);
 void appSerialCanDavinciSendTextMessage(char *str);
 
 #define	halAfeADS7946DebugMsg(str)		//appSerialCanDavinciSendTextMessage(str);

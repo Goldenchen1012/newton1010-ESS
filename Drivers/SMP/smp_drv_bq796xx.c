@@ -876,7 +876,7 @@ uint8_t drv_bq796xx_check_respone_event2(void){
 	return(BQ796XX_RES_WAITTING); 
 }
 
-void appSerialUartSendMessage(uint8_t *str);
+void appSerialCanDavinciSendTextMessage(uint8_t *str);
 void DumpBuffer(uint8_t *pBuf,uint16_t len);
 extern smp_fifo_t 								uart0_rx_fifo;// = {0};
 
@@ -928,7 +928,7 @@ uint8_t drv_bq796xx_data_frame_parser(void)
           fifo_res = smp_uart_get(&bq796xx_uart, &rx_data);
 			if(fifo_res != 0)
 			{
-	//			appSerialUartSendMessage("empty ");
+	//			appSerialCanDavinciSendTextMessage("empty ");
 			}
           bq796xx_res_buf[BQ796XX_DF_RES_PAYLOAD_LEN+1+i] = rx_data;
         }
@@ -950,7 +950,7 @@ uint8_t drv_bq796xx_data_frame_parser(void)
   if(rcv_crc != crc) 	  
   {
 	//	GPIOD->ODR ^= GPIO_PIN_15;
-	//  appSerialUartSendMessage("Crc error");
+	//  appSerialCanDavinciSendTextMessage("Crc error");
 	  return(BQ796XX_RES_ERR_CRC);  
   }
   //-----------------------------------------------------------------------------------------------------

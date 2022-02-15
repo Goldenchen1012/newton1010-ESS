@@ -239,6 +239,11 @@ void apiSysParSetBalanceRlx(tScuProtectPar *pPar);
 void apiSysParGetNotwMessageString(uint8_t *pMsg);
 void apiSysParSetNotwMessageString(uint8_t *pMsg);
 
+void apiSysParGetIrUrpSetPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar);
+void apiSysParSetIrUrpSetPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar);
+void apiSysParGetIrUrpRlxPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar);
+void apiSysParSetIrUrpRlxPar(uint8_t IrIndex, uint8_t level, tScuProtectPar *pPar);
+
 uint32_t apiSysParGetQmax(void);
 void apiSysParSetQmax(uint32_t Qmax);
 uint16_t apiSysParGetQmaxUpdateTimes(void);
