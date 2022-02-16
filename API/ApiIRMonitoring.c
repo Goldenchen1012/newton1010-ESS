@@ -76,8 +76,10 @@ static uint8_t irm_data_ready_f = 0;
 static void getIRMonitoringVoValue_cb(float *read_volt_data)
 {
 	  irm_adc_data = *read_volt_data;  //Get Voltage data
+
 	  irm_adc_data /= IRM_K1;
 	  //irm_adc_data *= 2;
+
 	  irm_data_ready_f = 1;	           //Setting data ready falg
 }
 static uint8_t IRMonitoring_Init(uint8_t exe_interval_s, uint16_t sw_delay_ms, apiIRMonitoring_cb_t callbackfunc)
@@ -164,7 +166,7 @@ static void IRMonitoring_CtrlSW(IRMonitoring_SW_enum sw1, IRMonitoring_SW_enum s
 
 }
 
-static uint16_t  IRM_Balance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
+static uint32_t  IRM_Balance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
 	
 	ra = ((float)IRM_RA)*1.0f;
 	rb = ((float)IRM_RB)*1.0f;
@@ -173,13 +175,13 @@ static uint16_t  IRM_Balance_formula(IRMonitoring_Data_t data, IRMonitoring_Resi
 	temp_rp = (((data.Vn / data.Vn_l) * (data.Vp_l / data.Vp))-1.0f)*ra;
 	temp_rn = 1.0f/(((data.Vp_l / data.Vn_l)*(1.0f/temp_rp))-(1.0f/(rb + rc)));
 	
-	res_out->Rp_kohm = (uint16_t)(temp_rp / 1000.0f);
-	res_out->Rn_kohm = (uint16_t)(temp_rn / 1000.0f);
+	res_out->Rp_kohm = (uint32_t)(temp_rp / 1000.0f);
+	res_out->Rn_kohm = (uint32_t)(temp_rn / 1000.0f);
 	
 	return 0;
 }
 
-static uint16_t  IRM_Unbalance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
+static uint32_t  IRM_Unbalance_formula(IRMonitoring_Data_t data, IRMonitoring_Resistor_t *res_out){
 	
 	ra = ((float)IRM_RA)*1.0f;
 	rb = ((float)IRM_RB)*1.0f;
@@ -198,8 +200,8 @@ static uint16_t  IRM_Unbalance_formula(IRMonitoring_Data_t data, IRMonitoring_Re
 	temp_d = 1.0f/(rb + rc + rd);
   temp_rp = 1.0f/((data.Vn_l/data.Vp_l)*(temp_d + (1.0f/temp_rn)));
 	
-	res_out->Rp_kohm = (uint16_t)(temp_rp / 1000.0f);
-	res_out->Rn_kohm = (uint16_t)(temp_rn / 1000.0f);
+	res_out->Rp_kohm = (uint32_t)(temp_rp / 1000.0f);
+	res_out->Rn_kohm = (uint32_t)(temp_rn / 1000.0f);
 	
 	return 0;
 }
@@ -394,7 +396,7 @@ static IRMonitoring_step_ret_type IRMonitoringMeasure_Steps(IRMonitoring_steps_e
 					}
 					
 					//Test 2022.01.10
-					GPIOD->ODR ^= GPIO_PIN_14;
+//					GPIOD->ODR ^= GPIO_PIN_14;
 			    break;
 			case IRM_DEVICE_WAITTING:
           ++sub_step_count;
@@ -443,17 +445,12 @@ static void IRMonitoringSwTimerHandler(__far void *dest, uint16_t evt, void *vDa
 {
 	static IRMonitoring_step_ret_type res;
 	
-	if(appProjectIsInEngMode())
-	{
-		return;
-	}
-	
+	#if 0
+	GPIOD->ODR ^= GPIO_PIN_13;
+	#endif 
+
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
-		#if 1
-//	GPIOD->ODR ^= GPIO_PIN_13;
-	#endif 
-		
       if(irm_flag ==1){
           res =IRMonitoringMeasure_Steps(irm_mes_step);
       

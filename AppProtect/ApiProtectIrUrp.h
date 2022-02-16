@@ -13,8 +13,8 @@
   *
   ******************************************************************************
   */
-#ifndef _API_PROTECT_DUTP_H_
-#define _API_PROTECT_DUTP_H_
+#ifndef _API_PROTECT_IR_URP_H_
+#define _API_PROTECT_IR_URP_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include "AppProtect.h"
@@ -30,9 +30,10 @@ extern "C" {
 /* Public macro -------------------------------------------------------------*/
 /* Public variables ---------------------------------------------------------*/
 /* Public function prototypes -----------------------------------------------*/
-void apiProtectDutpOpen(tAppProtectEvtHandler evtHandler);
-uint8_t	apiProtectDutpGetFlag(uint16_t NtcIndex);
-uint8_t apiProtectDutpHandler(uint8_t ProtectLevel);
+uint8_t	apiProtectIrUrpGetRpFlag(void);
+uint8_t	apiProtectIrUrpGetRnFlag(void);
+void apiProtectIrUrpOpen(tAppProtectEvtHandler evtHandler);
+uint8_t apiProtectIrUrpHandler(uint8_t ProtectLevel);
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

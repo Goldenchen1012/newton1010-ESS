@@ -67,6 +67,8 @@ void apiFuRcvSetBaseAddr(uint32_t BaseAddr);
 void apiFuSetUpgradeData(uint32_t addr, uint8_t *pDatBuf, uint16_t leng);
 
 void apiFuSetMagicCode(uint8_t type);
+void apiFuCheckMagicCode(void);
+
 uint8_t apiFuGetMagicModeIndex(void);
 void apiFuJumpToBootloader(void);
 void apiFuUpdateFw(void);

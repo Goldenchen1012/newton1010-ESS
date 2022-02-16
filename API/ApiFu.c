@@ -184,7 +184,7 @@ void DumpBuffer(uint8_t *pBuf,uint16_t len);
 
 void apiFuCheckMagicCode(void)
 {
-#if defined (USE_BOOTLOADER)
+#if defined (USE_BOOTLOADER1)
 	tErrCode		result;
 	tHalEeProm		mHalEeProm;
 	uint8_t			index;

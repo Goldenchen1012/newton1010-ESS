@@ -175,7 +175,7 @@ int8_t smp_spi_master_init(smp_spi_t *p_spi, smp_spi_event_t smp_spi_event_handl
 		case SPI_module3:
 			__SPI3_CLK_ENABLE();
 			smp_spi3_handle.Instance               = BSP_SPI3;
-			smp_spi3_handle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32; 
+			smp_spi3_handle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2; 
 			smp_spi3_handle.Init.Direction         = SPI_DIRECTION_2LINES;
 			switch(p_spi->mode){
 				case SPI_mode0:

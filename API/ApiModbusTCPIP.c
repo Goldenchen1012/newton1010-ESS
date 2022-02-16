@@ -117,7 +117,7 @@ typedef enum{
 //========== Debug message function ==========
 static char str[100];
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	modbus_tcp_debug(str)	appSerialCanDavinciSendTextMessage(str)
+#define	modbus_tcp_debug(str)	//appSerialCanDavinciSendTextMessage(str)
 
 //========== Get data through external function define ==========
 static uint8_t data_index;

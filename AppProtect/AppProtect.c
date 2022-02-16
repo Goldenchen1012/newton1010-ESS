@@ -29,6 +29,8 @@
 #include "ApiProtectCocp.h"
 #include "ApiProtectDocp.h"
 #include "ApiProtectScuOt.h"
+#include "ApiProtectIrUrp.h"
+
 #include "LibSwTimer.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -388,6 +390,8 @@ void appProtectOpen(tAppProtectEvtHandler evtHandler)
 	apiProtectScuOtOpen(evtHandler);
 	apiProtectDvpOpen(evtHandler);
 	apiProtectDtpOpen(evtHandler);
+	apiProtectIrUrpOpen(evtHandler);
+
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

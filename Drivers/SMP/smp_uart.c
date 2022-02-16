@@ -872,6 +872,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
   */
 void BSP_UART0_DMA_RX_IRQHandler(void)
 {
+		GPIOC->ODR ^= GPIO_PIN_6;
+
 	HAL_DMA_IRQHandler(smp_uart0_handle.hdmarx);
 }
 
@@ -884,6 +886,8 @@ void BSP_UART0_DMA_RX_IRQHandler(void)
   */
 void BSP_UART0_DMA_TX_IRQHandler(void)
 {
+//	GPIOC->ODR ^= GPIO_PIN_6;
+
     HAL_DMA_IRQHandler(smp_uart0_handle.hdmatx);
 }
 

@@ -293,7 +293,7 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 										                           GPIO_SPEED_FREQ_HIGH);}
 #define BSP_RS485_DERE_HI()                    (BSP_RS485_DERE_GPIO->BSRR = BSP_RS485_DERE_PIN)
 #define BSP_RS485_DERE_LO()                    (BSP_RS485_DERE_GPIO->BRR = BSP_RS485_DERE_PIN)
-																							 
+																				 
 							
 #define	BSP_TERMLR_GPIO                       	GPIOB
 #define	BSP_TERMLR_PIN                           GPIO_PIN_5
@@ -325,7 +325,16 @@ void HalBspSetGpio(GPIO_TypeDef  *GPIOx, uint16_t Pin, uint32_t mode,uint32_t pu
 #define BSP_TLC6C5912_RCK_PORT                 GPIOE																								 
 #endif	
 
-											  
+#if	0																							 																			 					
+#define	BSP_TERMLR_GPIO                       	GPIOB
+#define	BSP_TERMLR_PIN                           GPIO_PIN_5
+#define BSP_TERMLR_OPEN()                      {HalBspSetGpio(	BSP_TERMLR_GPIO, BSP_TERMLR_PIN, \
+                                               GPIO_MODE_OUTPUT_PP, GPIO_PULLUP, \
+                                               GPIO_SPEED_FREQ_HIGH);}
+#define BSP_TERMLR_HI()                        (BSP_TERMLR_GPIO->BSRR = BSP_TERMLR_PIN)
+#define BSP_TERMLR_LO()                        (BSP_TERMLR_GPIO->BRR = BSP_TERMLR_PIN)
+#endif 																							 
+
 /********************************* BSP_BQ79600 I/O Pin define(please use "smp_gpio.h") *************/
 #ifdef BSP_BQ7600																							 
 #define BSP_BQ796XX_NCS_PIN                    PIN4

@@ -301,7 +301,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x20000020</StartAddress>
-                <Size>0x50000</Size>
+                <Size>0x3f000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -322,7 +322,7 @@
             <PlainCh>0</PlainCh>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <wLevel>2</wLevel>
+            <wLevel>1</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
@@ -339,7 +339,7 @@
               <MiscControls>--C99</MiscControls>
               <Define>STM32L496xx,USE_HAL_DRIVER,USE_STM32L4XX_NUCLEO_144,BSPSMPS,USE_STM32L4XX_NUCLEO_144_SMPS,USE_ADP5301ACBZ</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../../../Drivers/CMSIS/Include;../../../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../../../Drivers/STM32L4xx_HAL_Driver/Inc;../../../Drivers/BSP/STM32L4xx_Nucleo_144;..\..\..\User;..\..\..\HAL;..\..\..\Lib;..\..\..\Config_Common;..\..\..\AppProtect;..\..\..\APP;..\..\..\Lib\SMP;..\..\..\Drivers\SMP;..\..\..\BSP;..\..\..\Drivers\BSP\STM32L496V_Davinci;..\..\..\API;..\..\..\AppCommunication;..\..\..\Drivers\W5500;..\..\..\RTT</IncludePath>
+              <IncludePath>../Inc;../../../Drivers/CMSIS/Include;../../../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../../../Drivers/STM32L4xx_HAL_Driver/Inc;../../../Drivers/BSP/STM32L4xx_Nucleo_144;..\..\..\User;..\..\..\HAL;..\..\..\Lib;..\..\..\Config_Common;..\..\..\AppProtect;..\..\..\APP;..\..\..\Lib\SMP;..\..\..\Drivers\SMP;..\..\..\BSP;..\..\..\Drivers\BSP\STM32L496V_Davinci;..\..\..\API;..\..\..\AppCommunication;..\..\..\Drivers\W5500;..\..\..\RTT;..\..\..\Test</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -543,6 +543,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\AppProtect\ApiProtectDtp.c</FilePath>
             </File>
+            <File>
+              <FileName>ApiProtectIrUrp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectIrUrp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -703,6 +708,57 @@
               <FileName>ApiEventFlashRom.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiEventFlashRom.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>ApiIRMonitoring.c</FileName>
@@ -718,6 +774,11 @@
               <FileName>ApiCanbusPkgFu.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiCanbusPkgFu.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiEventLogSpiRom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiEventLogSpiRom.c</FilePath>
             </File>
             <File>
               <FileName>ApiFuSpiRom.c</FileName>
@@ -2359,6 +2420,56 @@
               <FileName>SEGGER_RTT_printf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\RTT\SEGGER_RTT_printf.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Test</GroupName>
+          <Files>
+            <File>
+              <FileName>Test_TLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_TLC6C5912.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_max7219.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_max7219.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_AppProjectHvEss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_AppProjectHvEss.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_MX25L_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_MX25L_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADS7946_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADS7946_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ApiIRMonitoring.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ApiIRMonitoring.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_drv_bq796xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_drv_bq796xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADC.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_log_managment.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_log_managment.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2731,7 +2842,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x20000020</StartAddress>
-                <Size>0x3f000</Size>
+                <Size>0x3ff00</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -2743,7 +2854,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -2766,7 +2877,7 @@
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls>--C99 --pointer_alignment=4</MiscControls>
+              <MiscControls>--C99</MiscControls>
               <Define>STM32L496xx,USE_HAL_DRIVER,USE_STM32L4XX_NUCLEO_144,BSPSMPS,USE_STM32L4XX_NUCLEO_144_SMPS,USE_ADP5301ACBZ, USE_BOOTLOADER</Define>
               <Undefine></Undefine>
               <IncludePath>../Inc;../../../Drivers/CMSIS/Include;../../../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../../../Drivers/STM32L4xx_HAL_Driver/Inc;../../../Drivers/BSP/STM32L4xx_Nucleo_144;..\..\..\User;..\..\..\Config_Common;..\..\..\Lib;..\..\..\HAL;..\..\..\APP;..\..\..\AppProtect;..\..\..\Lib\SMP;..\..\..\Drivers\SMP;..\..\..\BSP;..\..\..\Drivers\BSP\STM32L496V_Davinci;..\..\..\API;..\..\..\AppCommunication;..\..\..\Drivers\W5500;..\..\..\RTT</IncludePath>
@@ -2973,6 +3084,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\AppProtect\ApiProtectDtp.c</FilePath>
             </File>
+            <File>
+              <FileName>ApiProtectIrUrp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\AppProtect\ApiProtectIrUrp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -3133,6 +3249,57 @@
               <FileName>ApiEventFlashRom.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiEventFlashRom.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
             <File>
               <FileName>ApiIRMonitoring.c</FileName>
@@ -3148,6 +3315,11 @@
               <FileName>ApiCanbusPkgFu.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\API\ApiCanbusPkgFu.c</FilePath>
+            </File>
+            <File>
+              <FileName>ApiEventLogSpiRom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\API\ApiEventLogSpiRom.c</FilePath>
             </File>
             <File>
               <FileName>ApiFuSpiRom.c</FileName>
@@ -4789,6 +4961,56 @@
               <FileName>SEGGER_RTT_printf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\RTT\SEGGER_RTT_printf.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Test</GroupName>
+          <Files>
+            <File>
+              <FileName>Test_TLC6C5912.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_TLC6C5912.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_max7219.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_max7219.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_AppProjectHvEss.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_AppProjectHvEss.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_MX25L_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_MX25L_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADS7946_Driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADS7946_Driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ApiIRMonitoring.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ApiIRMonitoring.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_drv_bq796xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_drv_bq796xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_ADC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_ADC.c</FilePath>
+            </File>
+            <File>
+              <FileName>Test_log_managment.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Test\Test_log_managment.c</FilePath>
             </File>
           </Files>
         </Group>

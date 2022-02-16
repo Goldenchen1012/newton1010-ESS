@@ -23,7 +23,6 @@
 void appSerialCanDavinciSendTextMessage(uint8_t *str);
 #define	HalRtcDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
 
-
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

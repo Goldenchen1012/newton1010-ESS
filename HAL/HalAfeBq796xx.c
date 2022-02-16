@@ -27,6 +27,7 @@
 #include "ApiSysPar.h"
 #include "AppProject.h"
 #include "HalBsp.h"
+#include "smp_fifo_flash.h"
 
 //#define	AFE_COMM_TEST
 
@@ -36,11 +37,11 @@
 #define	AFE_DEBUG_S_NUM		2
 
 void appSerialCanDavinciSendTextMessage(char *msg);
-#define	halAfeBq796xxDebugMsg(str)	//appSerialCanDavinciSendTextMessage(str)
+#define	halAfeBq796xxDebugMsg(str)	appSerialCanDavinciSendTextMessage(str)
 
 /* Private define ------------------------------------------------------------*/
-#define	afeCommL1Time()					5
-#define	afeCommL2Time()					20
+#define	afeCommL1Time()					20
+#define	afeCommL2Time()					50
 
 #define	NTC_CH_NUM						16
 #define	AFE_READ_CYCLE_COUNT_10MS		50
@@ -74,7 +75,7 @@ extern bq796xx_data_t bq796xx_data;
 
 /* Private variables ---------------------------------------------------------*/
 #define AFE_PARAM_LOAD_VALUE    {                                                          \
-							          .ov_threshold         =OV_4175MV,                      \
+                                    .ov_threshold         =OV_4175MV,                      \
 	                                  .ov_step_threshold    =OV_STEP_100MV,                  \
 	                                  .uv_threshold         =UV_2800MV,                      \
 	                                  .ot_threshold         =OT_10_PCT,                      \
@@ -130,6 +131,9 @@ static uint32_t	OvUvResponseCount[2] = {0};
 static uint32_t	SummaryResponseCount[2] = {0};
 
 #endif
+
+
+static uint8_t StopAfeRunFlag = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 uint8_t drv_bq796xx_clean_fifo(void);
@@ -251,6 +255,7 @@ static void sendOutReadGpioCommand(void)
 	RealPaserCount[BridgeDirection] = 0;
 	getNextSubFunctionPointer();
 }
+
 static void paserAfeResponse(void)
 {
 	uint8_t res,i;
@@ -274,6 +279,9 @@ static void paserAfeResponse(void)
 		else
 		{
 			GPIOD->ODR ^= GPIO_PIN_15;
+			if(res == 0xFE)
+				StopAfeRunFlag = 1;
+			
 		}
 		//	break;
 		PaserIndex++;
@@ -716,7 +724,7 @@ static void DecodeCellVoltageByCellFlag(bq796xx_data_t *bq_data)
 	{
 		if(BmuIndex > bq_data->paser_id)
 			break;
-			
+		 	
 		CellFlag = apiSysParGetCellFlag(BmuIndex);
 		for(CellChannel=0; CellChannel<16; CellChannel++)
 		{
@@ -1005,6 +1013,9 @@ static void changeBmuDirForDataReadProcessor(void)
 #ifdef SHOW_CHGDIR_DEBUG_MSG			
 			halAfeBq796xxDebugMsg("ddddd Re Ini dddddd");
 #endif			
+		 	if(afeEvtHandler)
+		 		afeEvtHandler(0, AFE_EVT_RE_INI, 0);
+
 			changeToBq796xxIniHandler();
 			return;		
 		}
@@ -1374,10 +1385,44 @@ static void AfeBq796xxIniHandler(uint16_t evt)
 	}
 }
 
+static void __readSpiTestEventHandler(smp_flash_evt_type p_evt)
+{
+	}
+
+void __readSpiTest(void)
+{
+#define	WAIT_CCNT	5450	
+	static uint16_t	count = 0;
+	uint8_t	addr[5];
+	static uint8_t	buffer[256];
+	
+	count++;
+	if(count < WAIT_CCNT)
+	{
+		return ;
+	}
+	count = WAIT_CCNT-0;
+	
+	addr[0] = 0;
+	addr[1] = 0;
+	addr[2] = 0;
+	smp_mx25l_flash_fast_read_data_bytes_addr(addr, buffer, 256, __readSpiTestEventHandler);
+	//GPIOC->ODR ^= GPIO_PIN_6;
+}
+
 static void afeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 {
 	char	str[100];
-	if(evt == LIB_SW_TIMER_EVT_SW_1S)
+	//if(StopAfeRunFlag)
+	//	return;
+	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
+	{
+		//if(StopAfeRunFlag==0)
+		//__readSpiTest();
+//			GPIOC->ODR ^= GPIO_PIN_6;
+		GPIOD->ODR ^= GPIO_PIN_13;
+	}
+	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{
 		if(appProjectIsInSimuMode())
 			AfeCommTimeOutCount  = 0;
@@ -1450,7 +1495,7 @@ static void afeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 #endif		
 	}
 	
-	GPIOD->ODR ^= GPIO_PIN_13;
+	
 	AfeTimerHandlerProcessor(evt);
 //	GPIOD->ODR &= ~GPIO_PIN_15;
 }
@@ -1718,6 +1763,8 @@ void halafeOpen(tAfeEvtHandler evtHandler, tAfeLineLossCallBack lineLossCb)
 	//AfeTimerHandlerProcessor = AfeBq796xxIniHandler;
 #endif
 	LibSwTimerOpen(afeSwTimerHandler, 0);
+	
+#if 0	
 	{	
 		char	str[100];
 		subFunctionPointer = (tAfeFunctionTable )stopBalanceFunctionTable;			
@@ -1731,6 +1778,7 @@ void halafeOpen(tAfeEvtHandler evtHandler, tAfeLineLossCallBack lineLossCb)
 		sprintf(str,"Sub Fun Pointer=%.8lX",(uint32_t)subFunctionPointer);
 		halAfeBq796xxDebugMsg(str);
 	}
+#endif	
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

@@ -32,7 +32,6 @@ smp_spi_cs_t ADS7946_CS1;
 smp_spi_t ADS7946_SPI;
 
 static bool Flag_ADS7946_HW_Init_Done = false;
-uint8_t ADS7946_tx_data[BSP_SPI1_TX_BUFFER_SIZE];
 uint8_t ADS7946_rx_data[BSP_SPI1_RX_BUFFER_SIZE];
 
 void ADS7946_SPI_event_handler(smp_spi_evt_type p_evt);

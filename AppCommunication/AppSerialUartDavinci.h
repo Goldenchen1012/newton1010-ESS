@@ -15,7 +15,7 @@
   */
 
 #ifndef _APP_SERIAL_UART_DAVINCI_H_
-#define _APP_SERIAL_UART_DANVICI_H_
+#define _APP_SERIAL_UART_DAVINCI_H_
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
@@ -25,7 +25,7 @@ extern "C" {
 
 /* Public define ------------------------------------------------------------*/
 void appSerialUartDavinciOpen(void);
-
+void appSerialUartSendMessage(uint8_t *str);
 
 /* Public macro -------------------------------------------------------------*/
 #ifdef __cplusplus

@@ -53,6 +53,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 
 }
+void NMI_Handler(void) 
+{
+//	uint32_t	d;
+//	for(d=0; d<50000000; d++);
+//	GPIOC->ODR ^= GPIO_PIN_6;
 
+	__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);
+
+}
 
 /************************ (C) COPYRIGHT Simplo all right reserved *****END OF FILE****/

@@ -70,6 +70,9 @@ void appSerialCanDavinciSendTextMessage(char *msg);
 /* Private variables ---------------------------------------------------------*/
 static apiIRMonitoring_cb_t app_irm_event_cb;
 
+static uint32_t	IrRpValue = 0;
+static uint32_t	IrRnValue = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 static void app_irm_sw_gpio_init_cb(void){
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -173,11 +176,6 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
 	
 	char	str[100];
 	
-	/*
-	uint16_t Rp_kohm;
-	uint16_t Rn_kohm;
-	float V_stack;   
-	*/
  	switch(irm_event)
  	{
  	case IRM_EVENT_BALANCE:
@@ -189,6 +187,12 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
 				temp_irm_data.V_stack
 				);
     	projectIrDbgMsg(str);
+    	IrRpValue = temp_irm_data.Rp_kohm;
+    	if(IrRpValue == 0)
+    		IrRpValue = 1;
+		IrRnValue = temp_irm_data.Rn_kohm;
+		if(IrRnValue == 0)
+			IrRnValue = 1;
 		break;
  	case IRM_EVENT_UNBALANCE:
     	temp_irm_data = *irm_res_data;
@@ -199,6 +203,12 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
 				temp_irm_data.V_stack
 				);
     	projectIrDbgMsg(str);
+    	IrRpValue = temp_irm_data.Rp_kohm;
+    	if(IrRpValue == 0)
+    		IrRpValue = 1;
+		IrRnValue = temp_irm_data.Rn_kohm;
+		if(IrRnValue == 0)
+			IrRnValue = 1;
 		break;
  	case IRM_EVENT_GET_VSTACK:
     	temp_irm_vstack = irm_res_data->V_stack;
@@ -221,6 +231,11 @@ static uint8_t app_irm_rxdata_cb(IRMonitoring_Resistor_t *irm_res_data, IRMonito
 	return 0;
 }
 /* Public function prototypes -----------------------------------------------*/
+void appProjcetGetIrValue(uint32_t *Rp, uint32_t *Rn)
+{
+   	*Rp = IrRpValue;
+	*Rn = IrRnValue;
+}
 void IrFunctionOpen(void)
 {
 	uint8_t	res;

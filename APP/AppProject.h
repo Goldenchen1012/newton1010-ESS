@@ -38,6 +38,8 @@ uint8_t appProjectGetScuId(void);
 
 void appProjectOpen(void);
 uint8_t	appProjectIsRtcValid(void);
+void appProjcetGetIrValue(uint32_t *Rp, uint32_t *Rn);
+
 
 /* Public macro -------------------------------------------------------------*/
 #ifdef __cplusplus

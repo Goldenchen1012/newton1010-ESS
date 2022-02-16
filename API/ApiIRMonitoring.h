@@ -40,8 +40,8 @@ typedef struct{
 }IRMonitoring_Data_t;
 
 typedef struct{ 
-	uint16_t Rp_kohm;
-	uint16_t Rn_kohm;
+	uint32_t Rp_kohm;
+	uint32_t Rn_kohm;
 	float V_stack;   
 }IRMonitoring_Resistor_t;		
 
@@ -125,19 +125,22 @@ typedef struct{
   -------------------------------------------O  Stack-
 */
 
-#define IRM_RA							       800000.0f                                            //Unit:Ohm
-#define IRM_RB							       800000.0f                                            //Unit:Ohm
-#define IRM_RC							       2200.0f	                                            //Unit:Ohm
-#define IRM_RD							       500000.0f                                            //Unit:Ohm
-#define IRM_RSW							       0.0f		                                              //Unit:Ohm
+#define IRM_RA							                   800000.0f                                            //Unit:Ohm
+#define IRM_RB							                   800000.0f                                            //Unit:Ohm
+#define IRM_RC							                   2200.0f	                                            //Unit:Ohm
+#define IRM_RD							                   500000.0f                                            //Unit:Ohm
+#define IRM_RSW							                   0.0f		                                              //Unit:Ohm
 
-#define IRM_K1                     ((IRM_RA + IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)        //Unit: NA
-#define IRM_K2                     ((IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)                 //Unit: NA
-#define IRM_K3                     ((IRM_RB + IRM_RC + IRM_RD + IRM_RSW)/IRM_RC)        //Unit: NA
-#define IRM_KTHD                   2.0f                                                 //Unit: %
+#define IRM_K1                                 ((IRM_RA + IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)        //Unit: NA
+#define IRM_K2                                 ((IRM_RB + IRM_RC + IRM_RSW)/IRM_RC)                 //Unit: NA
+#define IRM_K3                                 ((IRM_RB + IRM_RC + IRM_RD + IRM_RSW)/IRM_RC)        //Unit: NA
+#define IRM_KTHD                               2.0f                                                 //Unit: %
 
-#define IRM_READ_TIMEOUT           10                                                   //Uint: ms
-#define IRM_DATA_READY_TIMEOUT     5                                                    //Uint: ms
+#define IRM_READ_TIMEOUT                       10                                                   //Uint: ms
+#define IRM_DATA_READY_TIMEOUT                 5                                                    //Uint: ms
+
+#define ITRM_TESTPARAM_DET_CYCLE_TIME          5                                                    //Uint: second               
+#define ITRM_TESTPARAM_RELAY_WAIT_TIME         200                                                  //Uint: ms      
 /* Public macro -------------------------------------------------------------*/
 
 /* Public function prototypes -----------------------------------------------*/

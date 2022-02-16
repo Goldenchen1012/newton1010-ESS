@@ -85,4 +85,5 @@ void maxShutdown(void);
 
 void MAX7219_All_Display(uint8_t data);
 
+void MAX7219_Display_1(void);
 #endif // __MAX7219_LIBRARY__

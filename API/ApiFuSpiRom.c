@@ -28,7 +28,7 @@
 
 
 void appSerialCanDavinciSendTextMessage(char *str);
-#define	fuDebugMsg(str)		appSerialCanDavinciSendTextMessage(str);
+#define	fuDebugMsg(str)		//appSerialCanDavinciSendTextMessage(str);
 
 /* Private define ------------------------------------------------------------*/
 #define		SYS_REV_AREA			0
@@ -120,13 +120,17 @@ static void writeCodeDataToSpiRom(uint32_t addr, uint8_t *pDatBuf, uint16_t leng
 	{
 		sector = addr / 4096L;
 		smp_mx25l_flash_sector_erase_sectornum(sector , spiromEventHandler);
+#if 0		
 		sprintf(str,"Erase:%d", sector);
 		fuDebugMsg(str);
+#endif		
 	}
 	page = addr / 256;
 	smp_mx25l_flash_page_program(page, pDatBuf, 256, spiromEventHandler);
+#if 0	
 	sprintf(str,"Write:%d - %d", page, page&0x0f);
 	fuDebugMsg(str);
+#endif	
 }
 
 static uint8_t isCorrectFwCodeHead1(uint8_t *pHeadinfo)

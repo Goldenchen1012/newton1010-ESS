@@ -713,7 +713,10 @@ static void afeEventHandler(void *pDest, uint16_t evt, void *pData)
 	case AFE_EVT_COMM_L2_RELEASE:
 		appProjectDebugMsg("AFE_EVT_COMM_L2_RELEASE");
 		saveEventLog(EVENT_TYPE_AFE_COMM_L2_RELEASE, 0);
-		
+		break;
+	case AFE_EVT_RE_INI:
+		appProjectDebugMsg("AFE_EVT_RE_INI");
+		saveEventLog(EVENT_TYPE_AFE_RE_INI, 0);	
 		break;
 	}
 }
@@ -1008,9 +1011,8 @@ void SimuModeIni(void)
 }	
 #endif
 
-void appProjectOpen(void){
-	
-	
+void appProjectOpen(void)
+{
 	char	str[100];
 	uint32_t	len;
 	 
@@ -1041,6 +1043,7 @@ void appProjectOpen(void){
 	sprintf(str,"Par Len = %d", len);
 	appSerialCanDavinciSendTextMessage(str);
 	appProjectDebugMsg(str);
+
 	appBalanceOpen(appProjectDavinciBalanceEventHandler);
 	apiSignalFeedbackOpen(signalFeedbackEventHandler);
   	LibSwTimerOpen(appProjectSwTimerHandler, 0);
@@ -1050,13 +1053,13 @@ void appProjectOpen(void){
   	appScuIdAssignOpen();
   	apiScuTempOpen();
   	apiSystemFlagOpen();
-  	apiEventLogOpen();
+ 	apiEventLogOpen();
+
 	appButtonOpen(buttonEventHandler);
 	appTcpipSmpOpen();
 	IrFunctionOpen();
 	appLedOpen();
 
-//HalBspReleaseCtrl
 //	NtcTest();
 	{
 		uint32_t	sec,rtc;
@@ -1107,7 +1110,7 @@ void appProjectOpen(void){
 	apiFuCheckMagicCode();
 
 //	appTestProjectOpen();
-	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.1.25...0");
+	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.2.16...4");
 	changeProjectState(projectPowerOnState);
 #ifdef SIM_MODE
 	SimuModeIni();

@@ -32,15 +32,20 @@ void appSerialCanDavinciSendTextMessage(char *str);
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static uint8_t	eventLogBuffer[260];
+static tApiEventLogCallbackFunction EventCbFunction = 0;
+static uint8_t	eventLogReadNum = 0;
 /* Public variables ---------------------------------------------------------*/
 /* Private function prototypes ----------------------------------------------*/
 static void logEventHandler(smp_log_evt_type p_evt)
 {
 //#define	SHOW_LOG_DEBUG_MSG	
+	//eventSpiRomDebugMsg("SPI Event logEventHandler");
+
 	switch(p_evt)
 	{
 	case SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE:
-		eventSpiRomDebugMsg("SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE");
+		//eventSpiRomDebugMsg("SMP_LOG_EVENT_SECTOR_HEADER_LOAD_DONE");
 #ifdef SHOW_LOG_DEBUG_MSG		
 				LOG_CYAN("load head\r\n");
 				LOG_CYAN("header %x\r\n",header_package.header[0]);
@@ -55,7 +60,7 @@ static void logEventHandler(smp_log_evt_type p_evt)
 #endif		
 		break;
 	case SMP_LOG_EVENT_SECTOR_HEADER_SAVE_DONE:
-		eventSpiRomDebugMsg("SMP_LOG_EVENT_SECTOR_HEADER_SAVE_DONE");
+		//eventSpiRomDebugMsg("SMP_LOG_EVENT_SECTOR_HEADER_SAVE_DONE");
 #ifdef SHOW_LOG_DEBUG_MSG			
 				LOG_CYAN("save head\r\n");
 				LOG_CYAN("header %x\r\n",header_package.header[0]);
@@ -70,7 +75,11 @@ static void logEventHandler(smp_log_evt_type p_evt)
 #endif		
 		break;
 	case SMP_LOG_EVENT_PAGE_LOAD_DONE:
-		eventSpiRomDebugMsg("SMP_LOG_EVENT_PAGE_LOAD_DONE");
+		//eventSpiRomDebugMsg("SMP_LOG_EVENT_PAGE_LOAD_DONE");
+		if(EventCbFunction)
+		{
+			EventCbFunction(eventLogReadNum, eventLogBuffer);
+		}
 #ifdef SHOW_LOG_DEBUG_MSG			
 				LOG_CYAN("page load\r\n");
 				for(int i = 0; i < 256;i++){				
@@ -79,19 +88,19 @@ static void logEventHandler(smp_log_evt_type p_evt)
 #endif		
 		break;
 	case SMP_LOG_EVENT_PAGE_SAVE_DONE:
-		eventSpiRomDebugMsg("SMP_LOG_EVENT_PAGE_SAVE_DONE");
+		//eventSpiRomDebugMsg("SMP_LOG_EVENT_PAGE_SAVE_DONE");
 #ifdef SHOW_LOG_DEBUG_MSG			
 				LOG_CYAN("page save\r\n");
 #endif		
 		break;
 	case SMP_LOG_EVENT_MEMORY_FULL:
-		eventSpiRomDebugMsg("SMP_LOG_EVENT_MEMORY_FULL");
+		//eventSpiRomDebugMsg("SMP_LOG_EVENT_MEMORY_FULL");
 #ifdef SHOW_LOG_DEBUG_MSG			
 				LOG_CYAN("fix memory full\r\n");
 #endif		
 		break;
 	case SMP_LOG_EVENT_ERROR:
-		eventSpiRomDebugMsg("");
+		//eventSpiRomDebugMsg("");
 #ifdef SHOW_LOG_DEBUG_MSG			
 				LOG_CYAN("Error\r\n");
 #endif		
@@ -123,7 +132,27 @@ void apiEventLogClearLogData(void)
 
 uint32_t apiEventLogGetLogNumber(void)
 {
-	return 0;
+	char	str[100];
+	smp_sector_header_package	header_package;
+	
+	app_flash_sector_header_get(&header_package);	
+	
+	sprintf(str,"Head %.2X %.2X %.2X %.2X", 
+					header_package.header[0],
+					header_package.header[1],
+					header_package.header[2],
+					header_package.header[3]);
+	eventSpiRomDebugMsg(str);
+	
+	sprintf(str, "Log Num1 = %d", header_package.reflash_total_log_cnt);
+	eventSpiRomDebugMsg(str);
+
+	sprintf(str, "Log Num2 = %d", header_package.fix_total_log_cnt);
+	eventSpiRomDebugMsg(str);
+	
+	
+	return header_package.reflash_total_log_cnt;
+	//return 0;
 }
 void apiEventLogReadLogData(uint32_t EvetIdex, uint8_t ReadNumber, tApiEventLogCallbackFunction CbFunction)
 {
@@ -132,10 +161,18 @@ void apiEventLogReadLogData(uint32_t EvetIdex, uint8_t ReadNumber, tApiEventLogC
 	
 	if(!CbFunction)
 		return;
-		
-	if(ReadNumber > 16)
-		ReadNumber = 16;
+	EventCbFunction = CbFunction;
+	if(ReadNumber > 32)
+		ReadNumber = 32;
+	eventLogReadNum = ReadNumber;
+	app_flash_page_data_load(eventLogBuffer, EvetIdex, ReadNumber, SMP_REFLASH_MEMORY);		
+		//eventLogBuffer
 #if	0		
+void app_flash_page_data_load(uint8_t * RX_buffer , uint16_t log_start_position, uint16_t log_length,smp_flash_type flash_type){
+
+//					app_flash_page_data_load(page_data_buffer,start_package,length_data,SMP_REFLASH_MEMORY);
+
+
 	EventNum = apiEventLogGetLogNumber();
 	if(EvetIdex >= EventNum)
 	{
@@ -188,10 +225,28 @@ void apiEventLogSaveLogData(uint8_t EventType,uint16_t Par)
 void apiEventLogOpen(void)
 {
 	int		i;
+	smp_sector_header_package	header_package;
+	char	str[100];
+
 	app_flash_log_managment_init(logEventHandler);
 	
+	eventSpiRomDebugMsg("SPI Event log open");
 //	for(i=0; i<33; i++)
 //		apiEventLogSaveLogData(0x11,0x1234);
+	app_flash_sector_header_get(&header_package);	
+
+	sprintf(str,"Head %.2X %.2X %.2X %.2X", 
+					header_package.header[0],
+					header_package.header[1],
+					header_package.header[2],
+					header_package.header[3]);
+	eventSpiRomDebugMsg(str);
+	
+	sprintf(str, "Log Num1 = %d", header_package.reflash_total_log_cnt);
+	eventSpiRomDebugMsg(str);
+
+	sprintf(str, "Log Num2 = %d", header_package.fix_total_log_cnt);
+	eventSpiRomDebugMsg(str);
 }
 
 /************************ (C) COPYRIGHT Johnny Wang *****END OF FILE****/    

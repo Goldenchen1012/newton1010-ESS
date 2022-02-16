@@ -132,7 +132,7 @@ static void bmsSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 			}
 		}
 		putSelfDataToBmsBuffer();
-		
+#if 0		
 		{	
 			char str[100];
 			sprintf(str,"CAN Fifo Num = %d %d", MaxCanRxFifiNum,
@@ -146,6 +146,7 @@ static void bmsSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 				count = 0;
 			}
 		}
+#endif		
 	}
 }
 
@@ -516,7 +517,6 @@ uint8_t appBmsGetCellVoltage(uint8_t scuid, uint16_t cells, uint16_t *voltage)
 	*voltage = mBmsBuf[scuid].CellVoltage[cells];
 	return true;
 }
-
 
 uint8_t appBmsSetNtcVoltage(uint8_t scuid, uint16_t ntcs, uint16_t voltage)
 {
