@@ -611,7 +611,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
 		/*##-4- Configure the NVIC for DMA #########################################*/
 		/* NVIC configuration for DMA transfer complete interrupt (BSP_UART0) */
-		HAL_NVIC_SetPriority(BSP_UART0_DMA_TX_IRQn, 0, 1);
+		HAL_NVIC_SetPriority(BSP_UART0_DMA_TX_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(BSP_UART0_DMA_TX_IRQn);
 
 		/* NVIC configuration for DMA transfer complete interrupt (BSP_UART0) */
@@ -619,7 +619,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		HAL_NVIC_EnableIRQ(BSP_UART0_DMA_RX_IRQn);
 
 		/* NVIC for BSP_UART0, to catch the TX complete */
-		HAL_NVIC_SetPriority(BSP_UART0_IRQn, 0, 1);
+		HAL_NVIC_SetPriority(BSP_UART0_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(BSP_UART0_IRQn);
 		
 	}else if(huart->Instance==BSP_UART1){
@@ -695,7 +695,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		HAL_NVIC_EnableIRQ(SMP_UART1_DMA_RX_IRQn);
 		#endif
 		/* NVIC for BSP_UART1, to catch the TX complete */
-		HAL_NVIC_SetPriority(BSP_UART1_IRQn, 0, 1);
+		HAL_NVIC_SetPriority(BSP_UART1_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(BSP_UART1_IRQn);	
   }else if(huart->Instance==BSP_UART2){
 		static DMA_HandleTypeDef uart2_dma_tx;
@@ -770,7 +770,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		HAL_NVIC_EnableIRQ(SMP_UART2_DMA_RX_IRQn);
 		#endif
 		/* NVIC for BSP_UART1, to catch the TX complete */
-		HAL_NVIC_SetPriority(BSP_UART2_IRQn, 0, 1);
+		HAL_NVIC_SetPriority(BSP_UART2_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(BSP_UART2_IRQn);
 	}
 }
@@ -872,8 +872,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
   */
 void BSP_UART0_DMA_RX_IRQHandler(void)
 {
-		GPIOC->ODR ^= GPIO_PIN_6;
-
+	GPIOC->ODR ^= GPIO_PIN_6;
 	HAL_DMA_IRQHandler(smp_uart0_handle.hdmarx);
 }
 
@@ -886,8 +885,7 @@ void BSP_UART0_DMA_RX_IRQHandler(void)
   */
 void BSP_UART0_DMA_TX_IRQHandler(void)
 {
-//	GPIOC->ODR ^= GPIO_PIN_6;
-
+	GPIOC->ODR ^= GPIO_PIN_6;
     HAL_DMA_IRQHandler(smp_uart0_handle.hdmatx);
 }
 

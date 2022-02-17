@@ -1110,7 +1110,7 @@ void appProjectOpen(void)
 	apiFuCheckMagicCode();
 
 //	appTestProjectOpen();
-	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.2.16...4");
+	appSerialCanDavinciSendTextMessage("--------- Start Run -----2022.2.16...5");
 	changeProjectState(projectPowerOnState);
 #ifdef SIM_MODE
 	SimuModeIni();

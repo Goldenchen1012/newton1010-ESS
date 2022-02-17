@@ -170,6 +170,7 @@ int8_t smp_spi_master_init(smp_spi_t *p_spi, smp_spi_event_t smp_spi_event_handl
 			/* Initialization Error */
 				return SMP_ERROR_NOT_FOUND;
 			}
+			
 			spi2_evt_cb = smp_spi_event_handler;
 			break;
 		case SPI_module3:
@@ -437,14 +438,14 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *h_spi)
 void DMA1_Channel2_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
-
+	GPIOD->ODR |= GPIO_PIN_13;
   /* USER CODE END DMA1_Channel2_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi1_rx);
   /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
 	if(hdma_spi1_rx.State == HAL_SPI_STATE_READY){	
 		smp_spi_master_cs_set(&CS[SPI_module1],GPIO_ACTIVE_HIGH);			
 	}
-
+GPIOD->ODR &= ~GPIO_PIN_13;
   /* USER CODE END DMA1_Channel2_IRQn 1 */
 }
 
@@ -454,7 +455,7 @@ void DMA1_Channel2_IRQHandler(void)
 void DMA1_Channel3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
-
+GPIOD->ODR |= GPIO_PIN_13;
   /* USER CODE END DMA1_Channel3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi1_tx);
   /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
@@ -467,7 +468,7 @@ void DMA1_Channel3_IRQHandler(void)
 		}
 		
 	}
-	 
+	 GPIOD->ODR &= ~GPIO_PIN_13;
   /* USER CODE END DMA1_Channel3_IRQn 1 */
 }
 
@@ -477,13 +478,14 @@ void DMA1_Channel3_IRQHandler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-
+	GPIOD->ODR |= GPIO_PIN_13;
   /* USER CODE END DMA1_Channel4_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi2_rx);
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 	if(hdma_spi2_rx.State == HAL_SPI_STATE_READY){	
 			smp_spi_master_cs_set(&CS[SPI_module2],GPIO_ACTIVE_HIGH);		
 		}
+	GPIOD->ODR &= ~GPIO_PIN_13;
   /* USER CODE END DMA1_Channel4_IRQn 1 */
 }
 
@@ -493,7 +495,7 @@ void DMA1_Channel4_IRQHandler(void)
 void DMA1_Channel5_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
-
+GPIOD->ODR |= GPIO_PIN_13;
   /* USER CODE END DMA1_Channel5_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi2_tx);
   /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
@@ -501,10 +503,12 @@ void DMA1_Channel5_IRQHandler(void)
 		if(uSPIFlag[SPI_module2] == SPI_Transfer_only){
 			smp_spi_master_cs_set(&CS[SPI_module2],GPIO_ACTIVE_HIGH);
 		}else if(uSPIFlag[SPI_module2] == SPI_Both){
+			GPIOD->ODR |= GPIO_PIN_13;
 			HAL_SPI_Receive_DMA(&smp_spi2_handle, (uint8_t *)g_rx_data[SPI_module2], g_rx_size[SPI_module2]);
 		}
 		
 	}
+	GPIOD->ODR &= ~GPIO_PIN_13;
   /* USER CODE END DMA1_Channel5_IRQn 1 */
 }
 
@@ -514,13 +518,14 @@ void DMA1_Channel5_IRQHandler(void)
 void DMA2_Channel1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Channel1_IRQn 0 */
-
+GPIOD->ODR |= GPIO_PIN_13;
   /* USER CODE END DMA2_Channel1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi3_rx);
   /* USER CODE BEGIN DMA2_Channel1_IRQn 1 */
 	if(hdma_spi3_rx.State == HAL_SPI_STATE_READY){	
 			smp_spi_master_cs_set(&CS[SPI_module3],GPIO_ACTIVE_HIGH);		
 		}
+	GPIOD->ODR &= ~GPIO_PIN_13;
   /* USER CODE END DMA2_Channel1_IRQn 1 */
 }
 
@@ -530,7 +535,7 @@ void DMA2_Channel1_IRQHandler(void)
 void DMA2_Channel2_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Channel2_IRQn 0 */
-
+GPIOD->ODR |= GPIO_PIN_13;
   /* USER CODE END DMA2_Channel2_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_spi3_tx);
   /* USER CODE BEGIN DMA2_Channel2_IRQn 1 */
@@ -542,6 +547,7 @@ void DMA2_Channel2_IRQHandler(void)
 		}
 			
 		}
+	GPIOD->ODR &= ~GPIO_PIN_13;
   /* USER CODE END DMA2_Channel2_IRQn 1 */
 }
 /**
@@ -555,10 +561,10 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     /* USER CODE BEGIN SPI1_MspInit 0 */
 	  BSP_SPI1_DMAx_CLK_ENABLE();
 	  /* DMA1_Channel2_IRQn interrupt configuration */
-	  HAL_NVIC_SetPriority(BSP_SPI1_DMA_RX_IRQn, 0, 0);
+	  HAL_NVIC_SetPriority(BSP_SPI1_DMA_RX_IRQn, 1, 0);
 	  HAL_NVIC_EnableIRQ(BSP_SPI1_DMA_RX_IRQn);
 	  /* DMA1_Channel3_IRQn interrupt configuration */
-	  HAL_NVIC_SetPriority(BSP_SPI1_DMA_TX_IRQn, 0, 0);
+	  HAL_NVIC_SetPriority(BSP_SPI1_DMA_TX_IRQn, 1, 0);
 	  HAL_NVIC_EnableIRQ(BSP_SPI1_DMA_TX_IRQn);
     /* USER CODE END SPI1_MspInit 0 */
     /* Peripheral clock enable */
@@ -637,10 +643,10 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     /* USER CODE BEGIN SPI2_MspInit 0 */
 	  BSP_SPI2_DMAx_CLK_ENABLE();
 	  /* DMA1_Channel4_IRQn interrupt configuration */
-	  HAL_NVIC_SetPriority(BSP_SPI2_DMA_RX_IRQn, 0, 0);
+	  HAL_NVIC_SetPriority(BSP_SPI2_DMA_RX_IRQn, 1, 0);
 	  HAL_NVIC_EnableIRQ(BSP_SPI2_DMA_RX_IRQn);
 	  /* DMA1_Channel5_IRQn interrupt configuration */
-	  HAL_NVIC_SetPriority(BSP_SPI2_DMA_TX_IRQn, 0, 0);
+	  HAL_NVIC_SetPriority(BSP_SPI2_DMA_TX_IRQn, 1, 0);
 	  HAL_NVIC_EnableIRQ(BSP_SPI2_DMA_TX_IRQn);
     /* USER CODE END SPI2_MspInit 0 */
     /* Peripheral clock enable */
@@ -718,10 +724,10 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 	  /* USER CODE BEGIN SPI3_MspInit 0 */
 	  BSP_SPI3_DMAx_CLK_ENABLE();
 	  /* DMA2_Channel1_IRQn interrupt configuration */
-	  HAL_NVIC_SetPriority(BSP_SPI3_DMA_RX_IRQn, 0, 0);
+	  HAL_NVIC_SetPriority(BSP_SPI3_DMA_RX_IRQn, 1, 0);
 	  HAL_NVIC_EnableIRQ(BSP_SPI3_DMA_RX_IRQn);
 	  /* DMA2_Channel2_IRQn interrupt configuration */
-	  HAL_NVIC_SetPriority(BSP_SPI3_DMA_TX_IRQn, 0, 0);
+	  HAL_NVIC_SetPriority(BSP_SPI3_DMA_TX_IRQn, 1, 0);
 	  HAL_NVIC_EnableIRQ(BSP_SPI3_DMA_TX_IRQn);
 	  /* USER CODE END SPI3_MspInit 0 */
     /* Peripheral clock enable */

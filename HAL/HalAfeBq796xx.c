@@ -29,7 +29,7 @@
 #include "HalBsp.h"
 #include "smp_fifo_flash.h"
 
-//#define	AFE_COMM_TEST
+#define	AFE_COMM_TEST
 
 //#define	BALANCE_DEBUG		
 //#define	AFE_DEBUG_MODE
@@ -1401,7 +1401,7 @@ void __readSpiTest(void)
 	{
 		return ;
 	}
-	count = WAIT_CCNT-0;
+	count = WAIT_CCNT-3;
 	
 	addr[0] = 0;
 	addr[1] = 0;
@@ -1418,9 +1418,9 @@ static void afeSwTimerHandler(__far void *dest, uint16_t evt, void *vDataPtr)
 	if(evt == LIB_SW_TIMER_EVT_SW_1MS)
 	{
 		//if(StopAfeRunFlag==0)
-		//__readSpiTest();
+	//	__readSpiTest();
 //			GPIOC->ODR ^= GPIO_PIN_6;
-		GPIOD->ODR ^= GPIO_PIN_13;
+//		GPIOD->ODR ^= GPIO_PIN_13;
 	}
 	else if(evt == LIB_SW_TIMER_EVT_SW_1S)
 	{
