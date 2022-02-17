@@ -703,7 +703,7 @@ typedef enum{
 
 typedef struct{ 
 	uint16_t vcell_data[MAX_AFE_CNT][BMU_CELL_SERIES];
-	uint16_t busbar_data[MAX_AFE_CNT];
+	int16_t busbar_data[MAX_AFE_CNT];
 	uint16_t gpio_data[MAX_AFE_CNT][BQ79616_GPIO_NUM];  
 	uint8_t  fault_summary[MAX_AFE_CNT];
 	uint16_t fault_ov[MAX_AFE_CNT];
