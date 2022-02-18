@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    smp_drv_bq796xx.c
   * @author  Golden Chen
-  * @version V0.0.13
-  * @date    2022/01/13
+  * @version V0.0.14
+  * @date    2022/02/18
   * @brief   
   ******************************************************************************
   * @attention
@@ -452,6 +452,19 @@ uint8_t drv_bq796xx_Read_AFE_ALL_VCELL(bq796xx_AFE_GPIO_stack is_stack,uint8_t d
       drv_bq796xx_command_framing(STACK_READ, 0, BQ79600_VCELL16_H, 1, d_payload, delays);
   else
       drv_bq796xx_command_framing(SINGLE_READ, dev_id, BQ79600_VCELL16_H, 1, d_payload, delays);
+  
+  return 0;
+}
+
+uint8_t drv_bq796xx_Read_AFE_ALL_Busbar(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,uint32_t delays){
+  uint8_t    d_payload[4] = {0};
+  
+  fill_data4_payload(d_payload,BQ796XX_READ_BUSBAR_BYTE_NUM-1,0,0,0); //read 2(busbar data) bytes 
+  
+  if(is_stack == STACK)  
+      drv_bq796xx_command_framing(STACK_READ, 0, BQ79600_BUSBAR_H, 1, d_payload, delays);
+  else
+      drv_bq796xx_command_framing(SINGLE_READ, dev_id, BQ79600_BUSBAR_H, 1, d_payload, delays);
   
   return 0;
 }
@@ -988,6 +1001,18 @@ uint8_t drv_bq796xx_data_frame_parser(void)
 			bq796xx_data.busbar_data[device_id-1] = bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+(i*2)] * 256.0f + bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+(i*2+1)];
 			
 			bq_event_type = BQ_EVENT_VCELL;
+			
+      break;
+    case BQ79600_BUSBAR_H:
+
+			//Read 2 busbar data.
+			if((data_len+1) == BQ796XX_READ_BUSBAR_BYTE_NUM){
+		      bq796xx_data.busbar_data[device_id-1] = bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD] * 256.0f + bq796xx_res_buf[BQ796XX_DF_REG_PAYLOAD+1];
+			}else{
+			    bq_event_type = BQ796XX_RES_ERR;
+			}
+			
+			bq_event_type = BQ_EVENT_BUSBAR;
 			
       break;
     case BQ79600_GPIO1_RES_H:  

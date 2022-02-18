@@ -596,9 +596,12 @@ void Test_BQ796XX_OVUVOTUT_FUNC(void){
 	  while(1){
 				 drv_bq796xx_clear_fifobuffer();
 				
-	       drv_bq796xx_Read_AFE_ALL_VCELL(STACK, 0, 0);                               //Stack(BMU #1,#2) Read all VCell 1~16(Main ADC).
+	       drv_bq796xx_Read_AFE_ALL_VCELL(STACK, 0, 0);                               // All Stack(BMU) Read all VCell 1~16(Main ADC).
 				 drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
 				
+			   drv_bq796xx_Read_AFE_ALL_Busbar(STACK, 0, 0);                              /// All Stack(BMU) Read Busbar Data(Main ADC).
+			   drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms   
+			
 				 drv_bq796xx_Read_AFE_ALL_ADC(STACK, 0, 0);                                 //Stack(BMU #1,#2) Read all AUX ADC   (GPIO1~8).
 		     drv_bq796xx_delay_ms(1*bq796xx_default.bmu_total_num);                     //Please set  delay > (n X BMU conut) ms
 				
@@ -614,7 +617,7 @@ void Test_BQ796XX_OVUVOTUT_FUNC(void){
 		     drv_bq796xx_Read_Stack_FaultOTUT(0);
          drv_bq796xx_delay_ms(10);		
 		
-				 for(int ki =0; ki<10*BMU_TOTAL_BOARDS; ki++){
+				 for(int ki =0; ki<12*BMU_TOTAL_BOARDS; ki++){
 				     res = drv_bq796xx_data_frame_parser();
 				 }					 
 		     

@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    smp_drv_bq796xx.h 
   * @author  Golden Chen
-  * @version V0.0.13
-  * @date    2022/01/13
+  * @version V0.0.14
+  * @date    2022/02/18
   * @brief   Header for smp_drv_bq796xx.c module
   ******************************************************************************
   */
@@ -257,6 +257,7 @@ enum {
 
 typedef enum{
    BQ_EVENT_VCELL      =0  ,
+	 BQ_EVENT_BUSBAR         ,
 	 BQ_EVENT_GPIO_ADC       ,
 	 BQ_EVENT_FAULT          ,	
    BQ_EVENT_FAULTOVUV      ,
@@ -703,7 +704,7 @@ typedef enum{
 
 typedef struct{ 
 	uint16_t vcell_data[MAX_AFE_CNT][BMU_CELL_SERIES];
-	int16_t busbar_data[MAX_AFE_CNT];
+	int16_t  busbar_data[MAX_AFE_CNT];
 	uint16_t gpio_data[MAX_AFE_CNT][BQ79616_GPIO_NUM];  
 	uint8_t  fault_summary[MAX_AFE_CNT];
 	uint16_t fault_ov[MAX_AFE_CNT];
@@ -748,6 +749,7 @@ void drv_bq796xx_command_framing(uint8_t cmd_type, uint8_t dev_id, uint16_t reg_
 uint8_t drv_bq796xx_init(void);
 uint8_t drv_bq796xx_start_setting(uint8_t maxcnt, uint8_t dir);													
 uint8_t drv_bq796xx_Read_AFE_ALL_VCELL(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,uint32_t delays);
+uint8_t drv_bq796xx_Read_AFE_ALL_Busbar(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,uint32_t delays);
 uint8_t drv_bq796xx_Set_AFE_GPIO_type(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,bq796xx_AFE_GPIO_Type GPIO_type,bq796xx_AFE_GPIO GPIO_Num,uint32_t delays);
 uint8_t drv_bq796xx_Start_AFE_ADC(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,uint32_t delays);
 uint8_t drv_bq796xx_Stop_AFE_ADC(bq796xx_AFE_GPIO_stack is_stack,uint8_t dev_id,uint32_t delays);			
