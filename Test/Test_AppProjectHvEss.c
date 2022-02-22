@@ -504,7 +504,7 @@ void Test_main(void){
 	// MX25LXX Flash Test
 	//------------------------------------------
 	#ifdef TEST_MX25LXX_FLASH
-	res = smp_mx25l_flash_init();
+	Test_Event_MX25L_Driver();
 	#endif
 	//------------------------------------------
 

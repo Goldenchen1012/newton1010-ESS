@@ -12,4 +12,7 @@
 #define __TEST_MX25LXX_DRIVER__
 #include <stdint.h>
 
+void Test_Event_MX25L_Driver(void);
+
+
 #endif // __TEST_MX25LXX_DRIVER__

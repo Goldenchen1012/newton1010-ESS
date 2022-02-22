@@ -494,6 +494,17 @@ int8_t smp_mx25l_flash_release_deep_power_down(void)
   return tempstate;
 }
 
+int8_t smp_mx25l_flash_reset(void)
+{
+  /* Send "Reset-Enable (RSTEN) and Reset (RST)" command */
+	int8_t tempstate;
+	MX25L_tx_data[0] = MX25L_RSTEN;
+	MX25L_tx_data[1] = MX25L_RST;
+	UseDMAFlag = false;
+	tempstate = smp_spi_master_send_recv_blocking(&MX25L_SPI_1, MX25L_tx_data , 2 , 0, 0 , &MX25L_CS0);
+  return tempstate;
+}
+
 uint16_t MX25L_SPI_get_command_size(void)
 {
 	uint16_t size = 0;
